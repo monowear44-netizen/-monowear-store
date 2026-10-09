@@ -73,6 +73,7 @@ app.use(session({
  resave:false, saveUninitialized:false, store:new SQLiteStore({db:"sessions.sqlite",dir:dataDir}),
  cookie:{httpOnly:true,sameSite:"lax",secure:isProd,maxAge:8*60*60*1000}
 }));
+app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static(uploadDir));
 const loginLimiter=rateLimit({windowMs:15*60*1000,limit:10,standardHeaders:true,legacyHeaders:false});
 const checkoutLimiter=rateLimit({windowMs:15*60*1000,limit:20,standardHeaders:true,legacyHeaders:false});
