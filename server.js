@@ -15,11 +15,10 @@ const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const isProd = process.env.NODE_ENV === "production";
 const BASE_URL = (process.env.BASE_URL || `http://localhost:${PORT}`).replace(/\/$/, "");
-const dataDir = path.join(__dirname, "data");
-const uploadDir = path.join(__dirname, "public", "uploads");
+const dataDir = "/var/data";
+const uploadDir = path.join(dataDir, "uploads");
 fs.mkdirSync(dataDir, { recursive: true });
 fs.mkdirSync(uploadDir, { recursive: true });
-
 const db = new Database(path.join(dataDir, "monowear.sqlite"));
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
@@ -74,7 +73,7 @@ app.use(session({
  resave:false, saveUninitialized:false, store:new SQLiteStore({db:"sessions.sqlite",dir:dataDir}),
  cookie:{httpOnly:true,sameSite:"lax",secure:isProd,maxAge:8*60*60*1000}
 }));
-app.use(express.static(path.join(__dirname,"public")));
+app.use("/uploads", express.static(uploadDir));
 const loginLimiter=rateLimit({windowMs:15*60*1000,limit:10,standardHeaders:true,legacyHeaders:false});
 const checkoutLimiter=rateLimit({windowMs:15*60*1000,limit:20,standardHeaders:true,legacyHeaders:false});
 function adminOnly(req,res,next){if(!req.session.adminId)return res.status(401).json({error:"Please log in to the studio."});next();}
