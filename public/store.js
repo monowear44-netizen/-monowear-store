@@ -760,7 +760,66 @@ newsletterForm?.addEventListener("submit", async (event) => {
     }
   }
 });
+// MONOWEAR general waitlist
+const waitlistForm = $("#waitlistForm");
 
+waitlistForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const emailInput = $("#waitlistEmail");
+  const message = $("#waitlistMessage");
+  const submitButton = waitlistForm.querySelector(
+    'button[type="submit"]'
+  );
+
+  const email = emailInput?.value.trim();
+
+  if (!email) {
+    if (message) {
+      message.textContent = "Please enter your email address.";
+    }
+    return;
+  }
+
+  const originalText = submitButton?.textContent;
+
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.textContent = "JOINING...";
+  }
+
+  if (message) {
+    message.textContent = "";
+  }
+
+  try {
+    const result = await request("/api/waitlist/join", {
+      method: "POST",
+      body: JSON.stringify({
+        email,
+        list_type: "drop"
+      })
+    });
+
+    if (message) {
+      message.textContent =
+        result.message || "You're on the MONOWEAR waitlist.";
+    }
+
+    waitlistForm.reset();
+  } catch (error) {
+    if (message) {
+      message.textContent =
+        error.message || "Unable to join. Please try again.";
+    }
+  } finally {
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent =
+        originalText || "JOIN WAITLIST ↗";
+    }
+  }
+});
   checkoutForm?.addEventListener("submit", checkout);
 
   document.addEventListener("keydown", (event) => {
