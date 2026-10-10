@@ -219,20 +219,23 @@ ensureColumn("orders", "updated_at", "TEXT DEFAULT CURRENT_TIMESTAMP");
 // DEFAULT SETTINGS
 // ============================================================
 
-const defaults = {
-  store_name: "MONOWEAR",
-  tagline: "LIVE THE NAME. WEAR THE MEANING.",
-  currency: "NGN",
-  shipping_fee: "0",
-  free_shipping_threshold: "0",
-  announcement: "",
-  instagram: "https://www.instagram.com/",
-  x: "https://x.com/monowear44",
-  contact_email: process.env.CONTACT_EMAIL || "",
-  maintenance_mode: "false",
-  hero_background_image: "",
-waitlist_background_image: "",
-};
+const allowed = [
+  "brand_name",
+  "tagline",
+  "hero_title",
+  "hero_subtitle",
+  "hero_cta",
+  "announcement",
+  "instagram",
+  "x",
+  "contact_email",
+  "shipping_fee",
+  "free_shipping_threshold",
+  "policy_returns",
+  "policy_shipping",
+  "hero_background_image",
+  "waitlist_background_image"
+];
 
 const getSettingStatement = db.prepare(
   "SELECT value FROM settings WHERE key = ?"
