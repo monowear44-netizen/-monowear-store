@@ -7,9 +7,10 @@
   "use strict";
 
   const API = {
-    store: "/api/store",
-    checkout: "/api/checkout"
-  };
+  products: "/api/products",
+  settings: "/api/admin/settings",
+  checkout: "/api/checkout"
+};
 
   const CART_KEY = "monowear-cart-v1";
 
@@ -356,45 +357,61 @@
   }
 
   async function loadStore() {
-    if (productGrid) {
-      productGrid.innerHTML = `
-        <p class="muted">Loading the MONOWEAR collection...</p>
-      `;
-    }
+  if (productGrid) {
+    productGrid.innerHTML = `
+      <p class="muted">Loading the MONOWEAR collection...</p>
+    `;
+  }
 
-    try {
-      const data = await request(API.store);
+  try {
+    // Load published products from the actual MONOWEAR backend.
+    const data = await request(API.products);
 
-      products = Array.isArray(data.products)
+    products = Array.isArray(data)
+      ? data
+      : Array.isArray(data.products)
         ? data.products
         : [];
 
-      settings = data.settings || {};
+    // Keep the storefront independent of the admin settings endpoint.
+    settings = {};
 
-      applySettings();
-      renderCategories();
-      renderProducts();
-      renderCart();
+    applySettings();
+    renderCategories();
+    renderProducts();
+    renderCart();
 
-    } catch (error) {
-      console.error("MONOWEAR store error:", error);
+    console.log("MONOWEAR products loaded:", products);
 
-      if (productGrid) {
-        productGrid.innerHTML = `
-          <div class="empty-state">
-            <p>We couldn't load the collection.</p>
-            <p class="muted">
-              Please refresh the page and try again.
-            </p>
-            <button class="add-button" id="retryStore">
-              TRY AGAIN
-            </button>
-          </div>
-        `;
-      }
+    if (!products.length && productGrid) {
+      productGrid.innerHTML = `
+        <div class="empty-state">
+          <p>The collection is being updated.</p>
+          <p class="muted">
+            Please check back soon for new MONOWEAR pieces.
+          </p>
+        </div>
+      `;
+    }
+
+  } catch (error) {
+    console.error("MONOWEAR product loading error:", error);
+
+    if (productGrid) {
+      productGrid.innerHTML = `
+        <div class="empty-state">
+          <p>We couldn't load the collection.</p>
+          <p class="muted">
+            ${escapeHTML(error.message)}
+          </p>
+          <button type="button" class="add-button" id="retryStore">
+            TRY AGAIN
+          </button>
+        </div>
+      `;
     }
   }
-
+}
   /* ---------- Shopping bag ---------- */
 
   function addToCart(productId, size) {
@@ -596,10 +613,10 @@
         address: formData.get("address"),
 
         items: cart.map((item) => ({
-          id: Number(item.id),
-          qty: Number(item.qty),
-          size: item.size
-        }))
+  product_id: Number(item.id),
+  quantity: Number(item.qty),
+  size: item.size
+}))
       };
 
       const result = await request(API.checkout, {
