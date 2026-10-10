@@ -129,9 +129,7 @@
       color: var(--text);
       border-color: #454545;
     }
-    .mw-button-outline:hover {
-      color: #111;
-    }
+    .mw-button-outline:hover { color: #111; }
     .mw-actions {
       position: relative;
       z-index: 1;
@@ -268,7 +266,7 @@
       margin-bottom: 8px;
       color: var(--text);
     }
-    /* Sign-in and registration */
+    /* Authentication */
     .mw-auth-wrap {
       width: min(470px, calc(100% - 32px));
       margin: 65px auto 90px;
@@ -362,7 +360,7 @@
   <nav class="mw-nav" aria-label="Main navigation">
     <a href="/#shop">SHOP</a>
     <a href="/account.html" aria-current="page">MY ACCOUNT</a>
-    <a href="/" id="headerBagLink">BAG</a>
+    <a href="/#shop" id="headerBagLink">BAG</a>
   </nav>
 </header>
 <!-- SIGN IN / REGISTRATION -->
@@ -384,39 +382,64 @@
     <form class="mw-form" id="signupForm" hidden>
       <label>
         FULL NAME
-        <input name="name" type="text" autocomplete="name"
-          minlength="2" maxlength="100" required>
+        <input
+          name="name"
+          type="text"
+          autocomplete="name"
+          minlength="2"
+          maxlength="100"
+          required
+        >
       </label>
       <label>
         EMAIL ADDRESS
-        <input name="email" type="email" autocomplete="email"
-          maxlength="254" required>
+        <input
+          name="email"
+          type="email"
+          autocomplete="email"
+          maxlength="254"
+          required
+        >
       </label>
       <label>
-        PHONE NUMBER
-        <input name="phone" type="tel" autocomplete="tel">
+        PASSWORD — MINIMUM 8 CHARACTERS
+        <input
+          name="password"
+          type="password"
+          autocomplete="new-password"
+          minlength="8"
+          maxlength="128"
+          required
+        >
       </label>
-      <label>
-        PASSWORD — MINIMUM 10 CHARACTERS
-        <input name="password" type="password"
-          autocomplete="new-password" minlength="10"
-          maxlength="128" required>
-      </label>
-      <button class="mw-button" type="submit">CREATE MY ACCOUNT ↗</button>
+      <button class="mw-button" type="submit">
+        CREATE MY ACCOUNT ↗
+      </button>
       <p class="mw-message" id="signupMessage" aria-live="polite"></p>
     </form>
     <form class="mw-form" id="loginForm">
       <label>
         EMAIL ADDRESS
-        <input name="email" type="email" autocomplete="email"
-          maxlength="254" required>
+        <input
+          name="email"
+          type="email"
+          autocomplete="email"
+          maxlength="254"
+          required
+        >
       </label>
       <label>
         PASSWORD
-        <input name="password" type="password"
-          autocomplete="current-password" required>
+        <input
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          required
+        >
       </label>
-      <button class="mw-button" type="submit">SIGN IN ↗</button>
+      <button class="mw-button" type="submit">
+        SIGN IN ↗
+      </button>
       <p class="mw-message" id="loginMessage" aria-live="polite"></p>
     </form>
     <p class="mw-muted">
@@ -435,9 +458,16 @@
       Everything you need, all in one place.
     </p>
     <div class="mw-actions">
-      <a class="mw-button" href="/#shop">SHOP THE COLLECTION ↗</a>
-      <button class="mw-button mw-button-outline"
-        id="signoutButton" type="button">SIGN OUT</button>
+      <a class="mw-button" href="/#shop">
+        SHOP THE COLLECTION ↗
+      </a>
+      <button
+        class="mw-button mw-button-outline"
+        id="signoutButton"
+        type="button"
+      >
+        SIGN OUT
+      </button>
     </div>
   </section>
   <nav class="mw-shortcuts" aria-label="Account sections">
@@ -460,8 +490,13 @@
         <p class="mw-eyebrow">YOUR PURCHASES</p>
         <h2>RECENT ORDERS</h2>
       </div>
-      <button class="mw-button mw-button-outline"
-        id="refreshOrders" type="button">REFRESH ↻</button>
+      <button
+        class="mw-button mw-button-outline"
+        id="refreshOrders"
+        type="button"
+      >
+        REFRESH ↻
+      </button>
     </div>
     <div class="mw-panel">
       <div id="ordersContent" class="mw-muted">
@@ -485,8 +520,8 @@
         Checking your shopping bag…
       </div>
       <p class="mw-muted">
-        Your bag is read from this browser. Items may not appear here
-        if they were added on another device or browser.
+        Your bag is stored in this browser. Items added on another
+        device or browser may not appear here.
       </p>
     </div>
   </section>
@@ -506,15 +541,15 @@
         <span class="mw-profile-label">Email address</span>
         <span id="profileEmail">—</span>
       </div>
-      <div class="mw-profile-row">
-        <span class="mw-profile-label">Phone number</span>
-        <span id="profilePhone">Not provided</span>
-      </div>
       <p class="mw-muted">
         Need to update your details? Contact MONOWEAR support.
       </p>
-      <a class="mw-button mw-button-outline"
-        href="mailto:monowear44@gmail.com">CONTACT SUPPORT ↗</a>
+      <a
+        class="mw-button mw-button-outline"
+        href="mailto:monowear44@gmail.com"
+      >
+        CONTACT SUPPORT ↗
+      </a>
     </div>
   </section>
   <section class="mw-section">
@@ -524,7 +559,9 @@
       <p class="mw-muted">
         Explore the latest MONOWEAR pieces and find what speaks to you.
       </p>
-      <a class="mw-button" href="/#shop">RETURN TO THE STORE ↗</a>
+      <a class="mw-button" href="/#shop">
+        RETURN TO THE STORE ↗
+      </a>
     </div>
   </section>
 </main>
@@ -544,7 +581,7 @@
       style: "currency",
       currency: "NGN",
       maximumFractionDigits: 0
-    }).format(Number(amount || 0));
+    }).format(Number(amount) || 0);
   const escapeHTML = (value) =>
     String(value ?? "").replace(/[&<>"']/g, (character) => ({
       "&": "&amp;",
@@ -552,31 +589,46 @@
       ">": "&gt;",
       '"': "&quot;",
       "'": "&#39;"
-    }[character]));
+    })[character]);
   $("footerYear").textContent = new Date().getFullYear();
+  /* ======================================================
+     MESSAGE HELPERS
+  ====================================================== */
   function message(id, text, type = "") {
     const element = $(id);
+    if (!element) return;
     element.textContent = text;
     element.className = "mw-message" + (type ? " " + type : "");
   }
+  /* ======================================================
+     API HELPER
+  ====================================================== */
   async function api(url, options = {}) {
     const response = await fetch(url, {
+      ...options,
       credentials: "same-origin",
       cache: "no-store",
-      ...options,
       headers: {
-        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        Accept: "application/json",
+        ...(options.body
+          ? { "Content-Type": "application/json" }
+          : {}),
         ...(options.headers || {})
       }
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok) {
       throw new Error(
-        result.error || result.message || "Something went wrong. Please try again."
+        result.error ||
+        result.message ||
+        `Request failed (${response.status}). Please try again.`
       );
     }
     return result;
   }
+  /* ======================================================
+     LOGIN / REGISTRATION TABS
+  ====================================================== */
   function setAuthMode(mode) {
     const signup = mode === "signup";
     $("signupForm").hidden = !signup;
@@ -592,28 +644,44 @@
     message("signupMessage", "");
     message("loginMessage", "");
   }
-  $("signupTab").addEventListener("click", () => setAuthMode("signup"));
-  $("loginTab").addEventListener("click", () => setAuthMode("login"));
+  $("signupTab").addEventListener("click", () => {
+    setAuthMode("signup");
+  });
+  $("loginTab").addEventListener("click", () => {
+    setAuthMode("login");
+  });
+  /* ======================================================
+     CUSTOMER ORDERS
+     Server route:
+     GET /api/customer/orders
+  ====================================================== */
   async function loadOrders() {
     const content = $("ordersContent");
     content.textContent = "Loading your orders…";
     message("ordersMessage", "");
     try {
-      const orders = await api("/api/account/orders");
+      const orders = await api("/api/customer/orders");
       if (!Array.isArray(orders) || orders.length === 0) {
         content.innerHTML = `
           <p>You haven't placed any orders yet.</p>
-          <a class="mw-button" href="/#shop">DISCOVER THE COLLECTION ↗</a>
+          <a class="mw-button" href="/#shop">
+            DISCOVER THE COLLECTION ↗
+          </a>
         `;
         return;
       }
       content.innerHTML = orders.map((order) => {
         const items = Array.isArray(order.items) ? order.items : [];
         const itemDescription = items.length
-          ? items.map((item) =>
-              `${escapeHTML(item.name || "Product")} — ${escapeHTML(item.size || "Standard")} × ${escapeHTML(item.qty ?? 1)}`
-            ).join("<br>")
+          ? items.map((item) => `
+              ${escapeHTML(item.name || "MONOWEAR product")}
+              ${item.size
+                ? ` — Size: ${escapeHTML(item.size)}`
+                : ""}
+              × ${escapeHTML(item.quantity ?? item.qty ?? 1)}
+            `).join("<br>")
           : "Order items";
+        const status = order.order_status || order.status || "pending";
         return `
           <article class="mw-order">
             <div class="mw-order-top">
@@ -624,9 +692,17 @@
               <strong>${money(order.total)}</strong>
             </div>
             <p>${itemDescription}</p>
-            <p>Payment: ${escapeHTML(order.payment_status || "Pending")}</p>
-            <p>Fulfilment: ${escapeHTML(order.status || "Processing")}</p>
-            <span class="mw-status">${escapeHTML(order.status || "Processing")}</span>
+            <p>
+              Payment:
+              ${escapeHTML(order.payment_status || "pending")}
+            </p>
+            <p>
+              Order status:
+              ${escapeHTML(status)}
+            </p>
+            <span class="mw-status">
+              ${escapeHTML(status)}
+            </span>
           </article>
         `;
       }).join("");
@@ -635,13 +711,20 @@
       message("ordersMessage", error.message, "error");
     }
   }
+  /* ======================================================
+     SHOPPING BAG
+     The current storefront saves its cart using:
+     localStorage key: monowear-cart
+  ====================================================== */
   function readLocalBag() {
     try {
-      const raw = localStorage.getItem("monowear-cart-v1");
+      const raw = localStorage.getItem("monowear-cart");
       if (!raw) return [];
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) return parsed;
-      if (parsed && Array.isArray(parsed.items)) return parsed.items;
+      if (parsed && Array.isArray(parsed.items)) {
+        return parsed.items;
+      }
       return [];
     } catch (error) {
       console.warn("MONOWEAR bag could not be read:", error);
@@ -654,52 +737,95 @@
     if (!bag.length) {
       content.innerHTML = `
         <p>Your bag is currently empty.</p>
-        <a class="mw-button" href="/#shop">FIND YOUR NEXT PIECE ↗</a>
+        <a class="mw-button" href="/#shop">
+          FIND YOUR NEXT PIECE ↗
+        </a>
       `;
       return;
     }
+    const total = bag.reduce((sum, item) => {
+      const quantity = Number(item.quantity ?? item.qty ?? 1);
+      const price = Number(item.price || 0);
+      return sum + price * quantity;
+    }, 0);
     content.innerHTML = bag.map((item) => {
-      const name = item.name || item.title || item.product_name || "MONOWEAR piece";
-      const quantity = Number(item.qty ?? item.quantity ?? 1);
-      const size = item.size || "Not specified";
-      const price = Number(item.price || item.amount || 0);
+      const name =
+        item.name ||
+        item.title ||
+        item.product_name ||
+        "MONOWEAR piece";
+      const quantity = Number(item.quantity ?? item.qty ?? 1);
+      const size = item.size || "One size";
+      const price = Number(item.price || 0);
       return `
         <article class="mw-cart-item">
           <div>
             <strong>${escapeHTML(name)}</strong>
-            <p>Size: ${escapeHTML(size)} · Quantity: ${escapeHTML(quantity)}</p>
+            <p>
+              Size: ${escapeHTML(size)}
+              · Quantity: ${escapeHTML(quantity)}
+            </p>
           </div>
           <strong>${money(price * quantity)}</strong>
         </article>
       `;
-    }).join("");
+    }).join("") + `
+      <div class="mw-cart-item">
+        <strong>SUBTOTAL</strong>
+        <strong>${money(total)}</strong>
+      </div>
+    `;
   }
+  /* ======================================================
+     LOAD CUSTOMER ACCOUNT
+     Server route:
+     GET /api/customer/me
+     Successful response:
+     { authenticated: true, customer: {...} }
+  ====================================================== */
   async function loadAccount() {
     $("authView").hidden = true;
     $("dashboardView").hidden = true;
     try {
-      const result = await api("/api/account/me");
+      const result = await api("/api/customer/me");
       if (!result.authenticated || !result.customer) {
         $("authView").hidden = false;
         setAuthMode("login");
-        return;
+        return false;
       }
       const customer = result.customer;
       $("dashboardView").hidden = false;
       $("welcomeHeading").textContent =
-        "WELCOME BACK, " + (customer.name || "MONOWEAR CUSTOMER") + ".";
+        "WELCOME BACK, " +
+        (customer.name || "MONOWEAR CUSTOMER") +
+        ".";
       $("profileName").textContent = customer.name || "—";
       $("profileEmail").textContent = customer.email || "—";
-      $("profilePhone").textContent = customer.phone || "Not provided";
       renderBag();
       await loadOrders();
+      return true;
     } catch (error) {
+      $("dashboardView").hidden = true;
       $("authView").hidden = false;
       setAuthMode("login");
-      message("loginMessage", error.message, "error");
+      // A normal signed-out visitor should simply see the login form.
+      if (!error.message.includes("Please log in")) {
+        message("loginMessage", error.message, "error");
+      }
+      return false;
     }
   }
-  async function submitAccountForm(event, endpoint, formId, messageId) {
+  /* ======================================================
+     LOGIN AND REGISTRATION
+     POST /api/customer/register
+     POST /api/customer/login
+  ====================================================== */
+  async function submitAccountForm(
+    event,
+    endpoint,
+    formId,
+    messageId
+  ) {
     event.preventDefault();
     const form = $(formId);
     const button = form.querySelector('button[type="submit"]');
@@ -708,20 +834,24 @@
     button.textContent = "PLEASE WAIT…";
     message(messageId, "");
     try {
-      const payload = Object.fromEntries(new FormData(form).entries());
+      const payload = Object.fromEntries(
+        new FormData(form).entries()
+      );
       const result = await api(endpoint, {
         method: "POST",
         body: JSON.stringify(payload)
       });
-      if (result.ok === false) {
-        throw new Error(result.error || "Unable to complete your request.");
+      if (result.success !== true || !result.customer) {
+        throw new Error(
+          result.error || "Unable to complete your request."
+        );
       }
       form.reset();
-      await loadAccount();
-      if ($("dashboardView").hidden) {
+      const authenticated = await loadAccount();
+      if (!authenticated) {
         message(
           messageId,
-          "Your request was accepted, but your account could not be loaded. Please sign in.",
+          "Your request succeeded, but your session could not be confirmed. Please sign in again.",
           "error"
         );
       }
@@ -732,22 +862,26 @@
       button.textContent = originalText;
     }
   }
-  $("signupForm").addEventListener("submit", (event) =>
+  $("signupForm").addEventListener("submit", (event) => {
     submitAccountForm(
       event,
       "/api/customer/register",
       "signupForm",
       "signupMessage"
-    )
-  );
-  $("loginForm").addEventListener("submit", (event) =>
+    );
+  });
+  $("loginForm").addEventListener("submit", (event) => {
     submitAccountForm(
       event,
       "/api/customer/login",
       "loginForm",
       "loginMessage"
-    )
-  );
+    );
+  });
+  /* ======================================================
+     CUSTOMER LOGOUT
+     POST /api/customer/logout
+  ====================================================== */
   $("signoutButton").addEventListener("click", async () => {
     const button = $("signoutButton");
     button.disabled = true;
@@ -759,17 +893,35 @@
       $("dashboardView").hidden = true;
       $("authView").hidden = false;
       setAuthMode("login");
-      message("loginMessage", "You've signed out successfully.", "success");
+      message(
+        "loginMessage",
+        "You've signed out successfully.",
+        "success"
+      );
     } catch (error) {
       alert(error.message);
     } finally {
       button.disabled = false;
     }
   });
+  /* ======================================================
+     REFRESH ORDERS AND BAG
+  ====================================================== */
   $("refreshOrders").addEventListener("click", loadOrders);
   window.addEventListener("pageshow", () => {
-    if (!$("dashboardView").hidden) renderBag();
+    if (!$("dashboardView").hidden) {
+      renderBag();
+    }
   });
+  window.addEventListener("storage", (event) => {
+    if (event.key === "monowear-cart" &&
+        !$("dashboardView").hidden) {
+      renderBag();
+    }
+  });
+  /* ======================================================
+     START
+  ====================================================== */
   loadAccount();
 })();
 </script>
