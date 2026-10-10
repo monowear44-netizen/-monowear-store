@@ -1032,6 +1032,17 @@ app.get("/api/collections/:slug", (req, res) => {
 // ADMIN SETTINGS
 // ============================================================
 
+app.get("/api/store-settings", (req, res) => {
+  const rows = db.prepare(`
+    SELECT key, value FROM settings
+    WHERE key IN ('store_name','tagline','announcement','hero_background_image','waitlist_background_image')
+  `).all();
+  const settings = {};
+  for (const row of rows) settings[row.key] = row.value;
+  res.set("Cache-Control", "no-store");
+  res.json(settings);
+});
+
 app.get("/api/admin/settings", requireAdmin, (req, res) => {
   const rows = db.prepare(`
     SELECT key, value FROM settings ORDER BY key ASC
@@ -1057,9 +1068,9 @@ app.put("/api/admin/settings", requireAdmin, (req, res) => {
     "instagram",
     "x",
     "contact_email",
-    "maintenance_mode"
+    "maintenance_mode",
     "hero_background_image",
-"waitlist_background_image"
+    "waitlist_background_image"
   ];
 
   const updates = req.body || {};
