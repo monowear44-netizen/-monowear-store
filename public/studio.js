@@ -724,7 +724,9 @@ async function loadSettings() {
       instagram: "instagram",
       contact_email: "contact_email",
       shipping_fee: "shipping_fee",
-      free_shipping_threshold: "free_shipping_threshold"
+      free_shipping_threshold: "free_shipping_threshold",
+      hero_background_image: "hero_background_image",
+      waitlist_background_image: "waitlist_background_image"
     };
 
     Object.entries(mapping).forEach(([field, setting]) => {
@@ -734,9 +736,13 @@ async function loadSettings() {
       }
     });
 
-    // These fields are not currently supported by your
-    // server.js settings allowlist.
-    // Leave them editable, but don't imply they are saved.
+    ["hero_background_image", "waitlist_background_image"].forEach((key) => {
+      const input = form.elements[key];
+      const preview = $(key === "hero_background_image" ? "heroImagePreview" : "waitlistImagePreview");
+      if (input) input.value = data[key] || "";
+      if (preview && data[key]) { preview.src = data[key]; preview.hidden = false; }
+      else if (preview) { preview.removeAttribute("src"); preview.hidden = true; }
+    });
   } catch (error) {
     console.error("Settings load error:", error);
     showToast(error.message);
@@ -757,7 +763,9 @@ $("settingsForm").addEventListener("submit", async (event) => {
     shipping_fee: Number(form.elements.shipping_fee.value || 0),
     free_shipping_threshold: Number(
       form.elements.free_shipping_threshold.value || 0
-    )
+    ),
+    hero_background_image: form.elements.hero_background_image.value,
+    waitlist_background_image: form.elements.waitlist_background_image.value
   };
 
   try {
@@ -908,3 +916,29 @@ $("refreshOrders").addEventListener("click", loadOrders);
 // ============================================================
 
 checkAuth();
+
+// Storefront campaign image uploads (admin-only server endpoint).
+async function uploadStoreAreaImage(kind) {
+  const isHero = kind === "hero";
+  const input = $(isHero ? "heroImageFile" : "waitlistImageFile");
+  const preview = $(isHero ? "heroImagePreview" : "waitlistImagePreview");
+  const hidden = $("settingsForm").elements[isHero ? "hero_background_image" : "waitlist_background_image"];
+  const file = input && input.files && input.files[0];
+  if (!file) { showToast("Choose an image first."); return; }
+  if (!file.type.startsWith("image/")) { showToast("Choose a valid image file."); return; }
+  if (file.size > 8 * 1024 * 1024) { showToast("Image must be 8 MB or smaller."); return; }
+  const formData = new FormData();
+  formData.append("image", file);
+  const button = $(isHero ? "uploadHeroImage" : "uploadWaitlistImage");
+  button.disabled = true;
+  try {
+    const result = await api("/api/admin/uploads", { method: "POST", body: formData });
+    hidden.value = result.url;
+    preview.src = result.url;
+    preview.hidden = false;
+    showToast("Image uploaded. Tap SAVE STORE CHANGES to publish it.");
+  } catch (error) { showToast(error.message); }
+  finally { button.disabled = false; }
+}
+$("uploadHeroImage")?.addEventListener("click", () => uploadStoreAreaImage("hero"));
+$("uploadWaitlistImage")?.addEventListener("click", () => uploadStoreAreaImage("waitlist"));

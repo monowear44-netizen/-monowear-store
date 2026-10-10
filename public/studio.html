@@ -574,6 +574,25 @@
           </div>
 
 
+          <div class="image-settings-grid">
+            <section class="panel image-setting">
+              <h3>Header / hero image</h3>
+              <p class="muted">Upload the main banner image shown at the top of your storefront.</p>
+              <img id="heroImagePreview" class="site-image-preview" alt="Header image preview" hidden>
+              <input id="heroImageFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+              <button class="secondary" id="uploadHeroImage" type="button">UPLOAD HEADER IMAGE</button>
+              <input type="hidden" name="hero_background_image">
+            </section>
+            <section class="panel image-setting">
+              <h3>Waitlist image</h3>
+              <p class="muted">Upload the background image for the email sign-up section.</p>
+              <img id="waitlistImagePreview" class="site-image-preview" alt="Waitlist image preview" hidden>
+              <input id="waitlistImageFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+              <button class="secondary" id="uploadWaitlistImage" type="button">UPLOAD WAITLIST IMAGE</button>
+              <input type="hidden" name="waitlist_background_image">
+            </section>
+          </div>
+
           <p
             id="settingsMessage"
             class="message"

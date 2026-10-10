@@ -193,6 +193,16 @@
       newsletterLink.rel = "noopener noreferrer";
     }
 
+    const hero = document.querySelector(".hero");
+    const waitlist = document.querySelector(".newsletter");
+    if (hero && settings.hero_background_image) {
+      hero.style.backgroundImage = `linear-gradient(90deg,rgba(0,0,0,.72),rgba(0,0,0,.12)),url("${settings.hero_background_image.replace(/["\\\\]/g, "")}")`;
+      hero.classList.add("has-admin-background");
+    }
+    if (waitlist && settings.waitlist_background_image) {
+      waitlist.style.backgroundImage = `linear-gradient(90deg,rgba(0,0,0,.72),rgba(0,0,0,.25)),url("${settings.waitlist_background_image.replace(/["\\\\]/g, "")}")`;
+      waitlist.classList.add("has-admin-background");
+    }
     if (year) {
       year.textContent = new Date().getFullYear();
     }
@@ -851,3 +861,4 @@ waitlistForm?.addEventListener("submit", async (event) => {
   loadStore();
 
 })();
+\n// Load public campaign images/settings without requiring an admin session.\nloadStoreSettings();\n
