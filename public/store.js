@@ -706,6 +706,60 @@
   $("#closeCheckout")?.addEventListener("click", () => {
     checkoutDialog?.close();
   });
+// MONOWEAR newsletter signup
+const newsletterForm = $("#newsletterForm");
+
+newsletterForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const emailInput = $("#newsletterEmail");
+  const message = $("#newsletterMessage");
+  const submitButton = newsletterForm.querySelector(
+    'button[type="submit"]'
+  );
+
+  const email = emailInput?.value.trim();
+
+  if (!email) {
+    if (message) {
+      message.textContent = "Please enter your email address.";
+    }
+    return;
+  }
+
+  const originalText = submitButton?.textContent;
+
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.textContent = "JOINING...";
+  }
+
+  if (message) {
+    message.textContent = "";
+  }
+
+  try {
+    const result = await request("/api/newsletter/subscribe", {
+      method: "POST",
+      body: JSON.stringify({ email })
+    });
+
+    if (message) {
+      message.textContent = result.message;
+    }
+
+    newsletterForm.reset();
+  } catch (error) {
+    if (message) {
+      message.textContent = error.message;
+    }
+  } finally {
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = originalText || "JOIN THE LIST ↗";
+    }
+  }
+});
 
   checkoutForm?.addEventListener("submit", checkout);
 
