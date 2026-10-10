@@ -726,9 +726,7 @@ app.get("/api/products/:slug", (req, res) => {
 
 app.post("/api/account/register", loginLimiter, async (req, res) => {
   const name = String(req.body.name || "").trim();
-  const email = String(req.body.email || "")
-    .trim()
-    .toLowerCase();
+  const email = String(req.body.email || "").trim().toLowerCase();
   const password = String(req.body.password || "");
   const phone = String(req.body.phone || "").trim();
 
@@ -738,14 +736,13 @@ app.post("/api/account/register", loginLimiter, async (req, res) => {
     password.length < 10
   ) {
     return res.status(400).json({
-      error:
-        "Enter your name, a valid email, and a password of at least 10 characters."
+      error: "Enter your name, a valid email, and a password of at least 10 characters."
     });
   }
 
   try {
     const result = db.prepare(`
-      INSERT INTO customers(name, email, password_hash, phone)
+      INSERT INTO customers (name, email, password_hash, phone)
       VALUES (?, ?, ?, ?)
     `).run(
       name,
@@ -754,57 +751,95 @@ app.post("/api/account/register", loginLimiter, async (req, res) => {
       phone
     );
 
-    req.session.customerId = result.lastInsertRowid;
+    req.session.customerId = Number(result.lastInsertRowid);
     req.session.customerEmail = email;
 
-    res.status(201).json({
-      ok: true,
-      name,
-      email
+    req.session.save((error) => {
+      if (error) {
+        console.error("Registration session save failed:", error);
+
+        return res.status(500).json({
+          error: "Account created, but the session could not be saved. Please sign in."
+        });
+      }
+
+      return res.status(201).json({
+        ok: true,
+        name,
+        email
+      });
     });
   } catch (error) {
-    res.status(409).json({
-      error: "An account with that email may already exist."
-    });
-  }
-});
+    console.error("Customer registration failed:", error);
 
-app.post("/api/account/login", loginLimiter, async (req, res) => {
-  const email = String(req.body.email || "")
-    .trim()
-    .toLowerCase();
-  const password = String(req.body.password || "");
-
-  const customer = db.prepare(
-    "SELECT * FROM customers WHERE email = ?"
-  ).get(email);
-
-  if (
-    !customer ||
-    !(await bcrypt.compare(password, customer.password_hash))
-  ) {
-    return res.status(401).json({
-      error: "Email or password is incorrect."
-    });
-  }
-
-  req.session.regenerate((error) => {
-    if (error) {
-      return res.status(500).json({
-        error: "Could not start session."
+    if (error.code === "SQLITE_CONSTRAINT_UNIQUE") {
+      return res.status(409).json({
+        error: "An account with this email already exists. Please sign in."
       });
     }
 
-    req.session.customerId = customer.id;
-    req.session.customerEmail = customer.email;
-
-    res.json({
-      ok: true,
-      name: customer.name,
-      email: customer.email
+    return res.status(500).json({
+      error: "Unable to create your account right now."
     });
-  });
+  }
 });
+
+
+app.post("/api/account/login", loginLimiter, async (req, res) => {
+  const email = String(req.body.email || "").trim().toLowerCase();
+  const password = String(req.body.password || "");
+
+  try {
+    const customer = db.prepare(`
+      SELECT * FROM customers WHERE email = ?
+    `).get(email);
+
+    if (
+      !customer ||
+      !(await bcrypt.compare(password, customer.password_hash))
+    ) {
+      return res.status(401).json({
+        error: "Email or password is incorrect."
+      });
+    }
+
+    req.session.regenerate((error) => {
+      if (error) {
+        console.error("Session regeneration failed:", error);
+
+        return res.status(500).json({
+          error: "Could not start your session. Please try again."
+        });
+      }
+
+      req.session.customerId = Number(customer.id);
+      req.session.customerEmail = customer.email;
+
+      req.session.save((saveError) => {
+        if (saveError) {
+          console.error("Login session save failed:", saveError);
+
+          return res.status(500).json({
+            error: "Your credentials were accepted, but your session could not be saved."
+          });
+        }
+
+        return res.json({
+          ok: true,
+          name: customer.name,
+          email: customer.email
+        });
+      });
+    });
+  } catch (error) {
+    console.error("Customer login failed:", error);
+
+    return res.status(500).json({
+      error: "Unable to sign in right now. Please try again."
+    });
+  }
+});
+
 
 app.get("/api/account/me", (req, res) => {
   if (!req.session.customerId) {
@@ -819,29 +854,42 @@ app.get("/api/account/me", (req, res) => {
     WHERE id = ?
   `).get(req.session.customerId);
 
-  res.json({
+  return res.json({
     authenticated: !!customer,
     customer: customer || null
   });
 });
 
+
 app.post("/api/account/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.json({ ok: true });
+  req.session.destroy((error) => {
+    if (error) {
+      console.error("Customer logout failed:", error);
+
+      return res.status(500).json({
+        error: "Unable to sign out. Please try again."
+      });
+    }
+
+    res.clearCookie("monowear.sid", {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: isProd,
+      path: "/"
+    });
+
+    return res.json({ ok: true });
   });
 });
+
 
 app.get("/api/account/orders", customerOrAdmin, (req, res) => {
   const orders = req.session.adminId
     ? db.prepare(`
-        SELECT *
-        FROM orders
-        ORDER BY id DESC
-        LIMIT 200
+        SELECT * FROM orders ORDER BY id DESC LIMIT 200
       `).all()
     : db.prepare(`
-        SELECT *
-        FROM orders
+        SELECT * FROM orders
         WHERE customer_id = ?
         ORDER BY id DESC
       `).all(req.session.customerId);
