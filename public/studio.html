@@ -1,10 +1,761 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MONOWEAR Studio</title><link rel="stylesheet" href="/studio.css"></head><body>
-<aside class="sidebar"><a href="/" class="logo">MONOWEAR<span>®</span></a><p class="side-label">CONTROL ROOM</p><button class="nav active" data-tab="overview">Overview</button><button class="nav" data-tab="products">Products <span id="productCount">—</span></button><button class="nav" data-tab="appearance">Store editor</button><button class="nav" data-tab="orders">Orders <span id="orderCount">—</span></button><div class="side-bottom"><a href="/" target="_blank">↗ View storefront</a><button id="logoutButton">Log out ↗</button></div></aside>
-<main class="main"><header class="topbar"><div><p class="eyebrow">MONOWEAR / STUDIO</p><h1 id="pageTitle">Overview</h1></div><span id="loggedEmail" class="muted"></span></header>
-<section id="loginScreen" class="login-wrap"><form id="loginForm" class="panel login-panel"><p class="eyebrow">PRIVATE ACCESS</p><h2>Enter the studio.</h2><p class="muted">Manage your storefront, products, stock and order requests.</p><label>Email<input name="email" type="email" required autocomplete="username"></label><label>Password<input name="password" type="password" required autocomplete="current-password"></label><button class="primary full">LOG IN ↗</button><p id="loginError" class="error"></p></form></section>
-<section id="appScreen" hidden>
-<section class="tab-panel" id="tab-overview"><div class="stats-grid"><div class="stat"><span>PRODUCTS</span><strong id="statProducts">—</strong></div><div class="stat"><span>ORDERS</span><strong id="statOrders">—</strong></div><div class="stat"><span>NEEDS ATTENTION</span><strong id="statPending">—</strong></div><div class="stat"><span>PAID REVENUE</span><strong id="statRevenue">—</strong></div></div><div class="panel welcome"><p class="eyebrow">YOUR BRAND. YOUR CONTROL.</p><h2>Keep the store moving.</h2><p class="muted">Update a product, manage stock, refresh the campaign message, and track orders from one studio.</p><button class="primary" onclick="switchTab('products')">MANAGE PRODUCTS ↗</button></div></section>
-<section class="tab-panel" id="tab-products" hidden><div class="toolbar"><div><h2>Your collection</h2><p class="muted">Products and stock changes are reflected in the storefront.</p></div><button class="primary" id="newProductButton">+ ADD PRODUCT</button></div><div id="productsList" class="products-list"></div>
-<form id="productForm" class="panel editor" hidden><div class="editor-head"><div><p class="eyebrow">PRODUCT DETAILS</p><h2 id="productFormTitle">Add a product</h2></div><button type="button" class="quiet" id="cancelProduct">CANCEL ✕</button></div><input type="hidden" name="id"><div class="form-grid"><label>Product name<input name="name" required maxlength="140"></label><label>Product URL / slug<input name="slug" placeholder="auto-from-name"></label><label>Category<input name="category" placeholder="Hoodies, Tees, Accessories"></label><label>Price in naira (₦)<input name="price" type="number" min="0" step="1" required></label><label>Compare-at price<input name="compare_price" type="number" min="0" step="1"></label><label>Sizes, comma-separated<input name="sizes" value="S,M,L,XL"></label><label>Stock quantity<input name="stock" type="number" min="0" step="1" value="0" required></label><label>Image file (JPG/PNG/WEBP/GIF, max 5MB)<input name="imageFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif"></label><label class="span2">Or product image URL (HTTPS)<input name="image" type="url" placeholder="https://…"></label><label class="span2">Description<textarea name="description" rows="4"></textarea></label><label class="check"><input name="featured" type="checkbox"> Feature on storefront</label><label class="check"><input name="published" type="checkbox" checked> Published / visible</label></div><p id="productError" class="error"></p><div class="form-actions"><button class="primary">SAVE PRODUCT ↗</button><button type="button" class="danger" id="deleteProductButton" hidden>DELETE PRODUCT</button></div></form></section>
-<section class="tab-panel" id="tab-appearance" hidden><div class="toolbar"><div><h2>Store editor</h2><p class="muted">Edit homepage copy, delivery settings and policy text.</p></div></div><form id="settingsForm" class="panel settings-form"><div class="form-grid"><label>Brand name<input name="brand_name" required></label><label>Brand tagline<input name="tagline"></label><label>Announcement bar<input name="announcement"></label><label>Hero headline<input name="hero_title"></label><label class="span2">Hero subtitle<textarea name="hero_subtitle" rows="3"></textarea></label><label>Hero button text<input name="hero_cta"></label><label>Instagram URL<input name="instagram" type="url" placeholder="https://instagram.com/…"></label><label>Contact email<input name="contact_email" type="email"></label><label>Flat delivery fee (₦)<input name="shipping_fee" type="number" min="0"></label><label>Free shipping from (₦; 0 = off)<input name="free_shipping_threshold" type="number" min="0"></label><label class="span2">Shipping policy<textarea name="policy_shipping" rows="3"></textarea></label><label class="span2">Returns policy<textarea name="policy_returns" rows="3"></textarea></label></div><p id="settingsMessage" class="message"></p><button class="primary">SAVE STORE CHANGES ↗</button><a class="secondary" href="/" target="_blank">OPEN STOREFRONT ↗</a></form><div class="note"><strong>Payment setup</strong><p>Set your Paystack secret key on the server. Never paste secret payment keys into this form or public JavaScript. Add the webhook endpoint in your Paystack dashboard.</p></div></section>
-<section class="tab-panel" id="tab-orders" hidden><div class="toolbar"><div><h2>Order management</h2><p class="muted">Review customer details, payment state, items and fulfilment status.</p></div><button class="secondary" id="refreshOrders">REFRESH ↻</button></div><div id="ordersList" class="orders-list"></div></section></section><div id="toast" class="toast" role="status"></div></main><script src="/studio.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>MONOWEAR Studio</title>
+
+  <link rel="stylesheet" href="/studio.css">
+</head>
+
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <a href="/" class="logo">
+      MONOWEAR<span>®</span>
+    </a>
+
+    <p class="side-label">CONTROL ROOM</p>
+
+    <button class="nav active" data-tab="overview" type="button">
+      Overview
+    </button>
+
+    <button class="nav" data-tab="products" type="button">
+      Products <span id="productCount">—</span>
+    </button>
+
+    <button class="nav" data-tab="appearance" type="button">
+      Store editor
+    </button>
+
+    <button class="nav" data-tab="orders" type="button">
+      Orders <span id="orderCount">—</span>
+    </button>
+
+    <div class="side-bottom">
+      <a href="/" target="_blank" rel="noopener">
+        ↗ View storefront
+      </a>
+
+      <button id="logoutButton" type="button">
+        Log out ↗
+      </button>
+    </div>
+
+  </aside>
+
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">MONOWEAR / STUDIO</p>
+        <h1 id="pageTitle">Overview</h1>
+      </div>
+
+      <span id="loggedEmail" class="muted"></span>
+    </header>
+
+
+    <!-- LOGIN SCREEN -->
+    <section id="loginScreen" class="login-wrap">
+
+      <form id="loginForm" class="panel login-panel">
+
+        <p class="eyebrow">PRIVATE ACCESS</p>
+
+        <h2>Enter the studio.</h2>
+
+        <p class="muted">
+          Manage your storefront, products, stock and order requests.
+        </p>
+
+        <label>
+          Email
+          <input
+            name="email"
+            type="email"
+            required
+            autocomplete="username"
+          >
+        </label>
+
+        <label>
+          Password
+          <input
+            name="password"
+            type="password"
+            required
+            autocomplete="current-password"
+          >
+        </label>
+
+        <button class="primary full" type="submit">
+          LOG IN ↗
+        </button>
+
+        <p id="loginError" class="error" role="alert"></p>
+
+      </form>
+
+    </section>
+
+
+    <!-- APPLICATION -->
+    <section id="appScreen" hidden>
+
+
+      <!-- OVERVIEW TAB -->
+      <section class="tab-panel" id="tab-overview">
+
+        <div class="stats-grid">
+
+          <div class="stat">
+            <span>PRODUCTS</span>
+            <strong id="statProducts">—</strong>
+          </div>
+
+          <div class="stat">
+            <span>ORDERS</span>
+            <strong id="statOrders">—</strong>
+          </div>
+
+          <div class="stat">
+            <span>NEEDS ATTENTION</span>
+            <strong id="statPending">—</strong>
+          </div>
+
+          <div class="stat">
+            <span>PAID REVENUE</span>
+            <strong id="statRevenue">—</strong>
+          </div>
+
+        </div>
+
+
+        <div class="panel welcome">
+
+          <p class="eyebrow">YOUR BRAND. YOUR CONTROL.</p>
+
+          <h2>Keep the store moving.</h2>
+
+          <p class="muted">
+            Update products, manage stock, refresh your campaign message,
+            and track orders from one studio.
+          </p>
+
+          <button
+            class="primary"
+            type="button"
+            onclick="switchTab('products')"
+          >
+            MANAGE PRODUCTS ↗
+          </button>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- PRODUCTS TAB -->
+      <section class="tab-panel" id="tab-products" hidden>
+
+        <div class="toolbar">
+
+          <div>
+            <h2>Your collection</h2>
+
+            <p class="muted">
+              Products and stock changes are reflected in the storefront.
+            </p>
+          </div>
+
+          <button
+            class="primary"
+            id="newProductButton"
+            type="button"
+          >
+            + ADD PRODUCT
+          </button>
+
+        </div>
+
+
+        <!-- PRODUCT LIST -->
+        <div id="productsList" class="products-list"></div>
+
+
+
+        <!-- PRODUCT EDITOR -->
+        <form
+          id="productForm"
+          class="panel editor"
+          enctype="multipart/form-data"
+          hidden
+        >
+
+          <div class="editor-head">
+
+            <div>
+              <p class="eyebrow">PRODUCT DETAILS</p>
+              <h2 id="productFormTitle">Add a product</h2>
+            </div>
+
+            <button
+              type="button"
+              class="quiet"
+              id="cancelProduct"
+            >
+              CANCEL ✕
+            </button>
+
+          </div>
+
+
+          <input type="hidden" name="id">
+
+
+          <div class="form-grid">
+
+
+            <!-- NAME -->
+            <label>
+              Product name
+
+              <input
+                name="name"
+                type="text"
+                required
+                maxlength="140"
+                placeholder="MONOWEAR Original Tee"
+              >
+            </label>
+
+
+            <!-- SLUG -->
+            <label>
+              Product URL / slug
+
+              <input
+                name="slug"
+                type="text"
+                placeholder="auto-from-name"
+              >
+            </label>
+
+
+            <!-- CATEGORY -->
+            <label>
+              Category
+
+              <input
+                name="category"
+                type="text"
+                placeholder="Hoodies, Tees, Accessories"
+              >
+            </label>
+
+
+            <!-- PRICE -->
+            <label>
+              Price in naira (₦)
+
+              <input
+                name="price"
+                type="number"
+                min="0"
+                step="1"
+                required
+                placeholder="15000"
+              >
+            </label>
+
+
+            <!-- COMPARE PRICE -->
+            <label>
+              Compare-at price (₦)
+
+              <input
+                name="compare_price"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="20000"
+              >
+            </label>
+
+
+            <!-- SIZES -->
+            <label>
+              Sizes, comma-separated
+
+              <input
+                name="sizes"
+                type="text"
+                value="S,M,L,XL"
+                placeholder="S,M,L,XL"
+              >
+            </label>
+
+
+            <!-- STOCK -->
+            <label>
+              Stock quantity
+
+              <input
+                name="stock"
+                type="number"
+                min="0"
+                step="1"
+                value="0"
+                required
+              >
+            </label>
+
+
+
+            <!-- IMAGE UPLOAD -->
+            <div class="image-upload-field">
+
+              <label for="productImageFile">
+                Product image
+
+                <input
+                  id="productImageFile"
+                  name="imageFile"
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,.gif,image/jpeg,image/png,image/webp,image/gif"
+                >
+              </label>
+
+              <p class="muted">
+                JPG, PNG, WEBP or GIF. Maximum file size: 5 MB.
+              </p>
+
+              <div
+                id="imagePreviewWrap"
+                hidden
+                style="margin-top:12px;"
+              >
+
+                <img
+                  id="imagePreview"
+                  alt="Selected product image preview"
+                  style="display:block;max-width:220px;max-height:260px;object-fit:contain;"
+                >
+
+                <button
+                  id="removeImageButton"
+                  class="quiet"
+                  type="button"
+                  style="margin-top:8px;"
+                >
+                  REMOVE SELECTED IMAGE ✕
+                </button>
+
+              </div>
+
+            </div>
+
+
+
+            <!-- IMAGE URL -->
+            <label class="span2">
+              Or product image URL
+
+              <input
+                name="image"
+                type="url"
+                placeholder="https://example.com/product-image.jpg"
+              >
+
+              <small class="muted">
+                Use a public HTTPS image URL if you are not uploading a file.
+                If you select a file, the uploaded image will be used instead.
+              </small>
+
+            </label>
+
+
+
+            <!-- DESCRIPTION -->
+            <label class="span2">
+              Description
+
+              <textarea
+                name="description"
+                rows="4"
+                placeholder="Describe the fit, fabric, details and story behind this piece."
+              ></textarea>
+            </label>
+
+
+
+            <!-- FEATURED -->
+            <label class="check">
+              <input
+                name="featured"
+                type="checkbox"
+              >
+
+              Feature on storefront
+            </label>
+
+
+
+            <!-- PUBLISHED -->
+            <label class="check">
+              <input
+                name="published"
+                type="checkbox"
+                checked
+              >
+
+              Published / visible
+            </label>
+
+
+          </div>
+
+
+          <!-- PRODUCT ERROR -->
+          <p
+            id="productError"
+            class="error"
+            role="alert"
+            aria-live="polite"
+          ></p>
+
+
+          <!-- ACTIONS -->
+          <div class="form-actions">
+
+            <button class="primary" type="submit">
+              SAVE PRODUCT ↗
+            </button>
+
+            <button
+              type="button"
+              class="danger"
+              id="deleteProductButton"
+              hidden
+            >
+              DELETE PRODUCT
+            </button>
+
+          </div>
+
+        </form>
+
+      </section>
+
+
+
+      <!-- STORE EDITOR TAB -->
+      <section class="tab-panel" id="tab-appearance" hidden>
+
+        <div class="toolbar">
+
+          <div>
+            <h2>Store editor</h2>
+
+            <p class="muted">
+              Edit homepage copy, delivery settings and policy text.
+            </p>
+          </div>
+
+        </div>
+
+
+        <form id="settingsForm" class="panel settings-form">
+
+          <div class="form-grid">
+
+
+            <label>
+              Brand name
+              <input name="brand_name" required>
+            </label>
+
+
+            <label>
+              Brand tagline
+              <input name="tagline">
+            </label>
+
+
+            <label>
+              Announcement bar
+              <input name="announcement">
+            </label>
+
+
+            <label>
+              Hero headline
+              <input name="hero_title">
+            </label>
+
+
+            <label class="span2">
+              Hero subtitle
+              <textarea name="hero_subtitle" rows="3"></textarea>
+            </label>
+
+
+            <label>
+              Hero button text
+              <input name="hero_cta">
+            </label>
+
+
+            <label>
+              Instagram URL
+              <input
+                name="instagram"
+                type="url"
+                placeholder="https://instagram.com/yourbrand"
+              >
+            </label>
+
+
+            <label>
+              Contact email
+              <input
+                name="contact_email"
+                type="email"
+              >
+            </label>
+
+
+            <label>
+              Flat delivery fee (₦)
+              <input
+                name="shipping_fee"
+                type="number"
+                min="0"
+              >
+            </label>
+
+
+            <label>
+              Free shipping from (₦; 0 = off)
+              <input
+                name="free_shipping_threshold"
+                type="number"
+                min="0"
+              >
+            </label>
+
+
+            <label class="span2">
+              Shipping policy
+              <textarea
+                name="policy_shipping"
+                rows="3"
+              ></textarea>
+            </label>
+
+
+            <label class="span2">
+              Returns policy
+              <textarea
+                name="policy_returns"
+                rows="3"
+              ></textarea>
+            </label>
+
+
+          </div>
+
+
+          <p
+            id="settingsMessage"
+            class="message"
+            aria-live="polite"
+          ></p>
+
+
+          <button class="primary" type="submit">
+            SAVE STORE CHANGES ↗
+          </button>
+
+          <a
+            class="secondary"
+            href="/"
+            target="_blank"
+            rel="noopener"
+          >
+            OPEN STOREFRONT ↗
+          </a>
+
+        </form>
+
+
+
+        <div class="note">
+
+          <strong>Payment setup</strong>
+
+          <p>
+            Set your Paystack secret key on the server. Never paste secret
+            payment keys into this form or public JavaScript. Add the
+            webhook endpoint in your Paystack dashboard.
+          </p>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- ORDERS TAB -->
+      <section class="tab-panel" id="tab-orders" hidden>
+
+        <div class="toolbar">
+
+          <div>
+            <h2>Order management</h2>
+
+            <p class="muted">
+              Review customer details, payment state, items and fulfilment status.
+            </p>
+          </div>
+
+          <button
+            class="secondary"
+            id="refreshOrders"
+            type="button"
+          >
+            REFRESH ↻
+          </button>
+
+        </div>
+
+
+        <div id="ordersList" class="orders-list"></div>
+
+      </section>
+
+
+    </section>
+
+
+    <!-- NOTIFICATION -->
+    <div
+      id="toast"
+      class="toast"
+      role="status"
+      aria-live="polite"
+    ></div>
+
+  </main>
+
+
+
+  <!-- EXISTING STUDIO FUNCTIONALITY -->
+  <script src="/studio.js"></script>
+
+
+
+  <!-- PRODUCT IMAGE PREVIEW AND VALIDATION -->
+  <script>
+    (() => {
+      const imageInput = document.getElementById("productImageFile");
+      const previewWrap = document.getElementById("imagePreviewWrap");
+      const preview = document.getElementById("imagePreview");
+      const removeButton = document.getElementById("removeImageButton");
+      const productForm = document.getElementById("productForm");
+      const productError = document.getElementById("productError");
+
+      if (
+        !imageInput ||
+        !previewWrap ||
+        !preview ||
+        !removeButton ||
+        !productForm
+      ) {
+        return;
+      }
+
+      let previewObjectUrl = null;
+
+      function clearPreview() {
+        if (previewObjectUrl) {
+          URL.revokeObjectURL(previewObjectUrl);
+          previewObjectUrl = null;
+        }
+
+        preview.removeAttribute("src");
+        previewWrap.hidden = true;
+      }
+
+      imageInput.addEventListener("change", () => {
+        if (productError) {
+          productError.textContent = "";
+        }
+
+        const file = imageInput.files && imageInput.files[0];
+
+        clearPreview();
+
+        if (!file) {
+          return;
+        }
+
+        const allowedTypes = [
+          "image/jpeg",
+          "image/png",
+          "image/webp",
+          "image/gif"
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+          imageInput.value = "";
+
+          if (productError) {
+            productError.textContent =
+              "Choose a JPG, PNG, WEBP or GIF image.";
+          }
+
+          return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+          imageInput.value = "";
+
+          if (productError) {
+            productError.textContent =
+              "Your image is larger than 5 MB. Choose a smaller image.";
+          }
+
+          return;
+        }
+
+        previewObjectUrl = URL.createObjectURL(file);
+        preview.src = previewObjectUrl;
+        previewWrap.hidden = false;
+      });
+
+      removeButton.addEventListener("click", () => {
+        imageInput.value = "";
+        clearPreview();
+
+        if (productError) {
+          productError.textContent = "";
+        }
+      });
+
+      productForm.addEventListener("reset", () => {
+        clearPreview();
+      });
+    })();
+  </script>
+
+</body>
+</html>
