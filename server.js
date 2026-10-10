@@ -148,7 +148,6 @@ CREATE TABLE IF NOT EXISTS waitlist_entries (
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(email, list_type, product_slug)
 );
-`);
 const addSetting = db.prepare("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)");
 const defaults = {
  brand_name:"MONOWEAR", tagline:"LIVE THE NAME. WEAR THE MEANING.",
