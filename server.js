@@ -46,6 +46,23 @@ CREATE TABLE IF NOT EXISTS orders (
 );
 CREATE TABLE IF NOT EXISTS order_events (id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER NOT NULL, status TEXT NOT NULL, note TEXT DEFAULT '', created_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE);
 `);
+CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL UNIQUE,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  active INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS waitlist_entries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL,
+  name TEXT DEFAULT '',
+  list_type TEXT NOT NULL,
+  product_slug TEXT NOT NULL DEFAULT '',
+  product_name TEXT DEFAULT '',
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(email, list_type, product_slug)
+);
 const addSetting = db.prepare("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)");
 const defaults = {
  brand_name:"MONOWEAR", tagline:"LIVE THE NAME. WEAR THE MEANING.",
@@ -82,6 +99,84 @@ app.use("/uploads", express.static(uploadDir));
 const loginLimiter=rateLimit({windowMs:15*60*1000,limit:10,standardHeaders:true,legacyHeaders:false});
 const checkoutLimiter=rateLimit({windowMs:15*60*1000,limit:20,standardHeaders:true,legacyHeaders:false});
 function adminOnly(req,res,next){if(!req.session.adminId)return res.status(401).json({error:"Please log in to the studio."});next();}
+// MONOWEAR newsletter signup
+app.post("/api/newsletter/subscribe", (req, res) => {
+  const email = String(req.body?.email || "").trim().toLowerCase();
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({
+      error: "Please enter a valid email address."
+    });
+  }
+
+  try {
+    db.prepare(`
+      INSERT OR IGNORE INTO newsletter_subscribers (email)
+      VALUES (?)
+    `).run(email);
+
+    return res.json({
+      success: true,
+      message: "You're on the list. Stay tuned for the next move."
+    });
+  } catch (error) {
+    console.error("Newsletter signup error:", error);
+    return res.status(500).json({
+      error: "Unable to join the newsletter right now."
+    });
+  }
+});
+
+// MONOWEAR general and product waitlists
+app.post("/api/waitlist/join", (req, res) => {
+  const email = String(req.body?.email || "").trim().toLowerCase();
+  const name = String(req.body?.name || "").trim();
+  const listType = String(req.body?.list_type || "").trim().toLowerCase();
+  const productSlug = String(req.body?.product_slug || "").trim();
+  const productName = String(req.body?.product_name || "").trim();
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({
+      error: "Please enter a valid email address."
+    });
+  }
+
+  if (!["drop", "product"].includes(listType)) {
+    return res.status(400).json({
+      error: "Please select a valid waitlist."
+    });
+  }
+
+  if (listType === "product" && !productSlug) {
+    return res.status(400).json({
+      error: "Please select a product to join its waitlist."
+    });
+  }
+
+  try {
+    db.prepare(`
+      INSERT OR IGNORE INTO waitlist_entries
+        (email, name, list_type, product_slug, product_name)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(
+      email,
+      name,
+      listType,
+      listType === "product" ? productSlug : "",
+      listType === "product" ? productName : "MONOWEAR Drop Waitlist"
+    );
+
+    return res.json({
+      success: true,
+      message: "You're on the list. We'll keep you in the loop."
+    });
+  } catch (error) {
+    console.error("Waitlist signup error:", error);
+    return res.status(500).json({
+      error: "Unable to join the waitlist right now."
+    });
+  }
+});
 function customerOrAdmin(req,res,next){if(!req.session.customerId && !req.session.adminId)return res.status(401).json({error:"Log in to view this information."});next();}
 function getSettings(){return Object.fromEntries(db.prepare("SELECT key,value FROM settings").all().map(x=>[x.key,x.value]));}
 async function sendOrderConfirmation(order) {
