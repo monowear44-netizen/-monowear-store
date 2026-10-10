@@ -1,23 +1,910 @@
-const $=id=>document.getElementById(id);let currentProducts=[];
-async function api(url,options={}){const r=await fetch(url,{credentials:"same-origin",...options,headers:{"Content-Type":"application/json",...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||"Something went wrong.");return d;}
-function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}function money(n){return new Intl.NumberFormat("en-NG",{style:"currency",currency:"NGN",maximumFractionDigits:0}).format(Number(n||0));}
-function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2600);}
-function showApp(email){$("loginScreen").hidden=true;$("appScreen").hidden=false;$("loggedEmail").textContent=email||"";loadProducts();loadSettings();loadSummary();}
-function showLogin(){$("loginScreen").hidden=false;$("appScreen").hidden=true;}
-async function checkAuth(){try{const m=await api("/api/admin/me");if(m.authenticated)showApp(m.email);else showLogin();}catch{showLogin();}}
-$("loginForm").onsubmit=async e=>{e.preventDefault();$("loginError").textContent="";try{const r=await api("/api/admin/login",{method:"POST",body:JSON.stringify(Object.fromEntries(new FormData(e.currentTarget)))});showApp(r.email);}catch(err){$("loginError").textContent=err.message;}};
-$("logoutButton").onclick=async()=>{try{await api("/api/admin/logout",{method:"POST"});}finally{showLogin();}};
-document.querySelectorAll(".nav").forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
-function switchTab(tab){document.querySelectorAll(".nav").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));document.querySelectorAll(".tab-panel").forEach(s=>s.hidden=s.id!=="tab-"+tab);$("pageTitle").textContent=({overview:"Overview",products:"Products",appearance:"Store editor",orders:"Orders"})[tab];if(tab==="orders")loadOrders();if(tab==="overview")loadSummary();}
-async function loadSummary(){try{const d=await api("/api/admin/summary");$("statProducts").textContent=d.products;$("statOrders").textContent=d.orders;$("statPending").textContent=d.pending;$("statRevenue").textContent=money(d.revenue);}catch{}}
-async function loadProducts(){try{currentProducts=await api("/api/admin/products");$("productCount").textContent=currentProducts.length;$("productsList").innerHTML=currentProducts.map(p=>`<article class="product-row"><div class="thumb">${p.image?`<img src="${esc(p.image)}" alt="">`:"MONO"}</div><div><h3>${esc(p.name)}</h3><p>${esc(p.category)} · Stock ${p.stock} · ${p.published?"Published":"Hidden"} · ${p.featured?"Featured":"Standard"}</p></div><strong class="price">${money(p.price)}</strong><div class="row-actions"><button class="small-button" onclick="editProduct(${p.id})">EDIT ↗</button></div></article>`).join("")||'<p class="muted">No products yet. Add your first product.</p>';}catch(e){toast(e.message);}}
-function newProduct(){const f=$("productForm");f.reset();f.hidden=false;f.elements.id.value="";f.elements.sizes.value="S,M,L,XL";f.elements.stock.value=0;f.elements.published.checked=true;$("productFormTitle").textContent="Add a product";$("deleteProductButton").hidden=true;$("productError").textContent="";f.scrollIntoView({behavior:"smooth"});}
-window.editProduct=id=>{const p=currentProducts.find(x=>x.id===id);if(!p)return;const f=$("productForm");f.reset();f.hidden=false;for(const k of ["id","name","slug","category","price","compare_price","sizes","stock","image","description"])f.elements[k].value=k==="id"?p.id:k==="sizes"?p.sizes.join(","):p[k]??"";f.elements.featured.checked=p.featured;f.elements.published.checked=p.published;$("productFormTitle").textContent="Edit product";$("deleteProductButton").hidden=false;$("productError").textContent="";f.scrollIntoView({behavior:"smooth"});};
-$("newProductButton").onclick=newProduct;$("cancelProduct").onclick=()=>$("productForm").hidden=true;
-$("productForm").onsubmit=async e=>{e.preventDefault();const f=e.currentTarget,id=f.elements.id.value;const body={};for(const k of ["name","slug","category","price","compare_price","sizes","stock","image","description"])body[k]=f.elements[k].value;body.price=Number(body.price);body.stock=Number(body.stock);body.compare_price=body.compare_price===""?null:Number(body.compare_price);body.sizes=body.sizes.split(",").map(s=>s.trim()).filter(Boolean);body.featured=f.elements.featured.checked;body.published=f.elements.published.checked;$("productError").textContent="";try{const file=f.elements.imageFile.files[0];if(file){const fd=new FormData();fd.append("image",file);const up=await fetch("/api/admin/uploads",{method:"POST",body:fd});const ud=await up.json();if(!up.ok)throw Error(ud.error||"Image upload failed.");body.image=ud.url;}await api(id?"/api/admin/products/"+id:"/api/admin/products",{method:id?"PUT":"POST",body:JSON.stringify(body)});f.hidden=true;await loadProducts();loadSummary();toast("Product saved. Storefront updated.");}catch(err){$("productError").textContent=err.message;}};
-$("deleteProductButton").onclick=async()=>{const id=$("productForm").elements.id.value;if(!id||!confirm("Delete this product permanently?"))return;try{await api("/api/admin/products/"+id,{method:"DELETE"});$("productForm").hidden=true;await loadProducts();loadSummary();toast("Product deleted.");}catch(e){$("productError").textContent=e.message;}};
-async function loadSettings(){try{const d=await api("/api/store"),f=$("settingsForm");Object.entries(d.settings||{}).forEach(([k,v])=>{if(f.elements[k])f.elements[k].value=v;});}catch(e){toast(e.message);}}
-$("settingsForm").onsubmit=async e=>{e.preventDefault();const body=Object.fromEntries(new FormData(e.currentTarget));try{await api("/api/admin/settings",{method:"PUT",body:JSON.stringify(body)});$("settingsMessage").textContent="Saved. Your storefront changes are live.";toast("Storefront updated.");}catch(err){$("settingsMessage").textContent=err.message;}};
-async function loadOrders(){try{const os=await api("/api/admin/orders");$("orderCount").textContent=os.length;$("ordersList").innerHTML=os.map(o=>`<article class="order-card"><div><h3>#${esc(o.reference||o.id)} · ${esc(o.customer_name)} · ${money(o.total)}</h3><p>${esc(o.email)} · ${esc(o.phone)}</p><p>${esc(o.address)}</p><p>${o.items.map(i=>`${esc(i.name)} / ${esc(i.size)} × ${i.qty}`).join("<br>")}</p><p>Payment: ${esc(o.payment_status)} · Received ${esc(o.created_at)}</p><p>Subtotal ${money(o.subtotal)} + delivery ${money(o.shipping)}</p>${o.events.map(v=>`<p>• ${esc(v.status)} — ${esc(v.created_at)} ${esc(v.note)}</p>`).join("")}</div><div><label class="eyebrow">FULFILMENT STATUS</label><select onchange="updateOrder(${o.id},this.value)">${["Pending payment","Paid","Processing","Shipped","Delivered","Cancelled"].map(s=>`<option ${o.status===s?"selected":""}>${s}</option>`).join("")}</select></div></article>`).join("")||'<p class="muted">No orders yet.</p>';}catch(e){toast(e.message);}}
-window.updateOrder=async(id,status)=>{try{await api("/api/admin/orders/"+id,{method:"PATCH",body:JSON.stringify({status})});await loadOrders();loadSummary();toast("Order status updated.");}catch(e){toast(e.message);}};
-$("refreshOrders").onclick=loadOrders;checkAuth();
+"use strict";
+
+// ============================================================
+// MONOWEAR STUDIO — ADMIN JAVASCRIPT
+// ============================================================
+
+const $ = (id) => document.getElementById(id);
+
+let currentProducts = [];
+let currentOrders = [];
+let currentSettings = {};
+
+// ============================================================
+// API HELPERS
+// ============================================================
+
+async function api(url, options = {}) {
+  const headers = { ...(options.headers || {}) };
+
+  if (
+    options.body &&
+    !(options.body instanceof FormData) &&
+    typeof options.body === "string"
+  ) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const response = await fetch(url, {
+    credentials: "same-origin",
+    cache: "no-store",
+    ...options,
+    headers
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(
+      data.error || `Request failed (${response.status}).`
+    );
+  }
+
+  return data;
+}
+
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[character]);
+}
+
+function money(value) {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0
+  }).format(Number(value || 0));
+}
+
+function parseArray(value) {
+  if (Array.isArray(value)) return value;
+
+  if (typeof value === "string") {
+    try {
+      const result = JSON.parse(value);
+      return Array.isArray(result) ? result : [];
+    } catch {
+      return value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+  }
+
+  return [];
+}
+
+function showToast(message) {
+  const element = $("toast");
+
+  if (!element) return;
+
+  element.textContent = message;
+  element.classList.add("show");
+
+  clearTimeout(showToast.timer);
+
+  showToast.timer = setTimeout(() => {
+    element.classList.remove("show");
+  }, 3000);
+}
+
+function showError(id, message) {
+  const element = $(id);
+
+  if (element) {
+    element.textContent = message || "";
+  }
+}
+
+// ============================================================
+// AUTHENTICATION
+// ============================================================
+
+function showApp(email) {
+  $("loginScreen").hidden = true;
+  $("appScreen").hidden = false;
+
+  $("loggedEmail").textContent = email || "";
+
+  loadProducts();
+  loadSettings();
+  loadSummary();
+}
+
+function showLogin() {
+  $("loginScreen").hidden = false;
+  $("appScreen").hidden = true;
+  $("loggedEmail").textContent = "";
+}
+
+async function checkAuth() {
+  try {
+    const result = await api("/api/admin/me");
+
+    if (result.authenticated) {
+      showApp(result.admin?.email || "");
+    } else {
+      showLogin();
+    }
+  } catch {
+    showLogin();
+  }
+}
+
+$("loginForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  showError("loginError", "");
+
+  const form = event.currentTarget;
+
+  const credentials = {
+    email: form.elements.email.value.trim(),
+    password: form.elements.password.value
+  };
+
+  try {
+    const result = await api("/api/admin/login", {
+      method: "POST",
+      body: JSON.stringify(credentials)
+    });
+
+    showApp(result.admin?.email || credentials.email);
+
+    showToast("Welcome to MONOWEAR Studio.");
+  } catch (error) {
+    showError("loginError", error.message);
+  }
+});
+
+$("logoutButton").addEventListener("click", async () => {
+  try {
+    await api("/api/admin/logout", {
+      method: "POST"
+    });
+
+    showLogin();
+
+    showToast("You have logged out.");
+  } catch (error) {
+    showToast(error.message);
+  }
+});
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+
+document.querySelectorAll(".nav").forEach((button) => {
+  button.addEventListener("click", () => {
+    switchTab(button.dataset.tab);
+  });
+});
+
+function switchTab(tab) {
+  document.querySelectorAll(".nav").forEach((button) => {
+    button.classList.toggle(
+      "active",
+      button.dataset.tab === tab
+    );
+  });
+
+  document.querySelectorAll(".tab-panel").forEach((panel) => {
+    panel.hidden = panel.id !== `tab-${tab}`;
+  });
+
+  const titles = {
+    overview: "Overview",
+    products: "Products",
+    appearance: "Store editor",
+    orders: "Orders"
+  };
+
+  $("pageTitle").textContent = titles[tab] || "Studio";
+
+  if (tab === "overview") loadSummary();
+  if (tab === "products") loadProducts();
+  if (tab === "appearance") loadSettings();
+  if (tab === "orders") loadOrders();
+}
+
+window.switchTab = switchTab;
+
+// ============================================================
+// DASHBOARD SUMMARY
+// ============================================================
+
+async function loadSummary() {
+  try {
+    // This is the route defined in your server.js.
+    const data = await api("/api/admin/dashboard");
+
+    $("statProducts").textContent =
+      data.products ?? 0;
+
+    $("statOrders").textContent =
+      data.orders ?? 0;
+
+    $("statPending").textContent =
+      data.pendingOrders ?? 0;
+
+    $("statRevenue").textContent =
+      money(data.revenue ?? 0);
+
+    $("productCount").textContent =
+      data.products ?? currentProducts.length;
+
+    $("orderCount").textContent =
+      data.orders ?? currentOrders.length;
+  } catch (error) {
+    console.error("Dashboard error:", error);
+  }
+}
+
+// ============================================================
+// PRODUCT LIST
+// ============================================================
+
+async function loadProducts() {
+  try {
+    const products = await api("/api/admin/products");
+
+    currentProducts = Array.isArray(products)
+      ? products
+      : [];
+
+    $("productCount").textContent =
+      currentProducts.length;
+
+    $("productsList").innerHTML = currentProducts.map((product) => {
+      const image =
+        product.image ||
+        parseArray(product.images)[0] ||
+        "";
+
+      const sizes = parseArray(product.sizes);
+
+      return `
+        <article class="product-row">
+
+          <div class="thumb">
+            ${
+              image
+                ? `<img src="${esc(image)}"
+                        alt="${esc(product.name)}"
+                        loading="lazy"
+                        onerror="this.style.display='none'">`
+                : "MONO"
+            }
+          </div>
+
+          <div class="product-row-info">
+            <h3>${esc(product.name)}</h3>
+
+            <p>
+              ${esc(product.category || "Uncategorised")}
+              · Stock ${Number(product.stock || 0)}
+              · ${Number(product.published) ? "Published" : "Hidden"}
+              · ${Number(product.featured) ? "Featured" : "Standard"}
+            </p>
+
+            ${
+              sizes.length
+                ? `<p>Sizes: ${sizes.map(esc).join(", ")}</p>`
+                : ""
+            }
+          </div>
+
+          <strong class="price">
+            ${money(product.price)}
+          </strong>
+
+          <div class="row-actions">
+            <button
+              class="small-button"
+              type="button"
+              onclick="editProduct(${Number(product.id)})"
+            >
+              EDIT ↗
+            </button>
+          </div>
+
+        </article>
+      `;
+    }).join("") || `
+      <div class="panel">
+        <p class="muted">
+          No products yet. Add your first MONOWEAR product.
+        </p>
+      </div>
+    `;
+  } catch (error) {
+    console.error("Products error:", error);
+    showToast(error.message);
+  }
+}
+
+// ============================================================
+// PRODUCT FORM
+// ============================================================
+
+function resetImagePreview() {
+  const input = $("productImageFile");
+  const preview = $("imagePreview");
+  const wrap = $("imagePreviewWrap");
+
+  if (input) input.value = "";
+
+  if (preview) {
+    if (preview.dataset.objectUrl) {
+      URL.revokeObjectURL(preview.dataset.objectUrl);
+      delete preview.dataset.objectUrl;
+    }
+
+    preview.removeAttribute("src");
+  }
+
+  if (wrap) wrap.hidden = true;
+}
+
+function newProduct() {
+  const form = $("productForm");
+
+  form.reset();
+
+  resetImagePreview();
+
+  form.hidden = false;
+
+  form.elements.id.value = "";
+  form.elements.sizes.value = "S,M,L,XL";
+  form.elements.stock.value = "0";
+  form.elements.compare_price.value = "";
+  form.elements.image.value = "";
+  form.elements.published.checked = true;
+  form.elements.featured.checked = false;
+
+  $("productFormTitle").textContent = "Add a product";
+  $("deleteProductButton").hidden = true;
+
+  showError("productError", "");
+
+  form.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}
+
+window.editProduct = function (id) {
+  const product = currentProducts.find(
+    (item) => Number(item.id) === Number(id)
+  );
+
+  if (!product) {
+    showToast("Product not found.");
+    return;
+  }
+
+  const form = $("productForm");
+
+  form.reset();
+  resetImagePreview();
+
+  form.hidden = false;
+
+  const sizes = parseArray(product.sizes);
+
+  const fields = [
+    "id",
+    "name",
+    "slug",
+    "category",
+    "price",
+    "compare_price",
+    "stock",
+    "image",
+    "description"
+  ];
+
+  fields.forEach((key) => {
+    if (form.elements[key]) {
+      form.elements[key].value =
+        product[key] ?? "";
+    }
+  });
+
+  form.elements.sizes.value = sizes.join(",");
+
+  form.elements.featured.checked =
+    Boolean(Number(product.featured));
+
+  form.elements.published.checked =
+    Boolean(Number(product.published));
+
+  $("productFormTitle").textContent = "Edit product";
+
+  $("deleteProductButton").hidden = false;
+
+  showError("productError", "");
+
+  form.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+};
+
+$("newProductButton").addEventListener("click", newProduct);
+
+$("cancelProduct").addEventListener("click", () => {
+  $("productForm").hidden = true;
+  resetImagePreview();
+});
+
+// ============================================================
+// IMAGE PREVIEW
+// ============================================================
+
+$("productImageFile").addEventListener("change", (event) => {
+  const input = event.currentTarget;
+  const file = input.files?.[0];
+
+  showError("productError", "");
+
+  const preview = $("imagePreview");
+  const wrap = $("imagePreviewWrap");
+
+  if (preview.dataset.objectUrl) {
+    URL.revokeObjectURL(preview.dataset.objectUrl);
+    delete preview.dataset.objectUrl;
+  }
+
+  preview.removeAttribute("src");
+  wrap.hidden = true;
+
+  if (!file) return;
+
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif"
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    input.value = "";
+
+    showError(
+      "productError",
+      "Choose a JPG, PNG, WEBP or GIF image."
+    );
+
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    input.value = "";
+
+    showError(
+      "productError",
+      "Image must be 5 MB or smaller."
+    );
+
+    return;
+  }
+
+  const objectUrl = URL.createObjectURL(file);
+
+  preview.dataset.objectUrl = objectUrl;
+  preview.src = objectUrl;
+
+  wrap.hidden = false;
+});
+
+$("removeImageButton").addEventListener("click", () => {
+  resetImagePreview();
+  showError("productError", "");
+});
+
+// ============================================================
+// PRODUCT IMAGE UPLOAD
+// ============================================================
+
+async function uploadProductImage(file) {
+  if (!file) return "";
+
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif"
+  ];
+
+  if (!allowedTypes.includes(file.type)) {
+    throw new Error(
+      "Choose a JPG, PNG, WEBP or GIF image."
+    );
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error(
+      "Image must be 5 MB or smaller."
+    );
+  }
+
+  const formData = new FormData();
+
+  // IMPORTANT:
+  // server.js uses upload.array("images", 10).
+  formData.append("images", file);
+
+  // IMPORTANT:
+  // This is the exact endpoint in your server.js.
+  const result = await api("/api/admin/upload", {
+    method: "POST",
+    body: formData
+  });
+
+  const imageUrl =
+    result.urls?.[0] ||
+    result.files?.[0]?.url ||
+    "";
+
+  if (!result.success || !imageUrl) {
+    throw new Error(
+      "Image upload did not return an image URL."
+    );
+  }
+
+  return imageUrl;
+}
+
+// ============================================================
+// SAVE PRODUCT
+// ============================================================
+
+$("productForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const form = event.currentTarget;
+
+  const productId = form.elements.id.value.trim();
+
+  const saveButton = form.querySelector(
+    'button[type="submit"]'
+  );
+
+  saveButton.disabled = true;
+  saveButton.textContent = "SAVING PRODUCT...";
+
+  showError("productError", "");
+
+  try {
+    const product = {
+      name: form.elements.name.value.trim(),
+      slug: form.elements.slug.value.trim(),
+      category: form.elements.category.value.trim(),
+      price: Number(form.elements.price.value),
+      compare_price:
+        form.elements.compare_price.value === ""
+          ? 0
+          : Number(form.elements.compare_price.value),
+      stock: Number(form.elements.stock.value),
+      image: form.elements.image.value.trim(),
+      description: form.elements.description.value.trim(),
+      sizes: form.elements.sizes.value
+        .split(",")
+        .map((size) => size.trim())
+        .filter(Boolean),
+      featured: form.elements.featured.checked,
+      published: form.elements.published.checked
+    };
+
+    if (!product.name) {
+      throw new Error("Enter a product name.");
+    }
+
+    if (
+      !Number.isFinite(product.price) ||
+      product.price < 0
+    ) {
+      throw new Error("Enter a valid product price.");
+    }
+
+    if (
+      !Number.isInteger(product.stock) ||
+      product.stock < 0
+    ) {
+      throw new Error("Enter a valid stock quantity.");
+    }
+
+    // Upload the image first, if a new file was selected.
+    const file = form.elements.imageFile.files?.[0];
+
+    if (file) {
+      showToast("Uploading product image...");
+
+      product.image = await uploadProductImage(file);
+    }
+
+    const url = productId
+      ? `/api/admin/products/${encodeURIComponent(productId)}`
+      : "/api/admin/products";
+
+    const method = productId ? "PUT" : "POST";
+
+    await api(url, {
+      method,
+      body: JSON.stringify(product)
+    });
+
+    form.hidden = true;
+
+    resetImagePreview();
+
+    await loadProducts();
+
+    await loadSummary();
+
+    showToast(
+      productId
+        ? "Product updated successfully."
+        : "Product added successfully."
+    );
+  } catch (error) {
+    console.error("Save product error:", error);
+
+    showError("productError", error.message);
+  } finally {
+    saveButton.disabled = false;
+    saveButton.textContent = "SAVE PRODUCT ↗";
+  }
+});
+
+// ============================================================
+// DELETE PRODUCT
+// ============================================================
+
+$("deleteProductButton").addEventListener("click", async () => {
+  const id = $("productForm").elements.id.value;
+
+  if (!id) return;
+
+  const confirmed = confirm(
+    "Delete this product permanently? This cannot be undone."
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await api(
+      `/api/admin/products/${encodeURIComponent(id)}`,
+      {
+        method: "DELETE"
+      }
+    );
+
+    $("productForm").hidden = true;
+
+    resetImagePreview();
+
+    await loadProducts();
+
+    await loadSummary();
+
+    showToast("Product deleted.");
+  } catch (error) {
+    showError("productError", error.message);
+  }
+});
+
+// ============================================================
+// STORE SETTINGS
+// ============================================================
+
+async function loadSettings() {
+  try {
+    // Matches the settings endpoint in your server.js.
+    const data = await api("/api/admin/settings");
+
+    currentSettings = data;
+
+    const form = $("settingsForm");
+
+    // Map the existing editor fields to your server settings.
+    const mapping = {
+      brand_name: "store_name",
+      tagline: "tagline",
+      announcement: "announcement",
+      instagram: "instagram",
+      contact_email: "contact_email",
+      shipping_fee: "shipping_fee",
+      free_shipping_threshold: "free_shipping_threshold"
+    };
+
+    Object.entries(mapping).forEach(([field, setting]) => {
+      if (form.elements[field]) {
+        form.elements[field].value =
+          data[setting] ?? "";
+      }
+    });
+
+    // These fields are not currently supported by your
+    // server.js settings allowlist.
+    // Leave them editable, but don't imply they are saved.
+  } catch (error) {
+    console.error("Settings load error:", error);
+    showToast(error.message);
+  }
+}
+
+$("settingsForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+
+  const form = event.currentTarget;
+
+  const body = {
+    store_name: form.elements.brand_name.value.trim(),
+    tagline: form.elements.tagline.value.trim(),
+    announcement: form.elements.announcement.value.trim(),
+    instagram: form.elements.instagram.value.trim(),
+    contact_email: form.elements.contact_email.value.trim(),
+    shipping_fee: Number(form.elements.shipping_fee.value || 0),
+    free_shipping_threshold: Number(
+      form.elements.free_shipping_threshold.value || 0
+    )
+  };
+
+  try {
+    await api("/api/admin/settings", {
+      method: "PUT",
+      body: JSON.stringify(body)
+    });
+
+    $("settingsMessage").textContent =
+      "Store settings saved successfully.";
+
+    await loadSettings();
+
+    showToast("Store settings updated.");
+  } catch (error) {
+    $("settingsMessage").textContent = error.message;
+  }
+});
+
+// ============================================================
+// ORDER MANAGEMENT
+// ============================================================
+
+async function loadOrders() {
+  try {
+    const orders = await api("/api/admin/orders");
+
+    currentOrders = Array.isArray(orders)
+      ? orders
+      : [];
+
+    $("orderCount").textContent = currentOrders.length;
+
+    $("ordersList").innerHTML = currentOrders.map((order) => {
+      const items = parseArray(order.items);
+      const events = parseArray(order.events);
+
+      const statuses = [
+        "pending",
+        "processing",
+        "packed",
+        "shipped",
+        "delivered",
+        "cancelled"
+      ];
+
+      const currentStatus = String(
+        order.order_status || "pending"
+      ).toLowerCase();
+
+      return `
+        <article class="order-card">
+
+          <div>
+
+            <h3>
+              #${esc(order.reference || order.id)}
+              · ${esc(order.customer_name)}
+              · ${money(order.total)}
+            </h3>
+
+            <p>
+              ${esc(order.customer_email)}
+              · ${esc(order.customer_phone || "No phone provided")}
+            </p>
+
+            <p>
+              ${esc(order.shipping_address)}
+              ${esc(order.shipping_city || "")}
+              ${esc(order.shipping_state || "")}
+            </p>
+
+            <p>
+              ${items.map((item) =>
+                `${esc(item.name)} × ${Number(item.quantity || 0)}`
+              ).join("<br>")}
+            </p>
+
+            <p>
+              Payment: ${esc(order.payment_status)}
+              · Created ${esc(order.created_at)}
+            </p>
+
+            <p>
+              Subtotal ${money(order.subtotal)}
+              + delivery ${money(order.shipping_fee)}
+            </p>
+
+          </div>
+
+          <div>
+
+            <label class="eyebrow">
+              FULFILMENT STATUS
+            </label>
+
+            <select
+              onchange="updateOrder(${Number(order.id)}, this.value)"
+            >
+
+              ${statuses.map((status) => `
+                <option
+                  value="${status}"
+                  ${currentStatus === status ? "selected" : ""}
+                >
+                  ${status.toUpperCase()}
+                </option>
+              `).join("")}
+
+            </select>
+
+          </div>
+
+        </article>
+      `;
+    }).join("") || `
+      <p class="muted">No orders yet.</p>
+    `;
+  } catch (error) {
+    console.error("Orders error:", error);
+    showToast(error.message);
+  }
+}
+
+window.updateOrder = async (id, status) => {
+  try {
+    // Exact endpoint and method from your server.js.
+    await api(`/api/admin/orders/${id}/status`, {
+      method: "PUT",
+      body: JSON.stringify({ status })
+    });
+
+    await loadOrders();
+
+    await loadSummary();
+
+    showToast("Order status updated.");
+  } catch (error) {
+    showToast(error.message);
+    await loadOrders();
+  }
+};
+
+$("refreshOrders").addEventListener("click", loadOrders);
+
+// ============================================================
+// START STUDIO
+// ============================================================
+
+checkAuth();
