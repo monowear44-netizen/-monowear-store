@@ -414,28 +414,71 @@
      CART OPEN / CLOSE
   ========================================================= */
   function setupCartControls() {
-    const cartButton =
-      $("cartButton") ||
-      $("cartBtn") ||
-      $("openCart");
-    const closeButton =
-      $("closeCart") ||
-      $("closeCartButton");
-    const cartPanel = $("cartPanel");
-    if (cartButton && cartPanel) {
-      cartButton.addEventListener("click", () => {
-        cartPanel.classList.add("open");
-        cartPanel.setAttribute("aria-hidden", "false");
-      });
-    }
-    if (closeButton && cartPanel) {
-      closeButton.addEventListener("click", () => {
-        cartPanel.classList.remove("open");
-        cartPanel.setAttribute("aria-hidden", "true");
-      });
-    }
+  const cartButton = $("cartToggle");
+  const closeButton = $("closeCart");
+  const cartDrawer = $("cartDrawer");
+  const cartOverlay = $("cartOverlay");
+  const checkoutButton = $("checkoutButton");
+  const checkoutDialog = $("checkoutDialog");
+  const closeCheckout = $("closeCheckout");
+  function openCart() {
+    if (cartDrawer) cartDrawer.classList.add("open");
+    if (cartOverlay) cartOverlay.classList.add("open");
+    document.body.classList.add("cart-open");
   }
-  /* =========================================================
+  function closeCart() {
+    if (cartDrawer) cartDrawer.classList.remove("open");
+    if (cartOverlay) cartOverlay.classList.remove("open");
+    document.body.classList.remove("cart-open");
+  }
+  if (cartButton) {
+    cartButton.addEventListener("click", openCart);
+  }
+  if (closeButton) {
+    closeButton.addEventListener("click", closeCart);
+  }
+  if (cartOverlay) {
+    cartOverlay.addEventListener("click", closeCart);
+  }
+  if (checkoutButton) {
+    checkoutButton.addEventListener("click", () => {
+      if (!cart.length) {
+        alert("Your bag is empty. Add a piece before checkout.");
+        return;
+      }
+      closeCart();
+      const checkoutTotal = $("checkoutTotal");
+      if (checkoutTotal) {
+        checkoutTotal.textContent = money(
+          cart.reduce(
+            (total, item) =>
+              total +
+              Number(item.price || 0) *
+                Number(item.quantity || 1),
+            0
+          )
+        );
+      }
+      if (checkoutDialog && !checkoutDialog.open) {
+        checkoutDialog.showModal();
+      }
+    });
+  }
+  if (closeCheckout && checkoutDialog) {
+    closeCheckout.addEventListener("click", () => {
+      checkoutDialog.close();
+    });
+  }
+  if (checkoutDialog) {
+    checkoutDialog.addEventListener("click", (event) => {
+      if (event.target === checkoutDialog) {
+        checkoutDialog.close();
+      }
+    });
+  }
+  renderCart();
+}
+/* =========================================================
      STOREFRONT EVENTS
   ========================================================= */
   function setupEvents() {
