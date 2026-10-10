@@ -1,6 +1,152 @@
-const $=id=>document.getElementById(id);const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));const money=n=>new Intl.NumberFormat("en-NG",{style:"currency",currency:"NGN",maximumFractionDigits:0}).format(Number(n||0));
-async function call(url,body){const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify(body)}),d=await r.json();if(!r.ok)throw Error(d.error||"Request failed.");return d;}
-async function showAccount(){const r=await fetch("/api/account/me"),d=await r.json();$("accountGuest").hidden=d.authenticated;$("accountDashboard").hidden=!d.authenticated;if(d.authenticated){$("welcomeName").textContent="Welcome, "+d.customer.name;$("myOrders").innerHTML="Loading orders…";const o=await fetch("/api/account/orders"),orders=await o.json();$("myOrders").innerHTML=orders.length?orders.map(x=>`<article class="account-order"><h4>${esc(x.reference)} · ${money(x.total)}</h4><p>${esc(x.status)} · Payment: ${esc(x.payment_status)}</p><p>${x.items.map(i=>`${esc(i.name)} (${esc(i.size)}) × ${i.qty}`).join(", ")}</p><small>${esc(x.created_at)}</small></article>`).join(""):'<p class="muted">No orders yet. Your orders will appear here.</p>';}}
-$("registerForm").onsubmit=async e=>{e.preventDefault();const b=Object.fromEntries(new FormData(e.currentTarget));try{await call("/api/account/register",b);await showAccount();}catch(err){$("registerMessage").textContent=err.message;}};
-$("loginForm").onsubmit=async e=>{e.preventDefault();try{await call("/api/account/login",Object.fromEntries(new FormData(e.currentTarget)));await showAccount();}catch(err){$("accountLoginMessage").textContent=err.message;}};
-$("accountLogout").onclick=async()=>{await call("/api/account/logout",{});showAccount();};showAccount();
+const $ = (id) => document.getElementById(id);
+const esc = (s) =>
+  String(s ?? "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[c]));
+const money = (n) =>
+  new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 0
+  }).format(Number(n || 0));
+async function request(url, options = {}) {
+  const response = await fetch(url, {
+    credentials: "same-origin",
+    ...options,
+    headers: {
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...(options.headers || {})
+    }
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || "Something went wrong. Please try again.");
+  }
+  return data;
+}
+async function post(url, body = {}) {
+  return request(url, {
+    method: "POST",
+    body: JSON.stringify(body)
+  });
+}
+async function showAccount() {
+  const guest = $("accountGuest");
+  const dashboard = $("accountDashboard");
+  try {
+    const data = await request("/api/account/me");
+    if (!data.authenticated || !data.customer) {
+      guest.hidden = false;
+      dashboard.hidden = true;
+      return;
+    }
+    guest.hidden = true;
+    dashboard.hidden = false;
+    $("welcomeName").textContent =
+      "Welcome, " + data.customer.name;
+    $("myOrders").textContent = "Loading your orders…";
+    try {
+      const orders = await request("/api/account/orders");
+      if (!Array.isArray(orders) || orders.length === 0) {
+        $("myOrders").innerHTML =
+          '<p class="muted">No orders yet. Your orders will appear here.</p>';
+        return;
+      }
+      $("myOrders").innerHTML = orders.map((order) => {
+        const items = Array.isArray(order.items) ? order.items : [];
+        return `
+          <article class="account-order">
+            <h4>${esc(order.reference)} · ${money(order.total)}</h4>
+            <p>${esc(order.status)} · Payment: ${esc(order.payment_status)}</p>
+            <p>${items.map((item) =>
+              `${esc(item.name)} (${esc(item.size)}) × ${esc(item.qty)}`
+            ).join(", ")}</p>
+            <small>${esc(order.created_at)}</small>
+          </article>
+        `;
+      }).join("");
+    } catch (error) {
+      $("myOrders").textContent =
+        "Your account is open, but your orders could not be loaded. Please refresh.";
+      console.error("MONOWEAR orders error:", error);
+    }
+  } catch (error) {
+    console.error("MONOWEAR account error:", error);
+    guest.hidden = false;
+    dashboard.hidden = true;
+    const message = $("accountLoginMessage");
+    if (message) {
+      message.textContent =
+        "We couldn't load your account. Please refresh the page and try again.";
+    }
+  }
+}
+$("registerForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const message = $("registerMessage");
+  const button = form.querySelector('button[type="submit"], button:not([type])');
+  message.textContent = "";
+  if (button) {
+    button.disabled = true;
+    button.textContent = "CREATING ACCOUNT…";
+  }
+  try {
+    await post(
+      "/api/account/register",
+      Object.fromEntries(new FormData(form))
+    );
+    form.reset();
+    await showAccount();
+  } catch (error) {
+    message.textContent = error.message;
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "CREATE ACCOUNT ↗";
+    }
+  }
+});
+$("loginForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const message = $("accountLoginMessage");
+  const button = form.querySelector('button[type="submit"], button:not([type])');
+  message.textContent = "";
+  if (button) {
+    button.disabled = true;
+    button.textContent = "SIGNING IN…";
+  }
+  try {
+    await post(
+      "/api/account/login",
+      Object.fromEntries(new FormData(form))
+    );
+    form.reset();
+    await showAccount();
+  } catch (error) {
+    message.textContent = error.message;
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "SIGN IN ↗";
+    }
+  }
+});
+$("accountLogout").addEventListener("click", async () => {
+  const button = $("accountLogout");
+  button.disabled = true;
+  try {
+    await post("/api/account/logout", {});
+    await showAccount();
+  } catch (error) {
+    alert(error.message);
+  } finally {
+    button.disabled = false;
+  }
+});
+showAccount();
