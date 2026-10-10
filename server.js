@@ -87,20 +87,60 @@ function getSettings(){return Object.fromEntries(db.prepare("SELECT key,value FR
 async function sendOrderConfirmation(order) {
 if (!resend || !order || !order.email) return;
 
-const items = JSON.parse(order.items_json || "[]");
-const logoUrl = "https://monowear-store.onrender.com/monowear-logo.png";
-
-const itemRows = items.map(item => <tr> <td style="padding:10px;border-bottom:1px solid #333;"> ${String(item.name).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))} — ${String(item.size || "")} × ${Number(item.qty) || 1} </td> <td style="padding:10px;border-bottom:1px solid #333;text-align:right;"> ₦${(Number(item.price) * Number(item.qty)).toLocaleString("en-NG")} </td> </tr>).join(””);
-
-const html =  <div style="background:#111;color:#f5f5f5;padding:32px;font-family:Arial,sans-serif;max-width:600px;margin:auto;"> <div style="text-align:center;padding-bottom:24px;"> <img src="${logoUrl}" alt="MONOWEAR" style="width:150px;max-width:100%;height:auto;"> <p style="letter-spacing:3px;font-size:11px;">LIVE THE NAME. WEAR THE MEANING.</p> </div> <h2 style="font-size:24px;">ORDER CONFIRMED</h2> <p>Hi ${String(order.customer_name).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))},</p> <p>Your payment has been verified. Your MONOWEAR order is now being processed.</p> <p><strong>Order reference:</strong> ${String(order.reference)}</p> <table style="width:100%;border-collapse:collapse;margin:24px 0;"> ${itemRows} <tr> <td style="padding:12px 10px;">Shipping</td> <td style="padding:12px 10px;text-align:right;">₦${Number(order.shipping).toLocaleString("en-NG")}</td> </tr> <tr> <td style="padding:12px 10px;font-weight:bold;">TOTAL</td> <td style="padding:12px 10px;text-align:right;font-weight:bold;">₦${Number(order.total).toLocaleString("en-NG")}</td> </tr> </table> <p>Thank you for choosing MONOWEAR.</p> <p style="color:#aaa;font-size:12px;">MONOWEAR — LIVE THE NAME. WEAR THE MEANING.</p> </div>;
-
 try {
+const items = JSON.parse(order.items_json || “[]”);
+const logoUrl = “https://monowear-store.onrender.com/monowear-logo.png”;
+
+const escapeHtml = (value) =>
+  String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+const itemRows = items.map((item) => `
+  <tr>
+    <td style="padding:10px;border-bottom:1px solid #333;">
+      ${escapeHtml(item.name)} — ${escapeHtml(item.size || "")} × ${Number(item.qty) || 1}
+    </td>
+    <td style="padding:10px;border-bottom:1px solid #333;text-align:right;">
+      ₦${(Number(item.price) * (Number(item.qty) || 1)).toLocaleString("en-NG")}
+    </td>
+  </tr>
+`).join("");
+const html = `
+  <div style="background:#111;color:#f5f5f5;padding:32px;font-family:Arial,sans-serif;max-width:600px;margin:auto;">
+    <div style="text-align:center;padding-bottom:24px;">
+      <img src="${logoUrl}" alt="MONOWEAR" style="width:150px;max-width:100%;height:auto;">
+      <p style="letter-spacing:3px;font-size:11px;">LIVE THE NAME. WEAR THE MEANING.</p>
+    </div>
+    <h2 style="font-size:24px;">ORDER CONFIRMED</h2>
+    <p>Hi ${escapeHtml(order.customer_name)},</p>
+    <p>Your payment has been verified. Your MONOWEAR order is now being processed.</p>
+    <p><strong>Order reference:</strong> ${escapeHtml(order.reference)}</p>
+    <table style="width:100%;border-collapse:collapse;margin:24px 0;">
+      ${itemRows}
+      <tr>
+        <td style="padding:12px 10px;">Shipping</td>
+        <td style="padding:12px 10px;text-align:right;">₦${Number(order.shipping).toLocaleString("en-NG")}</td>
+      </tr>
+      <tr>
+        <td style="padding:12px 10px;font-weight:bold;">TOTAL</td>
+        <td style="padding:12px 10px;text-align:right;font-weight:bold;">₦${Number(order.total).toLocaleString("en-NG")}</td>
+      </tr>
+    </table>
+    <p>Thank you for choosing MONOWEAR.</p>
+    <p style="color:#aaa;font-size:12px;">MONOWEAR — LIVE THE NAME. WEAR THE MEANING.</p>
+  </div>
+`;
 await resend.emails.send({
-from: process.env.RESEND_FROM_EMAIL || “MONOWEAR onboarding@resend.dev”,
-to: [order.email],
-subject: MONOWEAR Order Confirmed — ${order.reference},
-html
+  from: process.env.RESEND_FROM_EMAIL || "MONOWEAR <onboarding@resend.dev>",
+  to: [order.email],
+  subject: `MONOWEAR Order Confirmed — ${order.reference}`,
+  html
 });
+
 } catch (error) {
 console.error(“MONOWEAR confirmation email failed:”, error.message);
 }
@@ -222,54 +262,123 @@ app.post("/api/checkout",checkoutLimiter,async(req,res)=>{
   res.status(201).json({order_id:orderId,reference,subtotal,shipping:actualShipping,total,payment_required:true,authorization_url:result.data.authorization_url,message:"Order created. Continue to secure payment."});
  }catch(e){res.status(502).json({error:"Order was created, but payment could not be initialized. Contact the store owner with reference "+reference+"."});}
 });
-app.get("/payment/verify",async(req,res)=>{
- const reference=String(req.query.reference||"");
- if(!reference)return res.redirect("/?payment=missing");
- if(!process.env.PAYSTACK_SECRET_KEY)return res.redirect("/?payment=not-configured");
- try{
-  const r=await fetch("https://api.paystack.co/transaction/verify/"+encodeURIComponent(reference),{headers:{Authorization:"Bearer "+process.env.PAYSTACK_SECRET_KEY}});
-  const d=await r.json();
-  if(r.ok&&d.status&&d.data.status==="success"){
-   const order=db.prepare("SELECT * FROM orders WHERE reference=?").get(reference);
-   if(order&&Number(d.data.amount)===order.total*100){
-    const tx=db.transaction(()=>{db.prepare("UPDATE orders SET payment_status='Paid',status='Processing',updated_at=CURRENT_TIMESTAMP WHERE id=?").run(order.id);db.prepare("INSERT INTO order_events(order_id,status,note) VALUES(?,?,?)").run(order.id,"Paid","Payment verified by provider");});
-    if(order.payment_status!==“Paid”) {
-tx();
-await sendOrderConfirmation({
-…order,
-payment_status: “Paid”,
-status: “Processing”
-});
-}
-return res.redirect(”/order-confirmation.html?ref=”+encodeURIComponent(reference));
-   }
-  }
-  return res.redirect("/?payment=failed");
- }catch{return res.redirect("/?payment=error");}
-});
-app.post("/api/payments/paystack-webhook",express.raw({type:"application/json"}),(req,res)=>{
- const secret=process.env.PAYSTACK_SECRET_KEY;if(!secret)return res.sendStatus(200);
- const signature=req.headers["x-paystack-signature"];const raw=req.rawBody||Buffer.alloc(0);const expected=crypto.createHmac("sha512",secret).update(raw).digest("hex");
- if(!signature||!crypto.timingSafeEqual(Buffer.from(signature),Buffer.from(expected)))return res.sendStatus(401);
- let event;try{event=JSON.parse(raw.toString("utf8"));}catch{return res.sendStatus(400);}
- if(event.event==="charge.success"&&event.data&&event.data.reference){
-  const order=db.prepare("SELECT * FROM orders WHERE reference=?").get(String(event.data.reference));
-  if(order&&event.data.status===“success”&&Number(event.data.amount)===order.total*100&&order.payment_status!==“Paid”){
-const tx=db.transaction(()=>{
-db.prepare(“UPDATE orders SET payment_status=‘Paid’,status=‘Processing’,updated_at=CURRENT_TIMESTAMP WHERE id=?”).run(order.id);
-db.prepare(“INSERT INTO order_events(order_id,status,note) VALUES(?,?,?)”).run(order.id,“Paid”,“Paystack webhook verified”);
-});
-tx();
+app.get(”/payment/verify”, async (req, res) => {
+const reference = String(req.query.reference || “”);
 
-sendOrderConfirmation({
-…order,
-payment_status:“Paid”,
-status:“Processing”
-});
+if (!reference) return res.redirect(”/?payment=missing”);
+if (!process.env.PAYSTACK_SECRET_KEY) {
+return res.redirect(”/?payment=not-configured”);
 }
+
+try {
+const response = await fetch(
+“https://api.paystack.co/transaction/verify/” + encodeURIComponent(reference),
+{
+headers: {
+Authorization: “Bearer “ + process.env.PAYSTACK_SECRET_KEY
+}
+}
+);
+
+const result = await response.json();
+if (!response.ok || !result.status || result.data.status !== "success") {
+  return res.redirect("/?payment=failed");
+}
+const order = db.prepare("SELECT * FROM orders WHERE reference = ?").get(reference);
+if (!order || Number(result.data.amount) !== order.total * 100) {
+  return res.redirect("/?payment=failed");
+}
+if (order.payment_status !== "Paid") {
+  const tx = db.transaction(() => {
+    db.prepare(
+      "UPDATE orders SET payment_status='Paid', status='Processing', updated_at=CURRENT_TIMESTAMP WHERE id=?"
+    ).run(order.id);
+    db.prepare(
+      "INSERT INTO order_events(order_id,status,note) VALUES(?,?,?)"
+    ).run(order.id, "Paid", "Payment verified by provider");
+  });
+  tx();
+  await sendOrderConfirmation({
+    ...order,
+    payment_status: "Paid",
+    status: "Processing"
+  });
+}
+return res.redirect(
+  "/order-confirmation.html?ref=" + encodeURIComponent(reference)
+);
+
+} catch (error) {
+console.error(“MONOWEAR payment verification failed:”, error.message);
+return res.redirect(”/?payment=error”);
+}
+});
+app.post(”/api/payments/paystack-webhook”, (req, res) => {
+const secret = process.env.PAYSTACK_SECRET_KEY;
+
+if (!secret) return res.sendStatus(200);
+
+const signature = req.headers[“x-paystack-signature”];
+const raw = req.rawBody || Buffer.alloc(0);
+
+const expected = crypto
+.createHmac(“sha512”, secret)
+.update(raw)
+.digest(“hex”);
+
+if (
+typeof signature !== “string” ||
+signature.length !== expected.length ||
+!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+) {
+return res.sendStatus(401);
+}
+
+let event;
+
+try {
+event = JSON.parse(raw.toString(“utf8”));
+} catch {
+return res.sendStatus(400);
+}
+
+if (event.event === “charge.success” && event.data?.reference) {
+try {
+const order = db
+.prepare(“SELECT * FROM orders WHERE reference = ?”)
+.get(String(event.data.reference));
+
+  if (
+    order &&
+    event.data.status === "success" &&
+    Number(event.data.amount) === order.total * 100 &&
+    order.payment_status !== "Paid"
+  ) {
+    const tx = db.transaction(() => {
+      db.prepare(
+        "UPDATE orders SET payment_status='Paid', status='Processing', updated_at=CURRENT_TIMESTAMP WHERE id=?"
+      ).run(order.id);
+      db.prepare(
+        "INSERT INTO order_events(order_id,status,note) VALUES(?,?,?)"
+      ).run(order.id, "Paid", "Paystack webhook verified");
+    });
+    tx();
+    sendOrderConfirmation({
+      ...order,
+      payment_status: "Paid",
+      status: "Processing"
+    }).catch((error) => {
+      console.error("MONOWEAR webhook email error:", error.message);
+    });
   }
- }
- res.sendStatus(200);
+} catch (error) {
+  console.error("MONOWEAR webhook processing error:", error.message);
+  return res.sendStatus(500);
+}
+
+}
+
+return res.sendStatus(200);
 });
 app.get("/api/orders/track/:reference",(req,res)=>{
  const o=db.prepare("SELECT reference,customer_name,status,payment_status,created_at,updated_at FROM orders WHERE reference=?").get(String(req.params.reference||"").slice(0,60));
