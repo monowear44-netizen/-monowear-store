@@ -88,7 +88,7 @@ async function sendOrderConfirmation(order) {
 if (!resend || !order || !order.email) return;
 
 try {
-const items = JSON.parse(order.items_json || “[]”);
+const items = JSON.parse(order.items_json || "[]");
 const logoUrl = “https://monowear-store.onrender.com/monowear-logo.png”;
 
 const escapeHtml = (value) =>
