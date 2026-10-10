@@ -6,7 +6,34 @@
 <section class="ticker"><div>LIVE THE NAME ✳ WEAR THE MEANING ✳ LIVE THE NAME ✳ WEAR THE MEANING ✳</div></section>
 <section class="shop section-wrap" id="shop"><div class="section-heading"><div><p class="eyebrow">THE CURRENT SELECTION</p><h2>Latest <i>release.</i></h2></div><div class="filters"><input id="searchProducts" placeholder="Search pieces…" aria-label="Search products"><select id="categoryFilter" aria-label="Filter category"><option value="">All pieces</option></select></div></div><div class="product-grid" id="productGrid"><p class="muted">Loading collection…</p></div></section>
 <section class="manifesto" id="story"><p class="eyebrow">A NOTE FROM MONO</p><h2>Built for the ones<br>who <i>keep going.</i></h2><p>MONO is a state of mind: self-reliant, intentional, and unwilling to wait for permission. Every piece carries a reminder to keep showing up for your own future.</p><span class="manifesto-signature">LIVE THE NAME. WEAR THE MEANING.</span></section>
-<section class="newsletter"><div><p class="eyebrow">STAY IN THE LOOP</p><h2>Don't miss the next move.</h2></div><a class="button button-outline" id="newsletterLink" href="#footer">FOLLOW THE JOURNEY ↗</a></section></main>
+<section class="newsletter" id="newsletter">
+  <div>
+    <p class="eyebrow">STAY IN THE LOOP</p>
+    <h2>Don't miss the next move.</h2>
+    <p>New drops. Early access. No missed moments.</p>
+  </div>
+
+  <form id="newsletterForm">
+    <label for="newsletterEmail">EMAIL ADDRESS</label>
+
+    <div class="newsletter-form-row">
+      <input
+        type="email"
+        id="newsletterEmail"
+        name="email"
+        placeholder="Enter your email"
+        autocomplete="email"
+        required
+      >
+
+      <button class="button button-outline" type="submit">
+        JOIN THE LIST ↗
+      </button>
+    </div>
+
+    <p id="newsletterMessage" role="status" aria-live="polite"></p>
+  </form>
+</section></div><a class="button button-outline" id="newsletterLink" href="#footer">FOLLOW THE JOURNEY ↗</a></section></main>
 <footer id="footer"><a class="wordmark" href="/" id="brandName">
 
 </a><p id="footerTagline">LIVE THE NAME. WEAR THE MEANING.</p><div class="footer-links"><a id="instagramLink" href="#" target="_blank" rel="noreferrer">INSTAGRAM ↗</a><a id="emailLink" href="mailto:">CONTACT ↗</a><a href="/studio">STUDIO LOGIN</a><a href="/policies.html">POLICIES</a></div><small>© <span id="year"></span> MONOWEAR. INDEPENDENT BY DESIGN.</small></footer>
