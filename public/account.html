@@ -1,111 +1,326 @@
 <!doctype html>
-
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#111111">
-  <meta name="description" content="Create your MONOWEAR account or sign in to access your account.">
-  <title>Customer Account — MONOWEAR</title>
+  <meta name="theme-color" content="#101010">
+  <meta name="description" content="Your personal MONOWEAR space. Manage your account, orders and shopping bag.">
+  <title>My Account — MONOWEAR</title>
   <link rel="stylesheet" href="/styles.css">
   <style>
     :root {
       color-scheme: dark;
+      --bg: #101010;
+      --panel: #171717;
+      --panel2: #1e1e1e;
+      --line: #303030;
+      --text: #f5f5f5;
+      --muted: #929292;
+      --accent: #d8ff62;
     }
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     body {
       margin: 0;
-      background: #101010;
-      color: #f5f5f5;
+      background: var(--bg);
+      color: var(--text);
       font-family: Arial, Helvetica, sans-serif;
     }
-    .account-header {
-      padding: 25px 6%;
-      border-bottom: 1px solid #292929;
+    button, input { font: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    a { color: inherit; text-decoration: none; }
+    [hidden] { display: none !important; }
+    .mw-header {
+      min-height: 78px;
+      padding: 20px 6%;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
       gap: 20px;
+      border-bottom: 1px solid var(--line);
     }
-    .account-header a {
-      color: inherit;
-      text-decoration: none;
-    }
-    .brand {
-      font-size: 22px;
+    .mw-brand {
+      font-size: 24px;
       font-weight: 900;
-      letter-spacing: -1px;
+      letter-spacing: -1.5px;
     }
-    .brand span {
+    .mw-brand span {
       font-size: 10px;
       vertical-align: top;
+      margin-left: 2px;
     }
-    .back-link {
-      font-size: 12px;
-      letter-spacing: 1px;
+    .mw-nav {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      font-size: 10px;
+      letter-spacing: 1.4px;
     }
-    .account-main {
-      width: min(100% - 32px, 460px);
-      margin: 65px auto;
-      padding: 36px;
-      background: #171717;
-      border: 1px solid #303030;
+    .mw-nav a:hover { color: var(--accent); }
+    .mw-wrap {
+      width: min(1120px, calc(100% - 40px));
+      margin: 55px auto 80px;
     }
-    .eyebrow {
-      color: #aaa;
+    .mw-eyebrow {
+      color: var(--muted);
       font-size: 10px;
       letter-spacing: 3px;
       text-transform: uppercase;
     }
-    h1 {
+    .mw-hero {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(28px, 6vw, 65px);
+      background: var(--panel);
+      border: 1px solid var(--line);
+    }
+    .mw-hero::after {
+      content: "MONO";
+      position: absolute;
+      right: -15px;
+      bottom: -45px;
+      color: rgba(255,255,255,.025);
+      font-size: clamp(100px, 22vw, 260px);
+      font-weight: 900;
+      letter-spacing: -15px;
+      pointer-events: none;
+    }
+    .mw-hero h1 {
+      position: relative;
+      z-index: 1;
+      margin: 22px 0 15px;
+      max-width: 750px;
+      font-size: clamp(38px, 7vw, 78px);
+      line-height: .98;
+      letter-spacing: -4px;
+      overflow-wrap: anywhere;
+    }
+    .mw-hero p {
+      position: relative;
+      z-index: 1;
+      color: #aaa;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+    .mw-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 14px 20px;
+      border: 1px solid var(--text);
+      background: var(--text);
+      color: #111;
+      font-size: 10px;
+      font-weight: bold;
+      letter-spacing: 1.3px;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+    .mw-button:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .mw-button:disabled {
+      opacity: .5;
+      cursor: wait;
+    }
+    .mw-button-outline {
+      background: transparent;
+      color: var(--text);
+      border-color: #454545;
+    }
+    .mw-button-outline:hover {
+      color: #111;
+    }
+    .mw-actions {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+    .mw-shortcuts {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 18px 0 45px;
+    }
+    .mw-shortcut {
+      display: block;
+      padding: 23px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      transition: border-color .2s;
+    }
+    .mw-shortcut:hover { border-color: #777; }
+    .mw-shortcut strong {
+      display: block;
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+    .mw-shortcut span {
+      display: block;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .mw-section { margin-top: 42px; }
+    .mw-section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 18px;
+    }
+    .mw-section-heading h2 {
+      margin: 0;
+      font-size: clamp(20px, 4vw, 29px);
+      letter-spacing: -1px;
+    }
+    .mw-panel {
+      padding: 25px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+    }
+    .mw-muted {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+    .mw-order {
+      padding: 23px 0;
+      border-top: 1px solid var(--line);
+    }
+    .mw-order:first-child {
+      padding-top: 0;
+      border-top: 0;
+    }
+    .mw-order:last-child { padding-bottom: 0; }
+    .mw-order-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .mw-order h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+    .mw-order p {
+      margin: 6px 0;
+      color: #aaa;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+    .mw-status {
+      display: inline-block;
+      padding: 7px 9px;
+      border: 1px solid #424242;
+      font-size: 9px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .mw-cart-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 15px 0;
+      border-top: 1px solid var(--line);
+      font-size: 12px;
+    }
+    .mw-cart-item:first-child { border-top: 0; }
+    .mw-cart-item p {
+      margin: 6px 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .mw-profile-row {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      gap: 20px;
+      padding: 17px 0;
+      border-top: 1px solid var(--line);
+      font-size: 12px;
+    }
+    .mw-profile-row:first-child { border-top: 0; }
+    .mw-profile-label {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 10px;
+    }
+    .mw-account-footer {
+      padding: 30px 20px;
+      border-top: 1px solid var(--line);
+      text-align: center;
+      color: #777;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      line-height: 2;
+    }
+    .mw-account-footer .mw-brand {
+      display: inline-block;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    /* Sign-in and registration */
+    .mw-auth-wrap {
+      width: min(470px, calc(100% - 32px));
+      margin: 65px auto 90px;
+    }
+    .mw-auth {
+      padding: clamp(23px, 6vw, 40px);
+      background: var(--panel);
+      border: 1px solid var(--line);
+    }
+    .mw-auth h1 {
+      margin: 20px 0 12px;
       font-size: clamp(32px, 7vw, 46px);
       line-height: 1;
       letter-spacing: -2px;
-      margin: 18px 0;
     }
-    .intro {
-      color: #aaa;
-      font-size: 14px;
-      line-height: 1.7;
+    .mw-auth-intro {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.8;
       margin-bottom: 28px;
     }
-    .tabs {
+    .mw-tabs {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin-bottom: 28px;
+      margin-bottom: 25px;
     }
-    .tab {
-      padding: 13px 8px;
+    .mw-tab {
+      padding: 14px 8px;
       background: transparent;
       color: #aaa;
       border: 1px solid #393939;
       cursor: pointer;
-      font-size: 11px;
+      font-size: 10px;
       letter-spacing: 1px;
     }
-    .tab.active {
-      background: #f5f5f5;
+    .mw-tab.active {
+      background: var(--text);
       color: #111;
-      border-color: #f5f5f5;
+      border-color: var(--text);
     }
-    .account-form {
+    .mw-form {
       display: grid;
       gap: 17px;
     }
-    .account-form[hidden] {
-      display: none;
-    }
-    .account-form label {
+    .mw-form label {
       display: grid;
       gap: 9px;
       font-size: 10px;
-      letter-spacing: 1.5px;
-      color: #ddd;
+      letter-spacing: 1.3px;
     }
-    .account-form input {
+    .mw-form input {
       width: 100%;
       padding: 15px;
       background: #101010;
@@ -114,302 +329,449 @@
       border-radius: 0;
       font-size: 14px;
     }
-    .account-form input:focus {
+    .mw-form input:focus {
       outline: 1px solid #fff;
       border-color: #fff;
     }
-    .submit-button {
-      width: 100%;
-      padding: 16px;
-      border: 1px solid #f5f5f5;
-      background: #f5f5f5;
-      color: #111;
-      font-weight: bold;
-      font-size: 11px;
-      letter-spacing: 1.5px;
-      cursor: pointer;
-      margin-top: 5px;
-    }
-    .submit-button:disabled {
-      opacity: .6;
-      cursor: wait;
-    }
-    .message {
-      font-size: 13px;
-      line-height: 1.6;
-      min-height: 20px;
+    .mw-form .mw-button { width: 100%; }
+    .mw-message {
+      min-height: 18px;
+      font-size: 12px;
+      line-height: 1.7;
       overflow-wrap: anywhere;
     }
-    .message.error {
-      color: #ff9696;
-    }
-    .message.success {
-      color: #a5e6b1;
-    }
-    .account-footer {
-      margin-top: 30px;
-      text-align: center;
-      color: #777;
-      font-size: 10px;
-      letter-spacing: 1px;
-      line-height: 1.8;
-    }
-    @media (max-width: 480px) {
-      .account-main {
-        padding: 25px 20px;
-        margin-top: 35px;
-      }
-      .account-header {
-        padding: 20px;
-      }
+    .mw-message.error { color: #ff9696; }
+    .mw-message.success { color: #a5e6b1; }
+    @media (max-width: 650px) {
+      .mw-header { padding: 20px; }
+      .mw-brand { font-size: 21px; }
+      .mw-nav { gap: 14px; font-size: 9px; }
+      .mw-wrap { margin-top: 25px; }
+      .mw-shortcuts { grid-template-columns: 1fr; }
+      .mw-shortcut { padding: 19px; }
+      .mw-hero h1 { letter-spacing: -2px; }
+      .mw-panel { padding: 19px; }
+      .mw-profile-row { grid-template-columns: 1fr; gap: 8px; }
+      .mw-auth-wrap { margin-top: 30px; }
     }
   </style>
 </head>
 <body>
-  <header class="account-header">
-    <a class="brand" href="/">MONOWEAR<span>®</span></a>
-    <a class="back-link" href="/">BACK TO STORE ↗</a>
-  </header>
-  <main class="account-main">
-    <p class="eyebrow">THE MONOWEAR COMMUNITY</p>
-    <h1 id="pageTitle">Create your account.</h1>
-    <p class="intro" id="pageIntro">
-      Your account. Your access. Create an account to get started with MONOWEAR.
+<header class="mw-header">
+  <a class="mw-brand" href="/">MONOWEAR<span>®</span></a>
+  <nav class="mw-nav" aria-label="Main navigation">
+    <a href="/#shop">SHOP</a>
+    <a href="/account.html" aria-current="page">MY ACCOUNT</a>
+    <a href="/" id="headerBagLink">BAG</a>
+  </nav>
+</header>
+<!-- SIGN IN / REGISTRATION -->
+<main id="authView" class="mw-auth-wrap" hidden>
+  <section class="mw-auth">
+    <p class="mw-eyebrow">THE MONOWEAR COMMUNITY</p>
+    <h1 id="authTitle">Your space.</h1>
+    <p class="mw-auth-intro" id="authIntro">
+      Sign in to manage your account, shopping bag and orders.
     </p>
-<div class="tabs" role="tablist" aria-label="Customer account options">
-  <button class="tab active" id="signupTab" type="button" role="tab" aria-selected="true">
-    CREATE ACCOUNT
-  </button>
-  <button class="tab" id="loginTab" type="button" role="tab" aria-selected="false">
-    SIGN IN
-  </button>
-</div>
-<form class="account-form" id="signupForm">
-  <label>
-    FULL NAME
-    <input
-      name="name"
-      type="text"
-      autocomplete="name"
-      placeholder="Your full name"
-      minlength="2"
-      maxlength="100"
-      required
-    >
-  </label>
-  <label>
-    EMAIL ADDRESS
-    <input
-      name="email"
-      type="email"
-      autocomplete="email"
-      placeholder="you@example.com"
-      maxlength="254"
-      required
-    >
-  </label>
-  <label>
-    PASSWORD
-    <input
-      name="password"
-      type="password"
-      autocomplete="new-password"
-      placeholder="At least 8 characters"
-      minlength="8"
-      maxlength="128"
-      required
-    >
-  </label>
-  <button class="submit-button" type="submit">CREATE MY ACCOUNT ↗</button>
-  <p class="message" id="signupMessage" role="status" aria-live="polite"></p>
-</form>
-<form class="account-form" id="loginForm" hidden>
-  <label>
-    EMAIL ADDRESS
-    <input
-      name="email"
-      type="email"
-      autocomplete="email"
-      placeholder="you@example.com"
-      maxlength="254"
-      required
-    >
-  </label>
-  <label>
-    PASSWORD
-    <input
-      name="password"
-      type="password"
-      autocomplete="current-password"
-      placeholder="Your password"
-      maxlength="128"
-      required
-    >
-  </label>
-  <button class="submit-button" type="submit">SIGN IN ↗</button>
-  <p class="message" id="loginMessage" role="status" aria-live="polite"></p>
-</form>
-<section id="accountPanel" hidden>
-  <h2 id="welcomeMessage">Welcome to MONOWEAR.</h2>
-  <p class="intro" id="customerEmail"></p>
-  <p class="intro">Your customer account is active.</p>
-  <button class="submit-button" id="logoutButton" type="button">SIGN OUT</button>
-  <p class="message" id="accountMessage" role="status" aria-live="polite"></p>
-</section>
-<div class="account-footer">
-  LIVE THE NAME. WEAR THE MEANING.<br>
-  © <span id="year"></span> MONOWEAR
-</div>
-  </main>
-  <script>
-    const signupForm = document.getElementById("signupForm");
-    const loginForm = document.getElementById("loginForm");
-    const signupTab = document.getElementById("signupTab");
-    const loginTab = document.getElementById("loginTab");
-    const accountPanel = document.getElementById("accountPanel");
-    const pageTitle = document.getElementById("pageTitle");
-    const pageIntro = document.getElementById("pageIntro");
-    document.getElementById("year").textContent = new Date().getFullYear();
-    function showMessage(element, message, type) {
-      element.textContent = message;
-      element.className = "message" + (type ? " " + type : "");
-    }
-    function setMode(mode) {
-      const signup = mode === "signup";
-      signupForm.hidden = !signup;
-      loginForm.hidden = signup;
-      accountPanel.hidden = true;
-      signupTab.classList.toggle("active", signup);
-      loginTab.classList.toggle("active", !signup);
-      signupTab.setAttribute("aria-selected", String(signup));
-      loginTab.setAttribute("aria-selected", String(!signup));
-      pageTitle.textContent = signup ? "Create your account." : "Welcome back.";
-      pageIntro.textContent = signup
-        ? "Your account. Your access. Create an account to get started with MONOWEAR."
-        : "Sign in to access your MONOWEAR customer account.";
-      showMessage(document.getElementById("signupMessage"), "", "");
-      showMessage(document.getElementById("loginMessage"), "", "");
-    }
-    signupTab.addEventListener("click", () => setMode("signup"));
-    loginTab.addEventListener("click", () => setMode("login"));
-    async function sendAccountRequest(endpoint, form, button, messageElement) {
-      const originalText = button.textContent;
-      button.disabled = true;
-      button.textContent = "PLEASE WAIT...";
-      showMessage(messageElement, "", "");
-      try {
-        const formData = new FormData(form);
-        const payload = Object.fromEntries(formData.entries());
-        const response = await fetch(endpoint, {
-          method: "POST",
-          credentials: "same-origin",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload)
-        });
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok || !result.ok) {
-          throw new Error(
-            result.error || result.message ||
-            "We couldn't complete your request. Please try again."
-          );
-        }
-        await loadCustomerAccount();
-        if (accountPanel.hidden) {
-          showMessage(
-            messageElement,
-            "Your request was accepted, but we couldn't load your account. Please sign in.",
-            "success"
-          );
-        }
-      } catch (error) {
-        showMessage(
-          messageElement,
-          error.message || "Connection problem. Please try again.",
-          "error"
-        );
-      } finally {
-        button.disabled = false;
-        button.textContent = originalText;
-      }
-    }
-    signupForm.addEventListener("submit", event => {
-      event.preventDefault();
-      sendAccountRequest(
-        "/api/account/register",
-        signupForm,
-        signupForm.querySelector('button[type="submit"]'),
-        document.getElementById("signupMessage")
-      );
-    });
-    loginForm.addEventListener("submit", event => {
-      event.preventDefault();
-      sendAccountRequest(
-        "/api/account/login",
-        loginForm,
-        loginForm.querySelector('button[type="submit"]'),
-        document.getElementById("loginMessage")
-      );
-    });
-    async function loadCustomerAccount() {
-  try {
-    const response = await fetch("/api/account/me", {
+    <div class="mw-tabs">
+      <button class="mw-tab" id="signupTab" type="button">
+        CREATE ACCOUNT
+      </button>
+      <button class="mw-tab active" id="loginTab" type="button">
+        SIGN IN
+      </button>
+    </div>
+    <form class="mw-form" id="signupForm" hidden>
+      <label>
+        FULL NAME
+        <input name="name" type="text" autocomplete="name"
+          minlength="2" maxlength="100" required>
+      </label>
+      <label>
+        EMAIL ADDRESS
+        <input name="email" type="email" autocomplete="email"
+          maxlength="254" required>
+      </label>
+      <label>
+        PHONE NUMBER
+        <input name="phone" type="tel" autocomplete="tel">
+      </label>
+      <label>
+        PASSWORD — MINIMUM 10 CHARACTERS
+        <input name="password" type="password"
+          autocomplete="new-password" minlength="10"
+          maxlength="128" required>
+      </label>
+      <button class="mw-button" type="submit">CREATE MY ACCOUNT ↗</button>
+      <p class="mw-message" id="signupMessage" aria-live="polite"></p>
+    </form>
+    <form class="mw-form" id="loginForm">
+      <label>
+        EMAIL ADDRESS
+        <input name="email" type="email" autocomplete="email"
+          maxlength="254" required>
+      </label>
+      <label>
+        PASSWORD
+        <input name="password" type="password"
+          autocomplete="current-password" required>
+      </label>
+      <button class="mw-button" type="submit">SIGN IN ↗</button>
+      <p class="mw-message" id="loginMessage" aria-live="polite"></p>
+    </form>
+    <p class="mw-muted">
+      Your space. Your wardrobe. Your MONOWEAR.
+    </p>
+  </section>
+</main>
+<!-- CUSTOMER DASHBOARD -->
+<main id="dashboardView" class="mw-wrap" hidden>
+  <section class="mw-hero">
+    <p class="mw-eyebrow">YOUR MONOWEAR SPACE</p>
+    <h1 id="welcomeHeading">WELCOME BACK.</h1>
+    <p>
+      Your space. Your wardrobe. Your MONOWEAR.
+      <br>
+      Everything you need, all in one place.
+    </p>
+    <div class="mw-actions">
+      <a class="mw-button" href="/#shop">SHOP THE COLLECTION ↗</a>
+      <button class="mw-button mw-button-outline"
+        id="signoutButton" type="button">SIGN OUT</button>
+    </div>
+  </section>
+  <nav class="mw-shortcuts" aria-label="Account sections">
+    <a class="mw-shortcut" href="#orders">
+      <strong>01 / MY ORDERS ↗</strong>
+      <span>View your purchases and order statuses.</span>
+    </a>
+    <a class="mw-shortcut" href="#bag">
+      <strong>02 / MY BAG ↗</strong>
+      <span>Return to the pieces you've selected.</span>
+    </a>
+    <a class="mw-shortcut" href="#profile">
+      <strong>03 / MY PROFILE ↗</strong>
+      <span>View your customer account information.</span>
+    </a>
+  </nav>
+  <section class="mw-section" id="orders">
+    <div class="mw-section-heading">
+      <div>
+        <p class="mw-eyebrow">YOUR PURCHASES</p>
+        <h2>RECENT ORDERS</h2>
+      </div>
+      <button class="mw-button mw-button-outline"
+        id="refreshOrders" type="button">REFRESH ↻</button>
+    </div>
+    <div class="mw-panel">
+      <div id="ordersContent" class="mw-muted">
+        Loading your orders…
+      </div>
+      <p class="mw-message" id="ordersMessage" aria-live="polite"></p>
+    </div>
+  </section>
+  <section class="mw-section" id="bag">
+    <div class="mw-section-heading">
+      <div>
+        <p class="mw-eyebrow">YOUR SELECTION</p>
+        <h2>MY BAG</h2>
+      </div>
+      <a class="mw-button mw-button-outline" href="/#shop">
+        CONTINUE SHOPPING ↗
+      </a>
+    </div>
+    <div class="mw-panel">
+      <div id="bagContent" class="mw-muted">
+        Checking your shopping bag…
+      </div>
+      <p class="mw-muted">
+        Your bag is read from this browser. Items may not appear here
+        if they were added on another device or browser.
+      </p>
+    </div>
+  </section>
+  <section class="mw-section" id="profile">
+    <div class="mw-section-heading">
+      <div>
+        <p class="mw-eyebrow">YOUR DETAILS</p>
+        <h2>MY PROFILE</h2>
+      </div>
+    </div>
+    <div class="mw-panel">
+      <div class="mw-profile-row">
+        <span class="mw-profile-label">Full name</span>
+        <strong id="profileName">—</strong>
+      </div>
+      <div class="mw-profile-row">
+        <span class="mw-profile-label">Email address</span>
+        <span id="profileEmail">—</span>
+      </div>
+      <div class="mw-profile-row">
+        <span class="mw-profile-label">Phone number</span>
+        <span id="profilePhone">Not provided</span>
+      </div>
+      <p class="mw-muted">
+        Need to update your details? Contact MONOWEAR support.
+      </p>
+      <a class="mw-button mw-button-outline"
+        href="mailto:monowear44@gmail.com">CONTACT SUPPORT ↗</a>
+    </div>
+  </section>
+  <section class="mw-section">
+    <div class="mw-panel">
+      <p class="mw-eyebrow">THE NEXT CHAPTER</p>
+      <h2>THE COLLECTION AWAITS.</h2>
+      <p class="mw-muted">
+        Explore the latest MONOWEAR pieces and find what speaks to you.
+      </p>
+      <a class="mw-button" href="/#shop">RETURN TO THE STORE ↗</a>
+    </div>
+  </section>
+</main>
+<footer class="mw-account-footer">
+  <a class="mw-brand" href="/">MONOWEAR<span>®</span></a>
+  <br>
+  LIVE THE NAME. WEAR THE MEANING.
+  <br>
+  © <span id="footerYear"></span> MONOWEAR
+</footer>
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const money = (amount) =>
+    new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      maximumFractionDigits: 0
+    }).format(Number(amount || 0));
+  const escapeHTML = (value) =>
+    String(value ?? "").replace(/[&<>"']/g, (character) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[character]));
+  $("footerYear").textContent = new Date().getFullYear();
+  function message(id, text, type = "") {
+    const element = $(id);
+    element.textContent = text;
+    element.className = "mw-message" + (type ? " " + type : "");
+  }
+  async function api(url, options = {}) {
+    const response = await fetch(url, {
       credentials: "same-origin",
-      cache: "no-store"
+      cache: "no-store",
+      ...options,
+      headers: {
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...(options.headers || {})
+      }
     });
     const result = await response.json().catch(() => ({}));
-    if (!response.ok || !result.authenticated || !result.customer) {
-      return false;
+    if (!response.ok) {
+      throw new Error(
+        result.error || result.message || "Something went wrong. Please try again."
+      );
     }
-    const customer = result.customer;
-    signupForm.hidden = true;
-    loginForm.hidden = true;
-    signupTab.hidden = true;
-    loginTab.hidden = true;
-    accountPanel.hidden = false;
-    pageTitle.textContent = "Your account.";
-    pageIntro.hidden = true;
-    document.getElementById("welcomeMessage").textContent =
-      "Welcome, " + (customer.name || "MONOWEAR customer") + ".";
-    document.getElementById("customerEmail").textContent =
-      customer.email || "";
-    return true;
-  } catch (error) {
-    console.error("MONOWEAR account loading failed:", error);
-    return false;
+    return result;
   }
-}
-    document.getElementById("logoutButton").addEventListener("click", async () => {
-      const button = document.getElementById("logoutButton");
-      const message = document.getElementById("accountMessage");
-      button.disabled = true;
-      try {
-        const response = await fetch("/api/account/logout", {
-          method: "POST",
-          credentials: "same-origin"
-        });
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok || result.ok === false) {
-          throw new Error(result.error || "Unable to sign out. Please try again.");
-        }
-        accountPanel.hidden = true;
-        signupTab.hidden = false;
-        loginTab.hidden = false;
-        pageIntro.hidden = false;
-        setMode("login");
-        showMessage(
-          document.getElementById("loginMessage"),
-          "You have signed out successfully.",
-          "success"
-        );
-      } catch (error) {
-        showMessage(message, error.message, "error");
-      } finally {
-        button.disabled = false;
+  function setAuthMode(mode) {
+    const signup = mode === "signup";
+    $("signupForm").hidden = !signup;
+    $("loginForm").hidden = signup;
+    $("signupTab").classList.toggle("active", signup);
+    $("loginTab").classList.toggle("active", !signup);
+    $("authTitle").textContent = signup
+      ? "Create your account."
+      : "Welcome back.";
+    $("authIntro").textContent = signup
+      ? "Join the MONOWEAR community and create your personal space."
+      : "Sign in to access your MONOWEAR account and orders.";
+    message("signupMessage", "");
+    message("loginMessage", "");
+  }
+  $("signupTab").addEventListener("click", () => setAuthMode("signup"));
+  $("loginTab").addEventListener("click", () => setAuthMode("login"));
+  async function loadOrders() {
+    const content = $("ordersContent");
+    content.textContent = "Loading your orders…";
+    message("ordersMessage", "");
+    try {
+      const orders = await api("/api/account/orders");
+      if (!Array.isArray(orders) || orders.length === 0) {
+        content.innerHTML = `
+          <p>You haven't placed any orders yet.</p>
+          <a class="mw-button" href="/#shop">DISCOVER THE COLLECTION ↗</a>
+        `;
+        return;
       }
-    });
-    loadCustomerAccount();
-  </script>
+      content.innerHTML = orders.map((order) => {
+        const items = Array.isArray(order.items) ? order.items : [];
+        const itemDescription = items.length
+          ? items.map((item) =>
+              `${escapeHTML(item.name || "Product")} — ${escapeHTML(item.size || "Standard")} × ${escapeHTML(item.qty ?? 1)}`
+            ).join("<br>")
+          : "Order items";
+        return `
+          <article class="mw-order">
+            <div class="mw-order-top">
+              <div>
+                <h3>${escapeHTML(order.reference || "MONOWEAR ORDER")}</h3>
+                <p>${escapeHTML(order.created_at || "")}</p>
+              </div>
+              <strong>${money(order.total)}</strong>
+            </div>
+            <p>${itemDescription}</p>
+            <p>Payment: ${escapeHTML(order.payment_status || "Pending")}</p>
+            <p>Fulfilment: ${escapeHTML(order.status || "Processing")}</p>
+            <span class="mw-status">${escapeHTML(order.status || "Processing")}</span>
+          </article>
+        `;
+      }).join("");
+    } catch (error) {
+      content.textContent = "Your orders could not be loaded right now.";
+      message("ordersMessage", error.message, "error");
+    }
+  }
+  function readLocalBag() {
+    try {
+      const raw = localStorage.getItem("monowear-cart-v1");
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+      if (parsed && Array.isArray(parsed.items)) return parsed.items;
+      return [];
+    } catch (error) {
+      console.warn("MONOWEAR bag could not be read:", error);
+      return [];
+    }
+  }
+  function renderBag() {
+    const content = $("bagContent");
+    const bag = readLocalBag();
+    if (!bag.length) {
+      content.innerHTML = `
+        <p>Your bag is currently empty.</p>
+        <a class="mw-button" href="/#shop">FIND YOUR NEXT PIECE ↗</a>
+      `;
+      return;
+    }
+    content.innerHTML = bag.map((item) => {
+      const name = item.name || item.title || item.product_name || "MONOWEAR piece";
+      const quantity = Number(item.qty ?? item.quantity ?? 1);
+      const size = item.size || "Not specified";
+      const price = Number(item.price || item.amount || 0);
+      return `
+        <article class="mw-cart-item">
+          <div>
+            <strong>${escapeHTML(name)}</strong>
+            <p>Size: ${escapeHTML(size)} · Quantity: ${escapeHTML(quantity)}</p>
+          </div>
+          <strong>${money(price * quantity)}</strong>
+        </article>
+      `;
+    }).join("");
+  }
+  async function loadAccount() {
+    $("authView").hidden = true;
+    $("dashboardView").hidden = true;
+    try {
+      const result = await api("/api/account/me");
+      if (!result.authenticated || !result.customer) {
+        $("authView").hidden = false;
+        setAuthMode("login");
+        return;
+      }
+      const customer = result.customer;
+      $("dashboardView").hidden = false;
+      $("welcomeHeading").textContent =
+        "WELCOME BACK, " + (customer.name || "MONOWEAR CUSTOMER") + ".";
+      $("profileName").textContent = customer.name || "—";
+      $("profileEmail").textContent = customer.email || "—";
+      $("profilePhone").textContent = customer.phone || "Not provided";
+      renderBag();
+      await loadOrders();
+    } catch (error) {
+      $("authView").hidden = false;
+      setAuthMode("login");
+      message("loginMessage", error.message, "error");
+    }
+  }
+  async function submitAccountForm(event, endpoint, formId, messageId) {
+    event.preventDefault();
+    const form = $(formId);
+    const button = form.querySelector('button[type="submit"]');
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = "PLEASE WAIT…";
+    message(messageId, "");
+    try {
+      const payload = Object.fromEntries(new FormData(form).entries());
+      const result = await api(endpoint, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      if (result.ok === false) {
+        throw new Error(result.error || "Unable to complete your request.");
+      }
+      form.reset();
+      await loadAccount();
+      if ($("dashboardView").hidden) {
+        message(
+          messageId,
+          "Your request was accepted, but your account could not be loaded. Please sign in.",
+          "error"
+        );
+      }
+    } catch (error) {
+      message(messageId, error.message, "error");
+    } finally {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  }
+  $("signupForm").addEventListener("submit", (event) =>
+    submitAccountForm(
+      event,
+      "/api/account/register",
+      "signupForm",
+      "signupMessage"
+    )
+  );
+  $("loginForm").addEventListener("submit", (event) =>
+    submitAccountForm(
+      event,
+      "/api/account/login",
+      "loginForm",
+      "loginMessage"
+    )
+  );
+  $("signoutButton").addEventListener("click", async () => {
+    const button = $("signoutButton");
+    button.disabled = true;
+    try {
+      await api("/api/account/logout", {
+        method: "POST",
+        body: JSON.stringify({})
+      });
+      $("dashboardView").hidden = true;
+      $("authView").hidden = false;
+      setAuthMode("login");
+      message("loginMessage", "You've signed out successfully.", "success");
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      button.disabled = false;
+    }
+  });
+  $("refreshOrders").addEventListener("click", loadOrders);
+  window.addEventListener("pageshow", () => {
+    if (!$("dashboardView").hidden) renderBag();
+  });
+  loadAccount();
+})();
+</script>
 </body>
 </html>
