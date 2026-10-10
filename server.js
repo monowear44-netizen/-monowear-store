@@ -2404,7 +2404,27 @@ app.get("/api/admin/dashboard", requireAdmin, (req, res) => {
     lowStock
   });
 });
+// ============================================================
+// ADMIN STUDIO PAGE
+// ============================================================
 
+app.get("/studio", (req, res) => {
+  const studioFile = path.join(__dirname, "public", "studio.html");
+
+  if (fs.existsSync(studioFile)) {
+    return res.sendFile(studioFile);
+  }
+
+  const rootStudioFile = path.join(__dirname, "studio.html");
+
+  if (fs.existsSync(rootStudioFile)) {
+    return res.sendFile(rootStudioFile);
+  }
+
+  return res.status(404).send(
+    "Studio page not found. Check that studio.html exists in the project."
+  );
+});
 // ============================================================
 // STOREFRONT FILES
 // ============================================================
