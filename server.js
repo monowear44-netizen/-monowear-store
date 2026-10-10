@@ -314,71 +314,76 @@ return res.redirect("/?payment=error");
 }
 });
 app.post("/api/payments/paystack-webhook", (req, res) => {
-const secret = process.env.PAYSTACK_SECRET_KEY;
-
-if (!secret) return res.sendStatus(200);
-
-const signature = req.headers["x-paystack-signature"];
-const raw = req.rawBody || Buffer.alloc(0);
-
-const expected = crypto
-.createHmac("sha512", secret)
-.update(raw)
-.digest("hex");
-
-if (
-typeof signature !== "string" ||
-signature.length !== expected.length ||
-!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
-) {
-return res.sendStatus(401);
-}
-
-let event;
-
-try {
-event = JSON.parse(raw.toString("utf8"));
-} catch {
-return res.sendStatus(400);
-}
-
-if (event.event === "charge.success" && event.data?.reference) {
-try {
-const order = db
-.prepare("SELECT * FROM orders WHERE reference = ?")
-..get(String(event.data.reference));
-
-  if (
-    order &&
-    event.data.status === "success" &&
-    Number(event.data.amount) === order.total * 100 &&
-    order.payment_status !== "Paid"
-  ) {
-    const tx = db.transaction(() => {
-      db.prepare(
-        "UPDATE orders SET payment_status='Paid', status='Processing', updated_at=CURRENT_TIMESTAMP WHERE id=?"
-      ).run(order.id);
-      db.prepare(
-        "INSERT INTO order_events(order_id,status,note) VALUES(?,?,?)"
-      ).run(order.id, "Paid", "Paystack webhook verified");
-    });
-    tx();
-    sendOrderConfirmation({
-      ...order,
-      payment_status: "Paid",
-      status: "Processing"
-    }).catch((error) => {
-      console.error("MONOWEAR webhook email error:", error.message);
-    });
+  try {
+    const secret = process.env.PAYSTACK_SECRET_KEY;
+    const signature = req.headers["x-paystack-signature"];
+    if (!secret || typeof signature !== "string") {
+      return res.sendStatus(401);
+    }
+    const raw = req.body;
+    const expected = crypto
+      .createHmac("sha512", secret)
+      .update(raw)
+      .digest("hex");
+    if (
+      signature.length !== expected.length ||
+      !crypto.timingSafeEqual(
+        Buffer.from(signature),
+        Buffer.from(expected)
+      )
+    ) {
+      return res.sendStatus(401);
+    }
+    let event;
+    try {
+      event = JSON.parse(raw.toString("utf8"));
+    } catch {
+      return res.sendStatus(400);
+    }
+    if (event.event === "charge.success" && event.data?.reference) {
+      try {
+        const order = db
+          .prepare("SELECT * FROM orders WHERE reference = ?")
+          .get(String(event.data.reference));
+        if (
+          order &&
+          event.data.status === "success" &&
+          Number(event.data.amount) === order.total * 100 &&
+          order.payment_status !== "Paid"
+        ) {
+          const tx = db.transaction(() => {
+            db.prepare(
+              "UPDATE orders SET payment_status='Paid', status='Processing', updated_at=CURRENT_TIMESTAMP WHERE id=?"
+            ).run(order.id);
+            db.prepare(
+              "INSERT INTO order_events(order_id,status,note) VALUES(?,?,?)"
+            ).run(order.id, "Paid", "Paystack webhook verified");
+          });
+          tx();
+          sendOrderConfirmation({
+            ...order,
+            payment_status: "Paid",
+            status: "Processing"
+          }).catch((error) => {
+            console.error(
+              "MONOWEAR webhook email error:",
+              error.message
+            );
+          });
+        }
+      } catch (error) {
+        console.error(
+          "MONOWEAR webhook processing error:",
+          error.message
+        );
+        return res.sendStatus(500);
+      }
+    }
+    return res.sendStatus(200);
+  } catch (error) {
+    console.error("MONOWEAR Paystack webhook failed:", error.message);
+    return res.sendStatus(500);
   }
-} catch (error) {
-  console.error("MONOWEAR webhook processing error:", error.message);
-  return res.sendStatus(500);
-}
-
-}
-
-return res.sendStatus(200);
 });
 app.get("/api/orders/track/:reference",(req,res)=>{
  const o=db.prepare("SELECT reference,customer_name,status,payment_status,created_at,updated_at FROM orders WHERE reference=?").get(String(req.params.reference||"").slice(0,60));
