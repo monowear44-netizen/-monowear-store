@@ -1629,7 +1629,29 @@ app.get("/api/admin/waitlist", requireAdmin, (req, res) => {
 
 // Stock is NOT deducted when someone merely starts checkout.
 // It is deducted only after Paystack confirms payment.
+// Read a setting from the database, using a fallback if missing.
+function getSetting(key, fallback = "") {
+  const row = db.prepare(
+    "SELECT value FROM settings WHERE key = ?"
+  ).get(key);
 
+  if (!row || row.value === null || row.value === undefined) {
+    return Object.prototype.hasOwnProperty.call(defaults, key)
+      ? defaults[key]
+      : fallback;
+  }
+
+  return row.value;
+}
+
+// Read a setting as a valid, non-negative monetary number.
+function moneySetting(key, fallback = 0) {
+  const value = Number(getSetting(key, fallback));
+
+  return Number.isFinite(value) && value >= 0
+    ? value
+    : fallback;
+}
 function normalizeCheckoutItems(items) {
   if (!Array.isArray(items) || items.length === 0) {
     throw new Error("Your cart is empty.");
