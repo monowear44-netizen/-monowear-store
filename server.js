@@ -38,8 +38,11 @@ const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 // DATABASE
 // ============================================================
 
-const DATA_DIR = path.join(__dirname, "data");
-const UPLOAD_DIR = path.join(__dirname, "uploads");
+const STORAGE_DIR =
+  process.env.RENDER_DISK_PATH || "/var/data";
+
+const DATA_DIR = path.join(STORAGE_DIR, "data");
+const UPLOAD_DIR = path.join(STORAGE_DIR, "uploads");
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
