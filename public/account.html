@@ -735,7 +735,7 @@
   $("signupForm").addEventListener("submit", (event) =>
     submitAccountForm(
       event,
-      "/api/account/register",
+      "/api/customer/register",
       "signupForm",
       "signupMessage"
     )
@@ -743,7 +743,7 @@
   $("loginForm").addEventListener("submit", (event) =>
     submitAccountForm(
       event,
-      "/api/account/login",
+      "/api/customer/login",
       "loginForm",
       "loginMessage"
     )
@@ -752,7 +752,7 @@
     const button = $("signoutButton");
     button.disabled = true;
     try {
-      await api("/api/account/logout", {
+      await api("/api/customer/logout", {
         method: "POST",
         body: JSON.stringify({})
       });
