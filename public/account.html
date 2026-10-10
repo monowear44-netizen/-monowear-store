@@ -353,31 +353,33 @@
       );
     });
     async function loadCustomerAccount() {
-      try {
-        const response = await fetch("/api/account/me", {
-          credentials: "same-origin"
-        });
-        const result = await response.json().catch(() => ({}));
-        if (!response.ok || !result.ok || !result.user) {
-          return false;
-        }
-        const user = result.user;
-        signupForm.hidden = true;
-        loginForm.hidden = true;
-        signupTab.hidden = true;
-        loginTab.hidden = true;
-        accountPanel.hidden = false;
-        pageTitle.textContent = "Your account.";
-        pageIntro.hidden = true;
-        document.getElementById("welcomeMessage").textContent =
-          "Welcome, " + (user.name || "MONOWEAR customer") + ".";
-        document.getElementById("customerEmail").textContent =
-          user.email || "";
-        return true;
-      } catch {
-        return false;
-      }
+  try {
+    const response = await fetch("/api/account/me", {
+      credentials: "same-origin",
+      cache: "no-store"
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.authenticated || !result.customer) {
+      return false;
     }
+    const customer = result.customer;
+    signupForm.hidden = true;
+    loginForm.hidden = true;
+    signupTab.hidden = true;
+    loginTab.hidden = true;
+    accountPanel.hidden = false;
+    pageTitle.textContent = "Your account.";
+    pageIntro.hidden = true;
+    document.getElementById("welcomeMessage").textContent =
+      "Welcome, " + (customer.name || "MONOWEAR customer") + ".";
+    document.getElementById("customerEmail").textContent =
+      customer.email || "";
+    return true;
+  } catch (error) {
+    console.error("MONOWEAR account loading failed:", error);
+    return false;
+  }
+}
     document.getElementById("logoutButton").addEventListener("click", async () => {
       const button = document.getElementById("logoutButton");
       const message = document.getElementById("accountMessage");
