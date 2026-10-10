@@ -1,201 +1,258 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b0b0b">
-  <meta name="description" content="Manage your MONOWEAR account and orders.">
+  <meta name="theme-color" content="#101010">
+  <meta name="description" content="Manage your MONOWEAR customer account.">
   <title>My Account | MONOWEAR</title>
   <link rel="stylesheet" href="/styles.css">
-  <link rel="stylesheet" href="/studio.css">
   <style>
-    .account-main {
-      width: min(1050px, 92%);
-      margin: 0 auto;
-      padding: 70px 0 100px;
-      min-height: 65vh;
+    * {
+      box-sizing: border-box;
     }
-    .account-heading {
-      margin-bottom: 38px;
+    body {
+      margin: 0;
+      background: #101010;
+      color: #f5f5f5;
+      font-family: Arial, Helvetica, sans-serif;
     }
-    .account-heading .eyebrow,
-    .account-panel .eyebrow {
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .mw-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px 6%;
+      border-bottom: 1px solid #292929;
+      gap: 20px;
+    }
+    .mw-logo {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+    .mw-logo span {
+      font-size: 10px;
+      vertical-align: top;
+    }
+    .mw-nav {
+      display: flex;
+      gap: 22px;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+    }
+    .mw-main {
+      width: min(100% - 32px, 1000px);
+      margin: 65px auto 90px;
+    }
+    .mw-heading {
+      margin-bottom: 32px;
+    }
+    .mw-eyebrow {
+      color: #999;
       font-size: 10px;
       letter-spacing: 3px;
       text-transform: uppercase;
-      opacity: .65;
     }
-    .account-heading h1 {
-      font-size: clamp(35px, 7vw, 64px);
+    .mw-heading h1 {
+      font-size: clamp(36px, 8vw, 65px);
       line-height: 1;
       letter-spacing: -2px;
-      margin: 15px 0;
+      margin: 18px 0;
     }
-    .account-heading p:last-child {
-      opacity: .65;
-      max-width: 420px;
-      line-height: 1.7;
+    .mw-intro {
+      color: #aaa;
+      font-size: 13px;
+      line-height: 1.8;
+      max-width: 460px;
     }
-    .account-columns {
+    .mw-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 22px;
+      gap: 20px;
     }
-    .account-panel {
+    .mw-card {
+      background: #171717;
+      border: 1px solid #303030;
       padding: clamp(22px, 4vw, 38px);
-      border: 1px solid rgba(255,255,255,.14);
-      border-radius: 3px;
-      background: rgba(255,255,255,.025);
     }
-    .account-panel h2 {
-      font-size: clamp(24px, 4vw, 32px);
-      margin: 12px 0 28px;
-      letter-spacing: -.7px;
+    .mw-card h2 {
+      margin: 15px 0 28px;
+      font-size: 27px;
+      letter-spacing: -1px;
     }
-    .account-panel label {
+    .mw-form label {
       display: block;
-      margin: 0 0 19px;
-      font-size: 12px;
-      letter-spacing: .5px;
+      margin-bottom: 20px;
+      color: #ddd;
+      font-size: 10px;
+      letter-spacing: 1px;
     }
-    .account-panel input {
+    .mw-form input {
       display: block;
       width: 100%;
-      box-sizing: border-box;
       margin-top: 9px;
-      padding: 14px 12px;
-      color: inherit;
-      background: rgba(255,255,255,.035);
-      border: 1px solid rgba(255,255,255,.2);
-      border-radius: 2px;
+      padding: 15px 12px;
+      border: 1px solid #393939;
+      border-radius: 0;
+      background: #101010;
+      color: #fff;
       font: inherit;
-      outline: none;
+      font-size: 14px;
     }
-    .account-panel input:focus {
-      border-color: rgba(255,255,255,.75);
+    .mw-form input:focus {
+      outline: 1px solid #eee;
+      border-color: #eee;
     }
-    .account-panel button {
+    .mw-button {
+      display: block;
+      width: 100%;
+      padding: 16px 12px;
+      border: 1px solid #f5f5f5;
+      border-radius: 0;
+      background: #f5f5f5;
+      color: #111;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
       cursor: pointer;
     }
-    .account-panel button:disabled {
+    .mw-button:disabled {
       opacity: .55;
       cursor: wait;
     }
-    .account-panel .full {
-      width: 100%;
-      margin-top: 7px;
+    .mw-button.secondary {
+      width: auto;
+      min-width: 120px;
+      border-color: #444;
+      background: transparent;
+      color: #fff;
     }
-    .form-message {
+    .mw-message {
       min-height: 20px;
-      margin: 16px 0 0;
+      margin: 15px 0 0;
       font-size: 12px;
-      line-height: 1.6;
+      line-height: 1.7;
       overflow-wrap: anywhere;
     }
-    .form-message[data-type="error"] {
-      color: #ff8585;
+    .mw-message.error {
+      color: #ff9696;
     }
-    .form-message[data-type="success"] {
-      color: #a8e6b0;
+    .mw-message.success {
+      color: #a5e6b1;
     }
-    .account-switch {
+    .mw-switch {
       margin-top: 22px;
+      color: #aaa;
       font-size: 12px;
       line-height: 1.8;
-      opacity: .75;
     }
-    .account-switch button {
+    .mw-switch button {
       padding: 0;
       border: 0;
       background: none;
-      color: inherit;
+      color: #fff;
       text-decoration: underline;
+      cursor: pointer;
       font: inherit;
     }
-    .account-dashboard {
-      margin-top: 10px;
+    .mw-dashboard {
+      max-width: 720px;
     }
-    .account-top {
+    .mw-dashboard-top {
       display: flex;
-      align-items: flex-start;
       justify-content: space-between;
-      gap: 20px;
+      align-items: flex-start;
       flex-wrap: wrap;
-      margin-bottom: 38px;
+      gap: 20px;
     }
-    .account-top h2 {
-      margin-bottom: 8px;
+    .mw-dashboard h2 {
+      font-size: clamp(26px, 5vw, 40px);
+      overflow-wrap: anywhere;
     }
-    .account-email {
-      opacity: .65;
+    .mw-email {
+      color: #aaa;
       font-size: 13px;
       overflow-wrap: anywhere;
     }
-    .account-section {
-      border-top: 1px solid rgba(255,255,255,.15);
+    .mw-orders {
+      margin-top: 35px;
       padding-top: 25px;
-      margin-top: 25px;
+      border-top: 1px solid #333;
     }
-    .account-section h3 {
-      font-size: 18px;
-      margin-bottom: 18px;
+    .mw-orders h3 {
+      font-size: 17px;
     }
-    .account-empty {
-      font-size: 13px;
-      opacity: .7;
-      line-height: 1.8;
-    }
-    .account-order {
-      padding: 18px 0;
-      border-bottom: 1px solid rgba(255,255,255,.12);
+    .mw-orders p {
+      color: #aaa;
       font-size: 13px;
       line-height: 1.8;
     }
-    .account-order strong {
-      display: block;
-      margin-bottom: 5px;
+    .mw-footer {
+      padding: 35px 20px;
+      border-top: 1px solid #292929;
+      text-align: center;
+      color: #888;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      line-height: 2;
+    }
+    .mw-footer .mw-logo {
+      display: inline-block;
+      color: #fff;
+      margin-bottom: 10px;
     }
     [hidden] {
       display: none !important;
     }
     @media (max-width: 680px) {
-      .account-main {
-        padding-top: 45px;
+      .mw-header {
+        padding: 20px;
       }
-      .account-columns {
+      .mw-nav {
+        gap: 13px;
+        font-size: 9px;
+      }
+      .mw-main {
+        margin-top: 40px;
+      }
+      .mw-grid {
         grid-template-columns: 1fr;
       }
-      .account-heading h1 {
-        letter-spacing: -1px;
+      .mw-heading h1 {
+        letter-spacing: -1.5px;
       }
     }
   </style>
 </head>
 <body>
-  <header class="site-header">
-    <a class="wordmark" href="/" aria-label="MONOWEAR home">
-      MONOWEAR<span>®</span>
-    </a>
-    <nav>
+  <header class="mw-header">
+    <a class="mw-logo" href="/">MONOWEAR<span>®</span></a>
+    <nav class="mw-nav">
       <a href="/#shop">SHOP</a>
       <a href="/">HOME</a>
     </nav>
   </header>
-  <main class="account-main">
-    <div class="account-heading">
-      <p class="eyebrow">MONOWEAR MEMBERS</p>
-      <h1>Your space.<br>Your account.</h1>
-      <p>Sign in to manage your account and keep track of your orders.</p>
-    </div>
-    <div id="accountGuest" class="account-columns">
-      <form id="registerForm" class="panel account-panel">
-        <p class="eyebrow">NEW HERE?</p>
+  <main class="mw-main">
+    <section class="mw-heading">
+      <p class="mw-eyebrow">THE MONOWEAR COMMUNITY</p>
+      <h1 id="pageTitle">Your space.<br>Your account.</h1>
+      <p class="mw-intro" id="pageIntro">
+        Create your account or sign in to access your MONOWEAR customer space.
+      </p>
+    </section>
+    <section id="accountGuest" class="mw-grid">
+      <form id="registerForm" class="mw-card mw-form">
+        <p class="mw-eyebrow">NEW HERE?</p>
         <h2>Create account</h2>
         <label>
-          Full name
+          FULL NAME
           <input
-            name="name"
             type="text"
+            name="name"
             autocomplete="name"
             minlength="2"
             maxlength="100"
@@ -203,126 +260,123 @@
           >
         </label>
         <label>
-          Email address
+          EMAIL ADDRESS
           <input
-            name="email"
             type="email"
+            name="email"
             autocomplete="email"
             maxlength="254"
             required
           >
         </label>
         <label>
-          Phone number <span style="opacity:.55">(optional)</span>
+          PHONE NUMBER (OPTIONAL)
           <input
-            name="phone"
             type="tel"
+            name="phone"
             autocomplete="tel"
             maxlength="30"
           >
         </label>
         <label>
-          Password (at least 10 characters)
+          PASSWORD — AT LEAST 10 CHARACTERS
           <input
-            name="password"
             type="password"
+            name="password"
             autocomplete="new-password"
             minlength="10"
             maxlength="128"
             required
           >
         </label>
-        <button id="registerButton" class="primary full" type="submit">
+        <button class="mw-button" type="submit">
           CREATE ACCOUNT ↗
         </button>
-        <p
-          class="form-message"
-          id="registerMessage"
-          role="status"
-          aria-live="polite"
-        ></p>
-        <p class="account-switch">
-          Already have an account?
-          <button type="button" data-show-form="loginForm">Sign in</button>
+        <p id="registerMessage"
+           class="mw-message"
+           role="status"
+           aria-live="polite"></p>
+        <p class="mw-switch">
+          Already registered?
+          <button type="button" data-mode="login">Sign in</button>
         </p>
       </form>
-      <form id="loginForm" class="panel account-panel">
-        <p class="eyebrow">WELCOME BACK</p>
+      <form id="loginForm" class="mw-card mw-form">
+        <p class="mw-eyebrow">WELCOME BACK</p>
         <h2>Sign in</h2>
         <label>
-          Email address
+          EMAIL ADDRESS
           <input
-            name="email"
             type="email"
+            name="email"
             autocomplete="email"
             maxlength="254"
             required
           >
         </label>
         <label>
-          Password
+          PASSWORD
           <input
-            name="password"
             type="password"
+            name="password"
             autocomplete="current-password"
             maxlength="128"
             required
           >
         </label>
-        <button id="loginButton" class="primary full" type="submit">
+        <button class="mw-button" type="submit">
           SIGN IN ↗
         </button>
-        <p
-          class="form-message"
-          id="accountLoginMessage"
-          role="status"
-          aria-live="polite"
-        ></p>
-        <p class="account-switch">
+        <p id="loginMessage"
+           class="mw-message"
+           role="status"
+           aria-live="polite"></p>
+        <p class="mw-switch">
           New to MONOWEAR?
-          <button type="button" data-show-form="registerForm">
+          <button type="button" data-mode="register">
             Create an account
           </button>
         </p>
       </form>
-    </div>
-    <section
-      id="accountDashboard"
-      class="panel account-panel account-dashboard"
-      hidden
-    >
-      <div class="account-top">
+    </section>
+    <section id="accountDashboard"
+             class="mw-card mw-dashboard"
+             hidden>
+      <div class="mw-dashboard-top">
         <div>
-          <p class="eyebrow">YOUR ACCOUNT</p>
+          <p class="mw-eyebrow">YOUR ACCOUNT</p>
           <h2 id="welcomeName">Welcome back.</h2>
-          <p id="accountEmail" class="account-email"></p>
+          <p id="accountEmail" class="mw-email"></p>
         </div>
-        <button id="accountLogout" class="secondary" type="button">
-          LOG OUT
+        <button id="logoutButton"
+                class="mw-button secondary"
+                type="button">
+          SIGN OUT
         </button>
       </div>
-      <div class="account-section">
+      <div class="mw-orders">
         <h3>Your orders</h3>
-        <div id="myOrders">
-          <p class="account-empty">Loading your orders...</p>
-        </div>
+        <p>
+          Your account is active. Order history will appear here once the
+          order-history connection is configured.
+        </p>
       </div>
-      <p
-        id="dashboardMessage"
-        class="form-message"
-        role="status"
-        aria-live="polite"
-      ></p>
+      <p id="dashboardMessage"
+         class="mw-message"
+         role="status"
+         aria-live="polite"></p>
     </section>
   </main>
-  <footer>
-    <a class="wordmark" href="/">MONOWEAR<span>®</span></a>
-    <p>LIVE THE NAME. WEAR THE MEANING.</p>
-    <div class="footer-links">
-      <a href="/policies.html">POLICIES</a>
-      <a href="/">HOME</a>
-    </div>
-    <small>© MONOWEAR</small>
+  <footer class="mw-footer">
+    <a class="mw-logo" href="/">MONOWEAR<span>®</span></a>
+    <br>
+    LIVE THE NAME. WEAR THE MEANING.
+    <br>
+    <a href="/policies.html">POLICIES</a>
+    &nbsp; · &nbsp;
+    <a href="/">HOME</a>
+    <br>
+    © MONOWEAR
   </footer>
   <script>
     (() => {
@@ -331,50 +385,38 @@
       const registerForm = document.getElementById("registerForm");
       const loginForm = document.getElementById("loginForm");
       const registerMessage = document.getElementById("registerMessage");
-      const loginMessage = document.getElementById("accountLoginMessage");
+      const loginMessage = document.getElementById("loginMessage");
       const dashboardMessage = document.getElementById("dashboardMessage");
-      const ordersContainer = document.getElementById("myOrders");
-      let requestInProgress = false;
-      function showMessage(element, message, type = "") {
-        element.textContent = message;
-        element.dataset.type = type;
+      let busy = false;
+      function message(element, text, type = "") {
+        element.textContent = text;
+        element.className = "mw-message" + (type ? " " + type : "");
       }
-      async function apiRequest(url, options = {}) {
+      async function request(url, options = {}) {
         const response = await fetch(url, {
           credentials: "same-origin",
+          cache: "no-store",
           ...options,
           headers: {
-            ...(options.body ? { "Content-Type": "application/json" } : {}),
+            ...(options.body
+              ? { "Content-Type": "application/json" }
+              : {}),
             ...(options.headers || {})
           }
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
           throw new Error(
-            data.error || data.message || "Something went wrong. Please try again."
+            data.error ||
+            data.message ||
+            "The request failed. Please try again."
           );
         }
         return data;
       }
-      function setBusy(form, busy, text) {
-        const button = form.querySelector('button[type="submit"]');
-        if (!button) return;
-        if (busy) {
-          button.dataset.originalText = button.textContent;
-          button.textContent = text;
-          button.disabled = true;
-        } else {
-          button.textContent =
-            button.dataset.originalText || button.textContent;
-          button.disabled = false;
-        }
-      }
-      function showGuest(message = "") {
+      function showGuest() {
         dashboard.hidden = true;
         guest.hidden = false;
-        if (message) {
-          showMessage(loginMessage, message, "error");
-        }
       }
       function showDashboard(customer) {
         guest.hidden = true;
@@ -383,120 +425,148 @@
           "Welcome, " + (customer.name || "MONOWEAR member") + ".";
         document.getElementById("accountEmail").textContent =
           customer.email || "";
-        ordersContainer.innerHTML =
-          '<p class="account-empty">Your account is active. Your order history will appear here when the order-history service is connected.</p>';
       }
       async function loadCustomerAccount() {
-        const result = await apiRequest("/api/account/me", {
-          method: "GET",
-          cache: "no-store"
+        const result = await request("/api/account/me", {
+          method: "GET"
         });
-        if (!result.authenticated || !result.customer) {
+        /*
+         * This matches the actual server response:
+         * { authenticated: true, customer: {...} }
+         */
+        if (result.authenticated !== true || !result.customer) {
           showGuest();
           return false;
         }
         showDashboard(result.customer);
         return true;
       }
-      async function submitAccountForm(form, endpoint, messageElement, busyText) {
-        if (requestInProgress) return;
-        requestInProgress = true;
-        setBusy(form, true, busyText);
-        showMessage(messageElement, "");
-        const formData = new FormData(form);
-        const payload = Object.fromEntries(formData.entries());
+      async function submitForm(form, endpoint, messageElement) {
+        if (busy) return;
+        busy = true;
+        const button = form.querySelector('button[type="submit"]');
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = "PLEASE WAIT...";
+        message(messageElement, "");
+        const payload = Object.fromEntries(new FormData(form).entries());
         if (payload.email) {
           payload.email = payload.email.trim().toLowerCase();
         }
         try {
-          const result = await apiRequest(endpoint, {
+          const result = await request(endpoint, {
             method: "POST",
             body: JSON.stringify(payload)
           });
           if (result.ok !== true) {
-            throw new Error("The request was not completed. Please try again.");
+            throw new Error("The server did not confirm the request.");
           }
           /*
-           * The server must save the session cookie before the account
-           * page can load the signed-in customer's details.
+           * Verify the session independently after registration/login.
            */
-          const authenticated = await loadCustomerAccount();
+          let authenticated = false;
+          try {
+            authenticated = await loadCustomerAccount();
+          } catch (error) {
+            console.error("Account session check failed:", error);
+          }
           if (!authenticated) {
-            showMessage(
+            showGuest();
+            message(
               messageElement,
-              "Your request was accepted, but your sign-in session was not found. Please try signing in again.",
+              "The server accepted your request, but your signed-in session could not be verified. This needs a server-side session fix.",
               "error"
             );
             return;
           }
           form.reset();
+          message(messageElement, "");
         } catch (error) {
-          showMessage(
+          message(
             messageElement,
             error.message || "Unable to complete your request.",
             "error"
           );
         } finally {
-          requestInProgress = false;
-          setBusy(form, false);
+          busy = false;
+          button.disabled = false;
+          button.textContent = originalText;
         }
       }
       registerForm.addEventListener("submit", event => {
         event.preventDefault();
-        submitAccountForm(
+        submitForm(
           registerForm,
           "/api/account/register",
-          registerMessage,
-          "CREATING ACCOUNT..."
+          registerMessage
         );
       });
       loginForm.addEventListener("submit", event => {
         event.preventDefault();
-        submitAccountForm(
+        submitForm(
           loginForm,
           "/api/account/login",
-          loginMessage,
-          "SIGNING IN..."
+          loginMessage
         );
       });
-      document.querySelectorAll("[data-show-form]").forEach(button => {
+      document.querySelectorAll("[data-mode]").forEach(button => {
         button.addEventListener("click", () => {
-          const target = document.getElementById(button.dataset.showForm);
-          if (!target) return;
-          target.scrollIntoView({ behavior: "smooth", block: "center" });
-          const input = target.querySelector(
-            'input[name="email"]'
-          );
-          if (input) {
-            setTimeout(() => input.focus(), 300);
-          }
+          const showLogin = button.dataset.mode === "login";
+          document.getElementById("pageTitle").innerHTML =
+            showLogin ? "Welcome<br>back." : "Your space.<br>Your account.";
+          document.getElementById("pageIntro").textContent =
+            showLogin
+              ? "Sign in to access your MONOWEAR customer account."
+              : "Create your account to get started with MONOWEAR.";
+          message(registerMessage, "");
+          message(loginMessage, "");
+          registerForm.hidden = showLogin;
+          loginForm.hidden = !showLogin;
+          const visibleForm = showLogin ? loginForm : registerForm;
+          visibleForm.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+          });
         });
       });
-      document.getElementById("accountLogout").addEventListener("click", async () => {
-        const button = document.getElementById("accountLogout");
-        button.disabled = true;
-        showMessage(dashboardMessage, "");
-        try {
-          await apiRequest("/api/account/logout", {
-            method: "POST",
-            body: JSON.stringify({})
-          });
-          dashboard.hidden = true;
-          guest.hidden = false;
-          loginForm.reset();
-          showMessage(loginMessage, "You have been signed out.", "success");
-          loginForm.scrollIntoView({ behavior: "smooth", block: "center" });
-        } catch (error) {
-          showMessage(
-            dashboardMessage,
-            error.message || "Unable to sign out. Please try again.",
-            "error"
-          );
-        } finally {
-          button.disabled = false;
+      document.getElementById("logoutButton").addEventListener(
+        "click",
+        async () => {
+          const button = document.getElementById("logoutButton");
+          button.disabled = true;
+          message(dashboardMessage, "");
+          try {
+            await request("/api/account/logout", {
+              method: "POST",
+              body: JSON.stringify({})
+            });
+            showGuest();
+            loginForm.reset();
+            message(
+              loginMessage,
+              "You have signed out.",
+              "success"
+            );
+            loginForm.scrollIntoView({
+              behavior: "smooth",
+              block: "center"
+            });
+          } catch (error) {
+            message(
+              dashboardMessage,
+              error.message || "Unable to sign out.",
+              "error"
+            );
+          } finally {
+            button.disabled = false;
+          }
         }
-      });
-      loadCustomerAccount().catch(() => {
+      );
+      /*
+       * Restore an existing login when the customer revisits the page.
+       */
+      loadCustomerAccount().catch(error => {
+        console.error("Could not restore customer session:", error);
         showGuest();
       });
     })();
