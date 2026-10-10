@@ -1,7 +1,8 @@
 {
-“name”: “monowear-commerce”,
-“version”: “2.0.0”,
-“private”: true,
+{{
+  "name": "monowear-commerce",
+  "version": "2.0.0",
+  "private": true,
 “description”: “MONOWEAR full-stack storefront and admin studio”,
 “main”: “server.js”,
 “scripts”: {
