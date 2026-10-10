@@ -272,7 +272,6 @@ return res.redirect("/?payment=not-configured");
 
 try {
 const response = await fetch(
-const response = await fetch(
   "https://api.paystack.co/transaction/verify/" + encodeURIComponent(reference),
 {
 {
