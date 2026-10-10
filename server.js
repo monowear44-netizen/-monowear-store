@@ -230,6 +230,8 @@ const defaults = {
   x: "https://x.com/monowear44",
   contact_email: process.env.CONTACT_EMAIL || "",
   maintenance_mode: "false"
+  hero_background_image: "",
+waitlist_background_image: "",
 };
 
 const getSettingStatement = db.prepare(
@@ -868,7 +870,52 @@ app.post("/api/customer/logout", (req, res) => {
     success: true
   });
 });
+// ============================================================
+// PUBLIC STORE API
+// ============================================================
 
+app.get("/api/store", (req, res) => {
+  try {
+    const products = db.prepare(`
+      SELECT *
+      FROM products
+      WHERE published = 1
+      ORDER BY sort_order ASC, id DESC
+    `).all();
+
+    const collections = db.prepare(`
+      SELECT *
+      FROM collections
+      WHERE published = 1
+      ORDER BY sort_order ASC, id ASC
+    `).all();
+
+    const rows = db.prepare(`
+      SELECT key, value FROM settings
+    `).all();
+
+    const settings = {};
+
+    for (const row of rows) {
+      settings[row.key] = row.value;
+    }
+
+    res.json({
+      products: products.map(productWithCollections),
+      collections: collections.map(collection => ({
+        ...safeCollection(collection),
+        products: getCollectionProducts(collection.id)
+      })),
+      settings
+    });
+  } catch (error) {
+    console.error("Store API error:", error);
+
+    res.status(500).json({
+      error: "Could not load the store."
+    });
+  }
+});
 // ============================================================
 // PUBLIC PRODUCTS
 // ============================================================
@@ -1011,6 +1058,8 @@ app.put("/api/admin/settings", requireAdmin, (req, res) => {
     "x",
     "contact_email",
     "maintenance_mode"
+    "hero_background_image",
+"waitlist_background_image"
   ];
 
   const updates = req.body || {};
@@ -1513,7 +1562,28 @@ app.post(
     });
   }
 );
+// ============================================================
+// STUDIO IMAGE UPLOAD COMPATIBILITY
+// ============================================================
 
+app.post(
+  "/api/admin/uploads",
+  requireAdmin,
+  upload.single("image"),
+  (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({
+        error: "Please select an image."
+      });
+    }
+
+    res.json({
+      success: true,
+      filename: req.file.filename,
+      url: `/uploads/${req.file.filename}`
+    });
+  }
+);
 // ============================================================
 // NEWSLETTER
 // ============================================================
