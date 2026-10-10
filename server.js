@@ -220,59 +220,25 @@ ensureColumn("orders", "updated_at", "TEXT DEFAULT CURRENT_TIMESTAMP");
 // ============================================================
 
 const defaults = {
-store_name: “MONOWEAR”,
-brand_name: “MONOWEAR”,
-tagline: “LIVE THE NAME. WEAR THE MEANING.”,
-hero_title: “HELP IS ON THE WAY.”,
-hero_subtitle:
-“A distressed collection about pressure, persistence and finding a way through.”,
-hero_cta: “SHOP THE DROP ↗”,
-currency: “NGN”,
-shipping_fee: “0”,
-free_shipping_threshold: “0”,
-announcement: “HELP IS ON THE WAY — COMING SOON”,
-instagram: “https://www.instagram.com/”,
-x: “https://x.com/monowear44”,
-contact_email: process.env.CONTACT_EMAIL || “”,
-maintenance_mode: “false”,
-hero_background_image: “”,
-waitlist_background_image: “”,
-policy_returns: “”,
-policy_shipping: “”
+  store_name: "MONOWEAR",
+  brand_name: "MONOWEAR",
+  tagline: "LIVE THE NAME. WEAR THE MEANING.",
+  hero_title: "HELP IS ON THE WAY.",
+  hero_subtitle: "A distressed collection about pressure, persistence and finding a way through.",
+  hero_cta: "SHOP THE DROP ↗",
+  currency: "NGN",
+  shipping_fee: "0",
+  free_shipping_threshold: "0",
+  announcement: "HELP IS ON THE WAY — COMING SOON",
+  instagram: "https://www.instagram.com/",
+  x: "https://x.com/monowear44",
+  contact_email: process.env.CONTACT_EMAIL || "",
+  maintenance_mode: "false",
+  hero_background_image: "",
+  waitlist_background_image: "",
+  policy_returns: "",
+  policy_shipping: ""
 };
-
-const allowed = [
-“store_name”,
-“brand_name”,
-“tagline”,
-“hero_title”,
-“hero_subtitle”,
-“hero_cta”,
-“currency”,
-“shipping_fee”,
-“free_shipping_threshold”,
-“announcement”,
-“instagram”,
-“x”,
-“contact_email”,
-“maintenance_mode”,
-“hero_background_image”,
-“waitlist_background_image”,
-“policy_returns”,
-“policy_shipping”
-];
-
-const getSettingStatement = db.prepare(
-“SELECT value FROM settings WHERE key = ?”
-);
-
-const setSettingStatement = db.prepare(INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value);
-
-for (const [key, value] of Object.entries(defaults)) {
-if (!getSettingStatement.get(key)) {
-setSettingStatement.run(key, value);
-}
-}
 // ============================================================
 // INITIAL ADMIN
 // ============================================================
