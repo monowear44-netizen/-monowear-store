@@ -338,9 +338,8 @@
       $("products").innerHTML = products.map(product => {
         const image = productImage(product);
 
-        const slug = product.slug
-          ? "/product/" + encodeURIComponent(product.slug)
-          : "/product.html?id=" + encodeURIComponent(product.id);
+        const slug = "/product.html?id=" +
+  encodeURIComponent(product.id);
 
         return `
           <article class="product">
