@@ -87,7 +87,7 @@ function getSettings(){return Object.fromEntries(db.prepare("SELECT key,value FR
 async function sendOrderConfirmation(order) {
 if (!resend || !order || !order.email) return;
 
-const items = JSON.parse(order.items_json || “[]”);
+const items = JSON.parse(order.items_json || "[]");
 const logoUrl = “https://monowear-store.onrender.com/monowear-logo.png”;
 
 const itemRows = items.map(item => <tr> <td style="padding:10px;border-bottom:1px solid #333;"> ${String(item.name).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))} — ${String(item.size || "")} × ${Number(item.qty) || 1} </td> <td style="padding:10px;border-bottom:1px solid #333;text-align:right;"> ₦${(Number(item.price) * Number(item.qty)).toLocaleString("en-NG")} </td> </tr>).join(””);
