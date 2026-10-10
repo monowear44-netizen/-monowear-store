@@ -89,7 +89,7 @@ if (!resend || !order || !order.email) return;
 
 try {
 const items = JSON.parse(order.items_json || "[]");
-const logoUrl = “https://monowear-store.onrender.com/monowear-logo.png”;
+const logoUrl = "https://monowear-store.onrender.com/monowear-logo.png";
 
 const escapeHtml = (value) =>
   String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -142,7 +142,7 @@ await resend.emails.send({
 });
 
 } catch (error) {
-console.error(“MONOWEAR confirmation email failed:”, error.message);
+console.error("MONOWEAR confirmation email failed:", error.message);
 }
 }
 function productOut(p){return {...p,sizes:(p.sizes||"").split(",").map(x=>x.trim()).filter(Boolean),featured:!!p.featured,published:!!p.published};}
@@ -262,20 +262,20 @@ app.post("/api/checkout",checkoutLimiter,async(req,res)=>{
   res.status(201).json({order_id:orderId,reference,subtotal,shipping:actualShipping,total,payment_required:true,authorization_url:result.data.authorization_url,message:"Order created. Continue to secure payment."});
  }catch(e){res.status(502).json({error:"Order was created, but payment could not be initialized. Contact the store owner with reference "+reference+"."});}
 });
-app.get(”/payment/verify”, async (req, res) => {
-const reference = String(req.query.reference || “”);
+app.get("/payment/verify", async (req, res) => {
+const reference = String(req.query.reference || "");
 
-if (!reference) return res.redirect(”/?payment=missing”);
+if (!reference) return res.redirect("/?payment=missing");
 if (!process.env.PAYSTACK_SECRET_KEY) {
-return res.redirect(”/?payment=not-configured”);
+return res.redirect("/?payment=not-configured");
 }
 
 try {
 const response = await fetch(
-“https://api.paystack.co/transaction/verify/” + encodeURIComponent(reference),
+"https://api.paystack.co/transaction/verify/"
 {
 headers: {
-Authorization: “Bearer “ + process.env.PAYSTACK_SECRET_KEY
+Authorization: "Bearer " + process.env.PAYSTACK_SECRET_KEY
 }
 }
 );
@@ -309,25 +309,25 @@ return res.redirect(
 );
 
 } catch (error) {
-console.error(“MONOWEAR payment verification failed:”, error.message);
-return res.redirect(”/?payment=error”);
+console.error("MONOWEAR payment verification failed:", error.message);
+return res.redirect("/?payment=error");
 }
 });
-app.post(”/api/payments/paystack-webhook”, (req, res) => {
+app.post("/api/payments/paystack-webhook", (req, res) => {
 const secret = process.env.PAYSTACK_SECRET_KEY;
 
 if (!secret) return res.sendStatus(200);
 
-const signature = req.headers[“x-paystack-signature”];
+const signature = req.headers["x-paystack-signature"];
 const raw = req.rawBody || Buffer.alloc(0);
 
 const expected = crypto
-.createHmac(“sha512”, secret)
+.createHmac("sha512", secret)
 .update(raw)
-.digest(“hex”);
+.digest("hex");
 
 if (
-typeof signature !== “string” ||
+typeof signature !== "string" ||
 signature.length !== expected.length ||
 !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
 ) {
@@ -337,16 +337,16 @@ return res.sendStatus(401);
 let event;
 
 try {
-event = JSON.parse(raw.toString(“utf8”));
+event = JSON.parse(raw.toString("utf8"));
 } catch {
 return res.sendStatus(400);
 }
 
-if (event.event === “charge.success” && event.data?.reference) {
+if (event.event === "charge.success" && event.data?.reference) {
 try {
 const order = db
-.prepare(“SELECT * FROM orders WHERE reference = ?”)
-.get(String(event.data.reference));
+.prepare("SELECT * FROM orders WHERE reference = ?")
+..get(String(event.data.reference));
 
   if (
     order &&
