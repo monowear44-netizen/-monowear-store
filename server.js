@@ -219,54 +219,60 @@ ensureColumn("orders", "updated_at", "TEXT DEFAULT CURRENT_TIMESTAMP");
 // DEFAULT SETTINGS
 // ============================================================
 
+const defaults = {
+store_name: “MONOWEAR”,
+brand_name: “MONOWEAR”,
+tagline: “LIVE THE NAME. WEAR THE MEANING.”,
+hero_title: “HELP IS ON THE WAY.”,
+hero_subtitle:
+“A distressed collection about pressure, persistence and finding a way through.”,
+hero_cta: “SHOP THE DROP ↗”,
+currency: “NGN”,
+shipping_fee: “0”,
+free_shipping_threshold: “0”,
+announcement: “HELP IS ON THE WAY — COMING SOON”,
+instagram: “https://www.instagram.com/”,
+x: “https://x.com/monowear44”,
+contact_email: process.env.CONTACT_EMAIL || “”,
+maintenance_mode: “false”,
+hero_background_image: “”,
+waitlist_background_image: “”,
+policy_returns: “”,
+policy_shipping: “”
+};
+
 const allowed = [
-  "brand_name",
-  "tagline",
-  "hero_title",
-  "hero_subtitle",
-  "hero_cta",
-  "announcement",
-  "instagram",
-  "x",
-  "contact_email",
-  "shipping_fee",
-  "free_shipping_threshold",
-  "policy_returns",
-  "policy_shipping",
-  "hero_background_image",
-  "waitlist_background_image"
+“store_name”,
+“brand_name”,
+“tagline”,
+“hero_title”,
+“hero_subtitle”,
+“hero_cta”,
+“currency”,
+“shipping_fee”,
+“free_shipping_threshold”,
+“announcement”,
+“instagram”,
+“x”,
+“contact_email”,
+“maintenance_mode”,
+“hero_background_image”,
+“waitlist_background_image”,
+“policy_returns”,
+“policy_shipping”
 ];
 
 const getSettingStatement = db.prepare(
-  "SELECT value FROM settings WHERE key = ?"
+“SELECT value FROM settings WHERE key = ?”
 );
 
-const setSettingStatement = db.prepare(`
-  INSERT INTO settings (key, value)
-  VALUES (?, ?)
-  ON CONFLICT(key) DO UPDATE SET value = excluded.value
-`);
+const setSettingStatement = db.prepare(INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value);
 
 for (const [key, value] of Object.entries(defaults)) {
-  if (!getSettingStatement.get(key)) {
-    setSettingStatement.run(key, value);
-  }
+if (!getSettingStatement.get(key)) {
+setSettingStatement.run(key, value);
 }
-
-function getSetting(key, fallback = "") {
-  const row = getSettingStatement.get(key);
-  return row ? row.value : fallback;
 }
-
-function setSetting(key, value) {
-  setSettingStatement.run(key, String(value ?? ""));
-}
-
-function moneySetting(key, fallback = 0) {
-  const number = Number(getSetting(key, String(fallback)));
-  return Number.isFinite(number) ? number : fallback;
-}
-
 // ============================================================
 // INITIAL ADMIN
 // ============================================================
@@ -1038,17 +1044,17 @@ app.get("/api/collections/:slug", (req, res) => {
 app.get("/api/store-settings", (req, res) => {
   const rows = db.prepare(`
     SELECT key, value FROM settings
-    WHERE key IN ('store_name','tagline','announcement','hero_background_image','waitlist_background_image')
-  `).all();
-  const settings = {};
-  for (const row of rows) settings[row.key] = row.value;
-  res.set("Cache-Control", "no-store");
-  res.json(settings);
-});
-
-app.get("/api/admin/settings", requireAdmin, (req, res) => {
-  const rows = db.prepare(`
-    SELECT key, value FROM settings ORDER BY key ASC
+    WHERE key IN (
+      'store_name',
+      'brand_name',
+      'tagline',
+      'announcement',
+      'hero_title',
+      'hero_subtitle',
+      'hero_cta',
+      'hero_background_image',
+      'waitlist_background_image'
+    )
   `).all();
 
   const settings = {};
@@ -1057,39 +1063,9 @@ app.get("/api/admin/settings", requireAdmin, (req, res) => {
     settings[row.key] = row.value;
   }
 
+  res.set("Cache-Control", "no-store");
   res.json(settings);
 });
-
-app.put("/api/admin/settings", requireAdmin, (req, res) => {
-  const allowed = [
-    "store_name",
-    "tagline",
-    "currency",
-    "shipping_fee",
-    "free_shipping_threshold",
-    "announcement",
-    "instagram",
-    "x",
-    "contact_email",
-    "maintenance_mode",
-    "hero_background_image",
-    "waitlist_background_image"
-  ];
-
-  const updates = req.body || {};
-
-  for (const key of allowed) {
-    if (Object.prototype.hasOwnProperty.call(updates, key)) {
-      setSetting(key, updates[key]);
-    }
-  }
-
-  res.json({
-    success: true,
-    message: "Settings saved."
-  });
-});
-
 // ============================================================
 // ADMIN PRODUCT MANAGEMENT
 // ============================================================
