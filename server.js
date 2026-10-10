@@ -229,7 +229,7 @@ const defaults = {
   instagram: "https://www.instagram.com/",
   x: "https://x.com/monowear44",
   contact_email: process.env.CONTACT_EMAIL || "",
-  maintenance_mode: "false"
+  maintenance_mode: "false",
   hero_background_image: "",
 waitlist_background_image: "",
 };
