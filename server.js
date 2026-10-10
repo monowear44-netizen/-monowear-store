@@ -2526,7 +2526,56 @@ app.use((error, req, res, next) => {
 // ============================================================
 // START SERVER
 // ============================================================
+// ============================================================
+// MONOWEAR STUDIO — SAVE STORE SETTINGS
+// ============================================================
 
+app.put("/api/admin/settings", requireAdmin, (req, res) => {
+  try {
+    const body = req.body || {};
+
+    const allowedKeys = Object.keys(defaults);
+
+    const saveSettings = db.transaction(() => {
+      const statement = db.prepare(`
+        INSERT INTO settings (key, value)
+        VALUES (?, ?)
+        ON CONFLICT(key)
+        DO UPDATE SET value = excluded.value
+      `);
+
+      for (const key of allowedKeys) {
+        if (Object.prototype.hasOwnProperty.call(body, key)) {
+          statement.run(key, String(body[key] ?? ""));
+        }
+      }
+    });
+
+    saveSettings();
+
+    const rows = db.prepare(
+      "SELECT key, value FROM settings"
+    ).all();
+
+    const settings = Object.fromEntries(
+      rows.map(row => [row.key, row.value])
+    );
+
+    res.set("Cache-Control", "no-store");
+
+    res.json({
+      success: true,
+      message: "Store settings saved successfully.",
+      settings
+    });
+  } catch (error) {
+    console.error("Save store settings error:", error);
+
+    res.status(500).json({
+      error: "Unable to save store settings. Please try again."
+    });
+  }
+});
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`MONOWEAR server running on port ${PORT}`);
 });
