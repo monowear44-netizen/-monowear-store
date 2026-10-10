@@ -1,24 +1,529 @@
-function applyStoreBackgrounds(settings){
-  const setBg=(el,url,overlay)=>{if(!el)return;if(url){el.style.backgroundImage=`${overlay},url("${String(url).replace(/["\\]/g, "")}")`;el.style.backgroundSize="cover";el.style.backgroundPosition="center";el.style.backgroundRepeat="no-repeat";}};
-  setBg(document.querySelector(".site-header"),settings.header_background_image,"linear-gradient(90deg,rgba(0,0,0,.72),rgba(0,0,0,.38))");
-  setBg(document.querySelector(".hero"),settings.hero_background_image,"linear-gradient(90deg,rgba(0,0,0,.70),rgba(0,0,0,.20))");
-  const waitlist=document.querySelector("#waitlist, .waitlist-section, .drop-waitlist, [data-section='waitlist'], .waitlist");
-  setBg(waitlist,settings.waitlist_background_image,"linear-gradient(90deg,rgba(0,0,0,.66),rgba(0,0,0,.34))");
-}
-const $=id=>document.getElementById(id),money=n=>new Intl.NumberFormat("en-NG",{style:"currency",currency:"NGN",maximumFractionDigits:0}).format(Number(n||0));
-let products=[],settings={},cart=JSON.parse(localStorage.getItem("monowear-cart")||"[]");
-function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-async function loadStore(){try{const r=await fetch("/api/store"),d=await r.json();settings=d.settings||{};products=d.products||[];applyStoreBackgrounds(settings);$("brandName").childNodes[0].textContent=settings.brand_name||"MONOWEAR";document.title=(settings.brand_name||"MONOWEAR")+" â Live the Name";$("announcement").textContent=settings.announcement||"";$("heroTitle").innerHTML=esc(settings.hero_title||"HELP IS ON THE WAY").replace(/ ON THE WAY/i,"<br><span>ON THE WAY.</span>");$("heroSubtitle").textContent=settings.hero_subtitle||"";$("heroCta").innerHTML=esc(settings.hero_cta||"SHOP THE DROP")+" â";$("footerTagline").textContent=settings.tagline||"";if(settings.instagram){$("instagramLink").href=settings.instagram;$("newsletterLink").href=settings.instagram}else $("instagramLink").hidden=true;if(settings.contact_email)$("emailLink").href="mailto:"+settings.contact_email;else $("emailLink").hidden=true;const cats=[...new Set(products.map(p=>p.category).filter(Boolean))];$("categoryFilter").innerHTML='<option value="">All pieces</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join("");renderProducts();}catch{$("productGrid").innerHTML='<p class="muted">The collection could not load. Please refresh.</p>'}renderCart();$("year").textContent=new Date().getFullYear();}
-function renderProducts(){const q=$("searchProducts").value.toLowerCase(),cat=$("categoryFilter").value;const list=products.filter(p=>(!cat||p.category===cat)&&(`${p.name} ${p.category} ${p.description}`.toLowerCase().includes(q)));if(!list.length){$("productGrid").innerHTML='<p class="empty-state">No pieces match that search.</p>';return}$("productGrid").innerHTML=list.map(p=>`<article class="product-card"><div class="product-image">${p.image?`<img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy">`:`<div class="image-placeholder">MONO<br>â ${esc(p.category).toUpperCase()} â</div>`}${p.featured?'<span class="product-badge">FEATURED</span>':""}${p.stock<=0?'<span class="sold-badge">SOLD OUT</span>':""}</div><div class="product-meta"><h3>${esc(p.name)}</h3><span class="price">${money(p.price)}</span></div><div class="product-category">${esc(p.category)} Â· ${p.stock} available</div><p class="product-description">${esc(p.description)}</p><div class="product-actions"><select class="size-select" id="size-${p.id}" aria-label="Choose size">${p.sizes.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join("")}</select><button class="add-button" ${p.stock<=0?"disabled":""} onclick="addToCart(${p.id})">${p.stock<=0?"SOLD OUT":"ADD TO BAG +"}</button></div></article>`).join("");}
-function addToCart(id){const p=products.find(x=>x.id===id);if(!p)return;const size=$("size-"+id).value,found=cart.find(x=>x.id===id&&x.size===size);if(found){if(found.qty>=p.stock)return alert("That is all the available stock.");found.qty++;}else cart.push({id:p.id,name:p.name,price:p.price,size,qty:1});saveCart();openCart();}
-function saveCart(){localStorage.setItem("monowear-cart",JSON.stringify(cart));renderCart();}
-function renderCart(){const count=cart.reduce((a,x)=>a+x.qty,0),total=cart.reduce((a,x)=>a+x.price*x.qty,0);$("cartCount").textContent=count;$("drawerCount").textContent="("+count+")";$("cartTotal").textContent=money(total);$("checkoutTotal").textContent=money(total);$("cartItems").innerHTML=cart.length?cart.map((x,i)=>`<div class="cart-line"><div><h3>${esc(x.name)}</h3><p>Size: ${esc(x.size)} Â· Qty: ${x.qty}</p><p>${money(x.price*x.qty)}</p><div class="qty-actions"><button onclick="changeQty(${i},-1)">â</button><button onclick="changeQty(${i},1)">+</button><button onclick="removeCart(${i})">REMOVE</button></div></div></div>`).join(""):'<p class="muted">Your bag is empty.</p>';$("checkoutButton").disabled=!cart.length;$("checkoutButton").style.opacity=cart.length?1:.5;}
-function changeQty(i,d){const p=products.find(x=>x.id===cart[i].id);if(!p)return;if(d>0&&cart[i].qty>=p.stock)return alert("Stock limit reached.");cart[i].qty+=d;if(cart[i].qty<=0)cart.splice(i,1);saveCart();}
-function removeCart(i){cart.splice(i,1);saveCart();}
-function openCart(){$("cartDrawer").classList.add("open");$("cartOverlay").classList.add("open");document.body.style.overflow="hidden";}
-function closeCart(){$("cartDrawer").classList.remove("open");$("cartOverlay").classList.remove("open");document.body.style.overflow="";}
-$("cartToggle").onclick=openCart;$("closeCart").onclick=closeCart;$("cartOverlay").onclick=closeCart;$("searchProducts").addEventListener("input",renderProducts);$("categoryFilter").addEventListener("change",renderProducts);
-$("checkoutButton").onclick=()=>{if(!cart.length)return;$("checkoutMessage").textContent="";$("checkoutDialog").showModal();};$("closeCheckout").onclick=()=>$("checkoutDialog").close();
-$("checkoutForm").addEventListener("submit",async e=>{e.preventDefault();const f=e.currentTarget,body=Object.fromEntries(new FormData(f).entries());body.items=cart.map(({id,qty,size})=>({id,qty,size}));const btn=f.querySelector('button[type=submit]');btn.disabled=true;btn.textContent="CREATING ORDERâ¦";$("checkoutMessage").textContent="";
-try{const r=await fetch("/api/checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}),d=await r.json();if(!r.ok)throw Error(d.error||"Checkout failed.");if(d.authorization_url){location.href=d.authorization_url;return;}cart=[];saveCart();f.reset();$("checkoutMessage").textContent=`${d.message} Reference: ${d.reference}.`; }catch(err){$("checkoutMessage").textContent=err.message;}finally{btn.disabled=false;btn.textContent="CONTINUE TO CHECKOUT â";}});
-loadStore();
+"use strict";
+/* =========================================================
+   MONOWEAR® STOREFRONT
+   Product collection, filters, cart, and store settings
+   LIVE THE NAME. WEAR THE MEANING.
+========================================================= */
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const money = (amount) =>
+    new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      maximumFractionDigits: 0
+    }).format(Number(amount) || 0);
+  const escapeHTML = (value) =>
+    String(value ?? "").replace(/[&<>"']/g, (character) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[character]);
+  let products = [];
+  let settings = {};
+  let cart = [];
+  try {
+    const savedCart = JSON.parse(
+      localStorage.getItem("monowear-cart") || "[]"
+    );
+    cart = Array.isArray(savedCart) ? savedCart : [];
+  } catch {
+    cart = [];
+  }
+  /* =========================================================
+     SAFE ELEMENT HELPERS
+  ========================================================= */
+  function setText(id, value) {
+    const element = $(id);
+    if (element) element.textContent = value ?? "";
+  }
+  function setHTML(id, value) {
+    const element = $(id);
+    if (element) element.innerHTML = value;
+  }
+  function setHidden(id, hidden) {
+    const element = $(id);
+    if (element) element.hidden = hidden;
+  }
+  function setLink(id, value) {
+    const element = $(id);
+    if (!element) return;
+    if (value) {
+      element.href = value;
+      element.hidden = false;
+    } else {
+      element.hidden = true;
+    }
+  }
+  /* =========================================================
+     BACKGROUND IMAGES
+  ========================================================= */
+  function setBackground(element, image, overlay) {
+    if (!element || !image) return;
+    const safeImage = String(image).replace(/["\\]/g, "");
+    element.style.backgroundImage =
+      `${overlay}, url("${safeImage}")`;
+    element.style.backgroundSize = "cover";
+    element.style.backgroundPosition = "center";
+    element.style.backgroundRepeat = "no-repeat";
+  }
+  function applyStoreBackgrounds(storeSettings) {
+    setBackground(
+      document.querySelector(".site-header"),
+      storeSettings.header_background_image,
+      "linear-gradient(90deg, rgba(0,0,0,.78), rgba(0,0,0,.35))"
+    );
+    setBackground(
+      document.querySelector(".hero"),
+      storeSettings.hero_background_image,
+      "linear-gradient(90deg, rgba(0,0,0,.72), rgba(0,0,0,.22))"
+    );
+    const waitlist = document.querySelector(
+      "#waitlist, .waitlist-section, .drop-waitlist, [data-section='waitlist'], .waitlist"
+    );
+    setBackground(
+      waitlist,
+      storeSettings.waitlist_background_image,
+      "linear-gradient(90deg, rgba(0,0,0,.72), rgba(0,0,0,.38))"
+    );
+  }
+  /* =========================================================
+     STORE SETTINGS
+  ========================================================= */
+  function applySettings() {
+    const brand = $("brandName");
+    if (brand) {
+      // Update the text safely without assuming a child exists.
+      brand.textContent = settings.brand_name || "MONOWEAR®";
+    }
+    document.title =
+      `${settings.brand_name || "MONOWEAR®"} — Live the Name`;
+    setText("announcement", settings.announcement || "");
+    const heroTitle = $("heroTitle");
+    if (heroTitle) {
+      const title = settings.hero_title || "HELP IS ON THE WAY";
+      heroTitle.textContent = title;
+      // Highlight the final phrase for the default campaign headline.
+      if (title.toUpperCase() === "HELP IS ON THE WAY") {
+        heroTitle.innerHTML = 'HELP IS <br><span>ON THE WAY.</span>';
+      }
+    }
+    setText("heroSubtitle", settings.hero_subtitle || "");
+    const heroButton = $("heroCta");
+    if (heroButton) {
+      heroButton.textContent =
+        `${settings.hero_cta || "SHOP THE DROP"} ↗`;
+    }
+    setText(
+      "footerTagline",
+      settings.tagline || "LIVE THE NAME. WEAR THE MEANING."
+    );
+    setLink("instagramLink", settings.instagram || "");
+    setLink("newsletterLink", settings.instagram || "");
+    if (settings.contact_email) {
+      setLink("emailLink", `mailto:${settings.contact_email}`);
+    } else {
+      setHidden("emailLink", true);
+    }
+    applyStoreBackgrounds(settings);
+  }
+  /* =========================================================
+     CATEGORY FILTER
+  ========================================================= */
+  function renderCategoryFilter() {
+    const filter = $("categoryFilter");
+    if (!filter) return;
+    const selected = filter.value;
+    const categories = [
+      ...new Set(
+        products
+          .map((product) => String(product.category || "").trim())
+          .filter(Boolean)
+      )
+    ];
+    filter.innerHTML =
+      '<option value="">All pieces</option>' +
+      categories
+        .map(
+          (category) =>
+            `<option value="${escapeHTML(category)}">${escapeHTML(category)}</option>`
+        )
+        .join("");
+    if (categories.includes(selected)) {
+      filter.value = selected;
+    }
+  }
+  /* =========================================================
+     PRODUCT IMAGE
+  ========================================================= */
+  function productImage(product) {
+    if (!product.image) {
+      return `
+        <div class="image-placeholder">
+          MONO<br>
+          <span>— ${escapeHTML(product.category || "COLLECTION").toUpperCase()} —</span>
+        </div>
+      `;
+    }
+    return `
+      <img
+        src="${escapeHTML(product.image)}"
+        alt="${escapeHTML(product.name || "MONOWEAR product")}"
+        loading="lazy"
+        onerror="this.style.display='none'; this.nextElementSibling.hidden=false;"
+      >
+      <div class="image-placeholder" hidden>
+        MONO<br>
+        <span>IMAGE UNAVAILABLE</span>
+      </div>
+    `;
+  }
+  /* =========================================================
+     PRODUCT DISPLAY
+  ========================================================= */
+  function renderProducts() {
+    const grid = $("productGrid");
+    if (!grid) {
+      console.error(
+        "MONOWEAR: Could not find #productGrid in the storefront HTML."
+      );
+      return;
+    }
+    const searchInput = $("searchProducts");
+    const categoryInput = $("categoryFilter");
+    const query = searchInput
+      ? searchInput.value.trim().toLowerCase()
+      : "";
+    const category = categoryInput ? categoryInput.value : "";
+    const visibleProducts = products.filter((product) => {
+      const matchesCategory =
+        !category ||
+        String(product.category || "").trim() === category;
+      const searchableText = [
+        product.name,
+        product.category,
+        product.description
+      ]
+        .join(" ")
+        .toLowerCase();
+      return matchesCategory && searchableText.includes(query);
+    });
+    if (!visibleProducts.length) {
+      grid.innerHTML = products.length
+        ? '<p class="empty-state">No pieces match your search.</p>'
+        : `
+          <div class="empty-state">
+            <p>THE COLLECTION IS BEING UPDATED.</p>
+            <p>Check back soon for the latest MONOWEAR pieces.</p>
+          </div>
+        `;
+      return;
+    }
+    grid.innerHTML = visibleProducts
+      .map((product) => {
+        const id = Number(product.id);
+        const stock = Number(product.stock ?? 0);
+        const sizes = Array.isArray(product.sizes)
+          ? product.sizes
+          : [];
+        const soldOut = stock <= 0;
+        const sizeOptions = sizes.length
+          ? sizes
+              .map(
+                (size) =>
+                  `<option value="${escapeHTML(size)}">${escapeHTML(size)}</option>`
+              )
+              .join("")
+          : '<option value="One size">One size</option>';
+        return `
+          <article class="product-card" data-product-id="${id}">
+            <div class="product-image">
+              ${productImage(product)}
+              ${
+                product.featured
+                  ? '<span class="product-badge">FEATURED</span>'
+                  : ""
+              }
+              ${
+                soldOut
+                  ? '<span class="sold-badge">SOLD OUT</span>'
+                  : ""
+              }
+            </div>
+            <div class="product-meta">
+              <h3>${escapeHTML(product.name || "MONOWEAR Piece")}</h3>
+              <span class="price">${money(product.price)}</span>
+            </div>
+            <div class="product-category">
+              ${escapeHTML(product.category || "MONOWEAR")}
+              ${stock > 0 ? ` · ${stock} available` : ""}
+            </div>
+            ${
+              product.description
+                ? `<p class="product-description">${escapeHTML(product.description)}</p>`
+                : ""
+            }
+            <div class="product-actions">
+              <select
+                class="size-select"
+                id="size-${id}"
+                aria-label="Choose size for ${escapeHTML(product.name)}"
+                ${soldOut ? "disabled" : ""}
+              >
+                ${sizeOptions}
+              </select>
+              <button
+                class="add-button"
+                type="button"
+                ${soldOut ? "disabled" : ""}
+                onclick="addToCart(${id})"
+              >
+                ${soldOut ? "SOLD OUT" : "ADD TO BAG +"}
+              </button>
+            </div>
+          </article>
+        `;
+      })
+      .join("");
+  }
+  /* =========================================================
+     CART STORAGE
+  ========================================================= */
+  function saveCart() {
+    try {
+      localStorage.setItem("monowear-cart", JSON.stringify(cart));
+    } catch (error) {
+      console.error("MONOWEAR: Could not save cart.", error);
+    }
+    renderCart();
+  }
+  function renderCart() {
+    const count = cart.reduce(
+      (total, item) => total + Math.max(0, Number(item.quantity) || 0),
+      0
+    );
+    setText("cartCount", String(count));
+    setText("cart-count", String(count));
+    const cartTotal = cart.reduce(
+      (total, item) =>
+        total +
+        (Number(item.price) || 0) *
+          Math.max(0, Number(item.quantity) || 0),
+      0
+    );
+    setText("cartTotal", money(cartTotal));
+    setText("cart-total", money(cartTotal));
+    const cartItems = $("cartItems");
+    if (cartItems) {
+      if (!cart.length) {
+        cartItems.innerHTML =
+          '<p class="empty-state">Your bag is empty.</p>';
+      } else {
+        cartItems.innerHTML = cart
+          .map(
+            (item, index) => `
+              <div class="cart-item">
+                <div>
+                  <strong>${escapeHTML(item.name)}</strong>
+                  <p>${escapeHTML(item.size || "One size")}</p>
+                  <p>${money(item.price)} × ${Number(item.quantity) || 1}</p>
+                </div>
+                <button
+                  type="button"
+                  aria-label="Remove ${escapeHTML(item.name)}"
+                  onclick="removeFromCart(${index})"
+                >
+                  REMOVE
+                </button>
+              </div>
+            `
+          )
+          .join("");
+      }
+    }
+    const cartPanel = $("cartPanel");
+    if (cartPanel) {
+      cartPanel.setAttribute("aria-live", "polite");
+    }
+  }
+  /* =========================================================
+     ADD TO CART
+  ========================================================= */
+  window.addToCart = function (productId) {
+    const product = products.find(
+      (item) => Number(item.id) === Number(productId)
+    );
+    if (!product) {
+      console.error("MONOWEAR: Product not found.", productId);
+      return;
+    }
+    if (Number(product.stock) <= 0) {
+      alert("This piece is currently sold out.");
+      return;
+    }
+    const sizeSelect = $(`size-${productId}`);
+    const selectedSize = sizeSelect
+      ? sizeSelect.value
+      : "One size";
+    const existingItem = cart.find(
+      (item) =>
+        Number(item.id) === Number(productId) &&
+        item.size === selectedSize
+    );
+    if (existingItem) {
+      if (Number(existingItem.quantity) >= Number(product.stock)) {
+        alert("You've reached the available stock for this piece.");
+        return;
+      }
+      existingItem.quantity =
+        (Number(existingItem.quantity) || 0) + 1;
+    } else {
+      cart.push({
+        id: Number(product.id),
+        name: product.name || "MONOWEAR Piece",
+        price: Number(product.price) || 0,
+        image: product.image || "",
+        size: selectedSize,
+        quantity: 1
+      });
+    }
+    saveCart();
+    const button = document.querySelector(
+      `.product-card[data-product-id="${Number(productId)}"] .add-button`
+    );
+    if (button) {
+      const originalText = button.textContent;
+      button.textContent = "ADDED TO BAG ✓";
+      setTimeout(() => {
+        if (button.isConnected && Number(product.stock) > 0) {
+          button.textContent = originalText;
+        }
+      }, 1200);
+    }
+  };
+  /* =========================================================
+     REMOVE FROM CART
+  ========================================================= */
+  window.removeFromCart = function (index) {
+    if (index < 0 || index >= cart.length) return;
+    cart.splice(index, 1);
+    saveCart();
+  };
+  /* =========================================================
+     CART OPEN / CLOSE
+  ========================================================= */
+  function setupCartControls() {
+    const cartButton =
+      $("cartButton") ||
+      $("cartBtn") ||
+      $("openCart");
+    const closeButton =
+      $("closeCart") ||
+      $("closeCartButton");
+    const cartPanel = $("cartPanel");
+    if (cartButton && cartPanel) {
+      cartButton.addEventListener("click", () => {
+        cartPanel.classList.add("open");
+        cartPanel.setAttribute("aria-hidden", "false");
+      });
+    }
+    if (closeButton && cartPanel) {
+      closeButton.addEventListener("click", () => {
+        cartPanel.classList.remove("open");
+        cartPanel.setAttribute("aria-hidden", "true");
+      });
+    }
+  }
+  /* =========================================================
+     STOREFRONT EVENTS
+  ========================================================= */
+  function setupEvents() {
+    const search = $("searchProducts");
+    const category = $("categoryFilter");
+    if (search) {
+      search.addEventListener("input", renderProducts);
+    }
+    if (category) {
+      category.addEventListener("change", renderProducts);
+    }
+    const heroButton = $("heroCta");
+    if (heroButton) {
+      heroButton.addEventListener("click", (event) => {
+        const collection = $("collection") || $("shop");
+        if (collection) {
+          event.preventDefault();
+          collection.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+          });
+        }
+      });
+    }
+    setText("year", String(new Date().getFullYear()));
+    setupCartControls();
+  }
+  /* =========================================================
+     LOAD STORE FROM API
+  ========================================================= */
+  async function loadStore() {
+    const grid = $("productGrid");
+    if (grid) {
+      grid.innerHTML =
+        '<p class="muted">Loading the MONOWEAR collection...</p>';
+    }
+    try {
+      const response = await fetch("/api/store", {
+        method: "GET",
+        headers: {
+          Accept: "application/json"
+        },
+        cache: "no-store"
+      });
+      if (!response.ok) {
+        throw new Error(`Store API returned ${response.status}`);
+      }
+      const data = await response.json();
+      if (!data || !Array.isArray(data.products)) {
+        throw new Error("The store API returned an unexpected response.");
+      }
+      settings =
+        data.settings && typeof data.settings === "object"
+          ? data.settings
+          : {};
+      // Only published products should be displayed.
+      products = data.products.filter(
+        (product) => product && product.published !== false
+      );
+      applySettings();
+      renderCategoryFilter();
+      renderProducts();
+      console.info(
+        `MONOWEAR: Loaded ${products.length} published product(s).`
+      );
+    } catch (error) {
+      console.error("MONOWEAR storefront loading error:", error);
+      if (grid) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <p>THE COLLECTION IS TEMPORARILY UNAVAILABLE.</p>
+            <p>Please refresh the page in a moment.</p>
+          </div>
+        `;
+      }
+    }
+    renderCart();
+  }
+  /* =========================================================
+     START STOREFRONT
+  ========================================================= */
+  function init() {
+    setupEvents();
+    loadStore();
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
