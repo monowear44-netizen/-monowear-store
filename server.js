@@ -272,11 +272,13 @@ return res.redirect("/?payment=not-configured");
 
 try {
 const response = await fetch(
-"https://api.paystack.co/transaction/verify/"
+const response = await fetch(
+  "https://api.paystack.co/transaction/verify/" + encodeURIComponent(reference),
 {
-headers: {
-Authorization: "Bearer " + process.env.PAYSTACK_SECRET_KEY
-}
+{
+  headers: {
+    Authorization: "Bearer " + process.env.PAYSTACK_SECRET_KEY
+  }
 }
 );
 
