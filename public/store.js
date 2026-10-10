@@ -490,6 +490,102 @@
     if (category) {
       category.addEventListener("change", renderProducts);
     }
+     // MONOWEAR CHECKOUT FORM
+const checkoutForm = $("checkoutForm");
+
+if (checkoutForm) {
+  checkoutForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const message = $("checkoutMessage");
+    const submitButton = checkoutForm.querySelector(
+      'button[type="submit"]'
+    );
+
+    if (!cart.length) {
+      if (message) message.textContent = "Your bag is empty.";
+      return;
+    }
+
+    const formData = new FormData(checkoutForm);
+
+    const payload = {
+      customer_name: String(
+        formData.get("customer_name") || ""
+      ).trim(),
+
+      email: String(
+        formData.get("email") || ""
+      ).trim(),
+
+      phone: String(
+        formData.get("phone") || ""
+      ).trim(),
+
+      address: String(
+        formData.get("address") || ""
+      ).trim(),
+
+      items: cart.map((item) => ({
+        product_id: Number(item.id),
+        quantity: Number(item.quantity)
+      }))
+    };
+
+    try {
+      if (message) {
+        message.textContent = "Connecting to secure checkout...";
+      }
+
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = "PLEASE WAIT...";
+      }
+
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        credentials: "same-origin",
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.error || "Could not start payment."
+        );
+      }
+
+      if (!result.authorization_url) {
+        throw new Error(
+          "Payment started, but no payment link was returned."
+        );
+      }
+
+      window.location.href = result.authorization_url;
+
+    } catch (error) {
+      console.error("MONOWEAR checkout error:", error);
+
+      if (message) {
+        message.textContent =
+          error.message || "Checkout failed. Please try again.";
+      } else {
+        alert(error.message || "Checkout failed.");
+      }
+
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = "CONTINUE TO CHECKOUT ↗";
+      }
+    }
+  });
+}
     const heroButton = $("heroCta");
     if (heroButton) {
       heroButton.addEventListener("click", (event) => {
