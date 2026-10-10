@@ -62,7 +62,93 @@ CREATE TABLE IF NOT EXISTS waitlist_entries (
   product_name TEXT DEFAULT '',
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(email, list_type, product_slug)
+db.exec(`
+CREATE TABLE IF NOT EXISTS admins (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS customers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  phone TEXT DEFAULT '',
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS products (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  category TEXT DEFAULT 'Apparel',
+  price INTEGER NOT NULL DEFAULT 0,
+  compare_price INTEGER,
+  description TEXT DEFAULT '',
+  image TEXT DEFAULT '',
+  sizes TEXT DEFAULT 'S,M,L,XL',
+  stock INTEGER NOT NULL DEFAULT 0,
+  featured INTEGER DEFAULT 0,
+  published INTEGER DEFAULT 1,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS orders (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  reference TEXT UNIQUE,
+  customer_id INTEGER,
+  customer_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT DEFAULT '',
+  address TEXT DEFAULT '',
+  items_json TEXT NOT NULL,
+  subtotal INTEGER NOT NULL,
+  shipping INTEGER NOT NULL DEFAULT 0,
+  total INTEGER NOT NULL,
+  status TEXT DEFAULT 'Pending payment',
+  payment_status TEXT DEFAULT 'Pending',
+  payment_reference TEXT,
+  notes TEXT DEFAULT '',
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(customer_id) REFERENCES customers(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS order_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  order_id INTEGER NOT NULL,
+  status TEXT NOT NULL,
+  note TEXT DEFAULT '',
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL UNIQUE,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  active INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS waitlist_entries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL,
+  name TEXT DEFAULT '',
+  list_type TEXT NOT NULL,
+  product_slug TEXT NOT NULL DEFAULT '',
+  product_name TEXT DEFAULT '',
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(email, list_type, product_slug)
+);
+`);
 const addSetting = db.prepare("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)");
 const defaults = {
  brand_name:"MONOWEAR", tagline:"LIVE THE NAME. WEAR THE MEANING.",
