@@ -209,7 +209,8 @@ function switchTab(tab) {
     abandoned: "Abandoned carts",
     completed: "Completed & shipped",
     collections: "Collections",
-    payments: "Payments"
+    payments: "Payments",
+    audience: "Waitlist & Subscribers"
   };
 
   $("pageTitle").textContent = titles[tab] || "Studio";
@@ -219,6 +220,7 @@ function switchTab(tab) {
   if (tab === "collections") loadCollections();
   if (tab === "payments") loadPayments();
   if (tab === "appearance") loadEmailStatus();
+  if (tab === "audience") loadAudience();
 }
 
 window.switchTab = switchTab;
@@ -798,6 +800,94 @@ $("settingsForm").addEventListener("submit", async (event) => {
     if (saveButton) saveButton.disabled = false;
   }
 });
+
+
+// ============================================================
+// WAITLIST & NEWSLETTER SUBSCRIBERS
+// ============================================================
+
+let currentWaitlist = [];
+let currentNewsletter = [];
+
+function audienceDate(value) {
+  if (!value) return "—";
+  const parsed = new Date(String(value).replace(" ", "T") + (String(value).includes("Z") ? "" : "Z"));
+  if (Number.isNaN(parsed.getTime())) return String(value);
+  return parsed.toLocaleString("en-NG", {
+    timeZone: "Africa/Lagos", year: "numeric", month: "short", day: "numeric",
+    hour: "2-digit", minute: "2-digit"
+  });
+}
+
+function renderAudienceTable(targetId, rows, kind) {
+  const target = $(targetId);
+  if (!target) return;
+  if (!rows.length) {
+    target.innerHTML = '<p class="muted">No sign-ups yet.</p>';
+    return;
+  }
+  const headings = kind === "waitlist"
+    ? ["Email address", "Product / drop", "Joined"]
+    : ["Email address", "Subscribed"];
+  const body = rows.map((row) => {
+    const email = esc(row.email || "");
+    const date = esc(audienceDate(row.created_at));
+    return kind === "waitlist"
+      ? '<div class="product-row"><div><strong>' + email + '</strong><p class="muted">' + esc(row.product_name || "General waitlist") + '</p></div><span>' + date + '</span></div>'
+      : '<div class="product-row"><div><strong>' + email + '</strong></div><span>' + date + '</span></div>';
+  }).join("");
+  target.innerHTML = '<p class="eyebrow">' + headings.map(esc).join(" · ") + '</p>' + body;
+}
+
+async function loadAudience() {
+  const message = $("audienceMessage");
+  if (message) message.textContent = "Loading customer sign-ups…";
+  try {
+    const [waitlist, newsletter] = await Promise.all([
+      api("/api/admin/waitlist"),
+      api("/api/admin/newsletter")
+    ]);
+    currentWaitlist = Array.isArray(waitlist) ? waitlist : [];
+    currentNewsletter = Array.isArray(newsletter) ? newsletter : [];
+    if ($("waitlistCount")) $("waitlistCount").textContent = currentWaitlist.length + (currentWaitlist.length === 1 ? " sign-up" : " sign-ups");
+    if ($("newsletterCount")) $("newsletterCount").textContent = currentNewsletter.length + (currentNewsletter.length === 1 ? " subscriber" : " subscribers");
+    renderAudienceTable("waitlistList", currentWaitlist, "waitlist");
+    renderAudienceTable("newsletterList", currentNewsletter, "newsletter");
+    if (message) message.textContent = "Updated. " + currentWaitlist.length + " product waitlist sign-ups and " + currentNewsletter.length + " newsletter subscribers found.";
+  } catch (error) {
+    if (message) message.textContent = "Could not load sign-ups: " + error.message;
+    if ($("waitlistList")) $("waitlistList").innerHTML = '<p class="error">Could not load the product waitlist.</p>';
+    if ($("newsletterList")) $("newsletterList").innerHTML = '<p class="error">Could not load newsletter subscribers.</p>';
+  }
+}
+
+function csvCell(value) {
+  return '"' + String(value ?? "").replace(/"/g, '""') + '"';
+}
+
+function exportAudienceCsv() {
+  const rows = [
+    ["Type", "Email", "Product / drop", "Joined at"],
+    ...currentWaitlist.map((item) => ["Product waitlist", item.email, item.product_name || "General waitlist", item.created_at]),
+    ...currentNewsletter.map((item) => ["Newsletter", item.email, "", item.created_at])
+  ];
+  if (rows.length === 1) {
+    toast("There are no customer sign-ups to export yet.");
+    return;
+  }
+  const csv = "\uFEFF" + rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "monowear-waitlist-subscribers.csv";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+$("refreshAudience")?.addEventListener("click", loadAudience);
+$("exportAudience")?.addEventListener("click", exportAudienceCsv);
 
 // ============================================================
 // ORDERS
