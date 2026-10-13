@@ -627,10 +627,26 @@ if (checkoutForm) {
       }))
     };
 
+    let redirectingToPaystack = false;
+    const paymentLoading = $("paymentLoading");
+    const showPaymentLoading = () => {
+      if (!paymentLoading) return;
+      paymentLoading.hidden = false;
+      paymentLoading.setAttribute("aria-hidden", "false");
+      document.body.classList.add("payment-is-loading");
+    };
+    const hidePaymentLoading = () => {
+      if (!paymentLoading) return;
+      paymentLoading.hidden = true;
+      paymentLoading.setAttribute("aria-hidden", "true");
+      document.body.classList.remove("payment-is-loading");
+    };
+
     try {
       if (message) {
         message.textContent = "Connecting to secure checkout...";
       }
+      showPaymentLoading();
 
       if (submitButton) {
         submitButton.disabled = true;
@@ -661,9 +677,13 @@ if (checkoutForm) {
         );
       }
 
-      window.location.href = result.authorization_url;
+      redirectingToPaystack = true;
+      const loadingMessage = paymentLoading ? paymentLoading.querySelector(".payment-loading-message") : null;
+      if (loadingMessage) loadingMessage.textContent = "Opening Paystack secure payment…";
+      window.location.assign(result.authorization_url);
 
     } catch (error) {
+      hidePaymentLoading();
       console.error("MONOWEAR checkout error:", error);
 
       if (message) {
@@ -674,9 +694,12 @@ if (checkoutForm) {
       }
 
     } finally {
-      if (submitButton) {
-        submitButton.disabled = false;
-        submitButton.textContent = "CONTINUE TO CHECKOUT ↗";
+      if (!redirectingToPaystack) {
+        hidePaymentLoading();
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.textContent = "CONTINUE TO CHECKOUT ↗";
+        }
       }
     }
   });
