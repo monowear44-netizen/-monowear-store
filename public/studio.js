@@ -901,6 +901,7 @@ function renderOrders() {
           ${esc(order.shipping_city)}
           ${esc(order.shipping_state)}
         </p>
+        <p class="muted">Dispatch from: ${esc(order.dispatch_location || "Ikorodu, Lagos")}</p>
 
         <p>
           Subtotal ${money(order.subtotal)}
