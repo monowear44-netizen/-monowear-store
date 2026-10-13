@@ -112,3 +112,20 @@
 
 /* Studio-controlled storefront control shape */
 .button,.add-button,.size-select,.checkout-dialog input,.checkout-dialog textarea{border-radius:var(--control-radius,0px)}
+
+
+/* Small-screen polish: keep the MONOWEAR header usable on narrow phones. */
+@media(max-width:430px){
+  .site-header{gap:8px;padding-inline:12px}
+  .wordmark{font-size:19px;white-space:nowrap}
+  .site-header nav{gap:9px}
+  .site-header nav a{font-size:8px;letter-spacing:.04em}
+  .header-actions{gap:2px}
+  .account-link{display:none}
+  .cart-toggle{padding:8px 4px;font-size:9px}
+  .section-heading{margin-bottom:26px}
+  .product-grid{gap:20px 10px}
+  .product-meta{overflow-wrap:anywhere}
+  .checkout-dialog{padding:20px 16px}
+  .checkout-dialog label{margin:14px 0}
+}
