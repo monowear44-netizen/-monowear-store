@@ -482,6 +482,7 @@ function newProduct() {
   form.elements.id.value = "";
   form.elements.sizes.value = "S,M,L,XL";
   form.elements.colors.value = "";
+  form.elements.images.value = "";
   form.elements.stock.value = 0;
   form.elements.published.checked = true;
   form.elements.sort_order.value = 0;
@@ -494,6 +495,8 @@ function newProduct() {
   showError("productError", "");
 
   setPreview("imagePreview", "", "imagePreviewWrap");
+  const fileInput = form.elements.imageFile;
+  if (fileInput) fileInput.value = "";
 
   form.scrollIntoView({
     behavior: "smooth",
@@ -524,6 +527,7 @@ window.editProduct = (id) => {
     "colors",
     "stock",
     "image",
+    "images",
     "description",
     "sort_order"
   ]) {
@@ -532,6 +536,10 @@ window.editProduct = (id) => {
     let value = product[key] ?? "";
 
     if (key === "id") value = product.id;
+
+    if (key === "images") {
+      value = Array.isArray(product.images) ? product.images.join("\n") : product.images || "";
+    }
 
     if (key === "sizes" || key === "colors") {
       value = Array.isArray(product[key])
@@ -621,11 +629,20 @@ $("productForm").addEventListener("submit", async (event) => {
   showError("productError", "");
 
   try {
-    const file = form.elements.imageFile.files[0];
-
-    if (file) {
-      body.image = await uploadImage(file);
+    const selectedFiles = [...(form.elements.imageFile.files || [])];
+    const existingImages = String(form.elements.images.value || "")
+      .split(/\n|,/)
+      .map((url) => url.trim())
+      .filter(Boolean);
+    if (existingImages.length + selectedFiles.length > 10) {
+      throw Error("A product can have up to 10 images. Remove some images before adding more.");
     }
+    const uploadedImages = [];
+    for (const file of selectedFiles) {
+      uploadedImages.push(await uploadImage(file));
+    }
+    body.images = [...existingImages, ...uploadedImages].filter((url, index, all) => all.indexOf(url) === index);
+    body.image = body.images[0] || body.image || "";
 
     await api(
       id ? `/api/admin/products/${id}` : "/api/admin/products",
