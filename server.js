@@ -2863,7 +2863,7 @@ app.post(
       const shippingCity = String(body.shipping_city || body.city || "").trim();
       const shippingState = String(body.shipping_state || body.state || "").trim();
       const shippingPostcode = String(body.shipping_postcode || body.postcode || "").trim();
-      const dispatchLocation = String(getSetting("active_dispatch_location", "Ijebu Ode, Ogun State")).trim() || "Ijebu Ode, Ogun State";
+      const dispatchLocation = "Ijebu Ode, Ogun State";
 
       if (!customerName || !validEmail(customerEmail) || !shippingAddress || !shippingCity || !shippingState) {
         return res.status(400).json({
