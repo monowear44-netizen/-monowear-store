@@ -261,6 +261,8 @@ if (ensureColumn("orders", "paid_at", "TEXT")) {
 ensureColumn("orders", "paystack_fee", "REAL DEFAULT 0");
 ensureColumn("orders", "payment_channel", "TEXT DEFAULT ''");
 ensureColumn("orders", "email_sent_at", "TEXT");
+ensureColumn("orders", "delivery_email_status", "TEXT DEFAULT ''");
+ensureColumn("orders", "delivery_email_sent_at", "TEXT");
 
 if (ensureColumn("orders", "email_status", "TEXT DEFAULT ''")) {
   // Orders already paid before this update are marked "legacy" so the
@@ -866,6 +868,64 @@ async function sendOrderConfirmationOnce(orderId, options = {}) {
     `Confirmation email failed: ${result.error || "unknown error"}`
   );
 
+  return { sent: false, reason: "failed", error: result.error };
+}
+
+// Sends a separate delivery confirmation when an order is marked delivered.
+async function sendOrderDeliveredEmail(order) {
+  const trackingUrl = BASE_URL ? `${BASE_URL}/track.html` : "";
+  const trackingLink = trackingUrl
+    ? `<p><a href="${escapeHTML(trackingUrl)}" style="display:inline-block;background:#c6ff4b;color:#141414;padding:12px 18px;text-decoration:none;font-weight:bold">TRACK YOUR ORDER</a></p>`
+    : "";
+  const body = `
+    <h2 style="margin:0 0 12px;font-size:22px">Your order has been delivered.</h2>
+    <p>Hi ${escapeHTML(order.customer_name)}, your MONOWEAR order has been marked as delivered.</p>
+    <p><strong>Order reference:</strong> ${escapeHTML(order.reference)}</p>
+    <p>We hope you enjoy your piece. Thank you for choosing MONOWEAR.</p>
+    ${trackingLink}
+    <p>If you have any issue with your delivery, reply to this email or contact monowear44@gmail.com.</p>
+  `;
+  return sendEmail(
+    order.customer_email,
+    `MONOWEAR order delivered — ${order.reference}`,
+    emailShell(body)
+  );
+}
+
+// Claims the delivery email atomically to prevent duplicate messages.
+// If a send fails, marking the same order Delivered again retries it.
+async function sendOrderDeliveredEmailOnce(orderId) {
+  const order = getOrderById(orderId);
+  if (!order || order.payment_status !== "paid") {
+    return { sent: false, reason: "order_not_paid_or_missing" };
+  }
+  if (["sent", "sending", "legacy", "skipped"].includes(order.delivery_email_status)) {
+    return { sent: false, reason: order.delivery_email_status };
+  }
+  const claim = db.prepare(`
+    UPDATE orders SET delivery_email_status = 'sending'
+    WHERE id = ?
+      AND (delivery_email_status IS NULL OR delivery_email_status IN ('', 'failed'))
+  `).run(order.id);
+  if (!claim.changes) {
+    return { sent: false, reason: "already_claimed" };
+  }
+  const result = await sendOrderDeliveredEmail(getOrderById(order.id));
+  if (result.ok) {
+    db.prepare(`
+      UPDATE orders
+      SET delivery_email_status = 'sent',
+          delivery_email_sent_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(order.id);
+    return { sent: true };
+  }
+  db.prepare("UPDATE orders SET delivery_email_status = 'failed' WHERE id = ?").run(order.id);
+  recordOrderEvent(
+    order.id,
+    "delivered",
+    `Delivery email failed: ${result.error || "unknown error"}`
+  );
   return { sent: false, reason: "failed", error: result.error };
 }
 
@@ -2862,7 +2922,7 @@ app.get("/api/admin/orders/:id", requireAdmin, (req, res) => {
   });
 });
 
-app.put("/api/admin/orders/:id/status", requireAdmin, (req, res) => {
+app.put("/api/admin/orders/:id/status", requireAdmin, async (req, res) => {
   const id = Number(req.params.id);
   const status = String(req.body.status || "").trim().toLowerCase();
 
@@ -2891,17 +2951,32 @@ app.put("/api/admin/orders/:id/status", requireAdmin, (req, res) => {
     });
   }
 
-  // Once an order is shipped or delivered, it is archived as completed
-  // and cannot be edited through the admin status endpoint.
   const currentStatus = String(order.order_status || "").toLowerCase();
-  if (["shipped", "delivered"].includes(currentStatus)) {
+
+  // Shipped orders can advance to Delivered, but cannot move backwards.
+  if (currentStatus === "shipped" && status !== "delivered") {
     return res.status(409).json({
-      error: "This order is completed and locked. Completed orders cannot be edited."
+      error: "This order has shipped. It can only be marked delivered."
     });
   }
 
-  // Admin order-status updates do not mark a payment as paid.
-  // Only verified Paystack payments can do that.
+  // Delivered orders stay locked, except a failed delivery email can be retried.
+  if (currentStatus === "delivered") {
+    if (status === "delivered" && order.delivery_email_status === "failed") {
+      const emailResult = await sendOrderDeliveredEmailOnce(id);
+      return res.json({
+        success: true,
+        order: safeOrder(getOrderById(id)),
+        delivery_email_sent: Boolean(emailResult.sent),
+        delivery_email_error: emailResult.error || null
+      });
+    }
+    return res.status(409).json({
+      error: "This delivered order is locked."
+    });
+  }
+
+  // Admin status updates never mark payment as paid; only verified Paystack does that.
   db.prepare(`
     UPDATE orders
     SET order_status = ?,
@@ -2909,20 +2984,25 @@ app.put("/api/admin/orders/:id/status", requireAdmin, (req, res) => {
     WHERE id = ?
   `).run(status, id);
 
-  // Marking an order refunded keeps your revenue figures correct.
-  // This records the refund only; it does not return money to the
-  // customer. Issue the refund in your Paystack dashboard.
+  // A refund must still be issued separately in Paystack.
   if (status === "refunded" && order.payment_status === "paid") {
-    db.prepare(`
-      UPDATE orders SET payment_status = 'refunded' WHERE id = ?
-    `).run(id);
+    db.prepare("UPDATE orders SET payment_status = 'refunded' WHERE id = ?").run(id);
   }
 
   recordOrderEvent(id, status, `Order status changed to ${status}.`);
 
+  let deliveryEmailResult = null;
+  if (status === "delivered" && order.payment_status === "paid") {
+    deliveryEmailResult = await sendOrderDeliveredEmailOnce(id);
+  }
+
   res.json({
     success: true,
-    order: safeOrder(getOrderById(id))
+    order: safeOrder(getOrderById(id)),
+    ...(status === "delivered" ? {
+      delivery_email_sent: Boolean(deliveryEmailResult && deliveryEmailResult.sent),
+      delivery_email_error: deliveryEmailResult?.error || null
+    } : {})
   });
 });
 

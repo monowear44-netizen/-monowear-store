@@ -915,10 +915,25 @@ function renderOrders() {
       </div>
 
       <div>
-        ${window.monowearActiveTab === "completed" ? `
-          <p class="muted"><strong>LOCKED</strong></p>
-          <p class="muted">This order has shipped or been delivered. Its status and classification can no longer be edited.</p>
-        ` : `
+        ${window.monowearActiveTab === "completed" ? (
+          String(order.order_status || "").toLowerCase() === "shipped" ? `
+            <p class="muted"><strong>SHIPPED</strong></p>
+            <p class="muted">When the customer receives the package, mark it delivered. MONOWEAR will email them automatically.</p>
+            <button class="small-button" type="button" onclick="updateOrder(${Number(order.id)}, 'delivered')">
+              MARK DELIVERED + EMAIL CUSTOMER
+            </button>
+          ` : `
+            <p class="muted"><strong>DELIVERED · LOCKED</strong></p>
+            <p class="muted">This order is completed and cannot be edited.</p>
+            ${order.delivery_email_status === "failed" ? `
+              <button class="small-button resend-button" type="button" onclick="updateOrder(${Number(order.id)}, 'delivered')">
+                RETRY DELIVERY EMAIL
+              </button>
+            ` : order.delivery_email_status === "sent" ? `
+              <p class="muted">Delivery email sent ${order.delivery_email_sent_at ? `· ${esc(fmtDate(order.delivery_email_sent_at))}` : ""}</p>
+            ` : ""}
+          `
+        ) : `
           <label class="eyebrow">ORDER STATUS</label>
           <select onchange="updateOrder(${Number(order.id)}, this.value)">
             ${statuses.map((value) => `
@@ -980,7 +995,7 @@ window.resendConfirmation = async (id) => {
 
 window.updateOrder = async (id, status) => {
   try {
-    await api(`/api/admin/orders/${id}/status`, {
+    const result = await api(`/api/admin/orders/${id}/status`, {
       method: "PUT",
       body: JSON.stringify({ status })
     });
@@ -988,7 +1003,17 @@ window.updateOrder = async (id, status) => {
     await loadOrders();
     await loadSummary();
 
-    toast("Order status updated.");
+    if (status === "delivered") {
+      if (result.delivery_email_sent) {
+        toast("Marked delivered. Customer delivery email sent.");
+      } else if (result.delivery_email_error) {
+        toast("Marked delivered, but email failed: " + result.delivery_email_error);
+      } else {
+        toast("Order status updated.");
+      }
+    } else {
+      toast("Order status updated.");
+    }
   } catch (error) {
     toast(error.message);
     await loadOrders();
