@@ -560,3 +560,22 @@ body:has(.checkout-dialog[open]){overflow:hidden;overscroll-behavior:none}
   .checkout-dialog label{margin:12px 0}
   .checkout-dialog input,.checkout-dialog textarea,.checkout-dialog select{font-size:16px}
 }
+
+
+/* MONOWEAR product image gallery */
+.product-image-thumbnails{
+  display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;
+}
+.product-image-thumbnail{
+  width:68px;height:82px;padding:3px;border:1px solid var(--border-color,rgba(255,255,255,.2));
+  background:transparent;cursor:pointer;opacity:.72;transition:opacity .2s,border-color .2s;
+}
+.product-image-thumbnail img{
+  display:block;width:100%;height:100%;object-fit:cover;
+}
+.product-image-thumbnail:hover,.product-image-thumbnail.is-active{
+  opacity:1;border-color:currentColor;
+}
+@media(max-width:600px){
+  .product-image-thumbnail{width:58px;height:70px}
+}
