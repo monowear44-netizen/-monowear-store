@@ -346,6 +346,24 @@
     // Keep this view focused on the one product the customer selected.
     const sizes = Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ["One size"];
     const stock = Number(product.stock ?? 0);
+    const moreProducts = products
+      .filter((item) => Number(item.id) !== Number(product.id))
+      .slice(0, 4);
+    const moreProductsMarkup = moreProducts.length ? `
+      <section class="product-detail-more" aria-label="More from MONOWEAR">
+        <p class="eyebrow">KEEP EXPLORING</p>
+        <h3>More from MONOWEAR</h3>
+        <div class="product-detail-more-grid">
+          ${moreProducts.map((item) => `
+            <button type="button" class="product-detail-more-card" data-detail-product-id="${Number(item.id)}">
+              <span class="product-detail-more-image">${productImage(item)}</span>
+              <span class="product-detail-more-name">${escapeHTML(item.name || "MONOWEAR Piece")}</span>
+              <span class="product-detail-more-category">${escapeHTML(item.category || "MONOWEAR")}</span>
+              <span class="product-detail-more-price">${money(item.price)}</span>
+            </button>
+          `).join("")}
+        </div>
+      </section>` : "";
     $("productDetailContent").innerHTML = `
       <div class="product-detail-layout">
         <div class="product-detail-image">${productImage(product)}</div>
@@ -363,6 +381,7 @@
           <button type="button" class="add-button product-detail-add" ${stock <= 0 ? "disabled" : ""} onclick="addToCartFromDetail(${Number(product.id)})">${stock <= 0 ? "SOLD OUT" : "ADD TO BAG +"}</button>
         </div>
       </div>
+      ${moreProductsMarkup}
 `;
     const sizeSelect = $("detail-size-" + Number(product.id));
     if (sizeSelect) sizeSelect.value = sizes[0];
