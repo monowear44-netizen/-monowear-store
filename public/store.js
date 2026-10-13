@@ -669,7 +669,7 @@ async function refreshShippingQuote() {
     }
     if (shippingNode) shippingNode.textContent = money(rate.amount) + " · Fixed delivery";
     if (totalNode) totalNode.textContent = money(subtotal + Number(rate.amount || 0));
-    if (messageNode) messageNode.textContent = "Fixed MONOWEAR delivery fee for " + state + ". The fee applies once per order, not per item.";
+    if (messageNode) messageNode.textContent = "Fixed MONOWEAR delivery fee for " + state + ". Fee is charged per clothing item.";
   } catch (error) {
     if (requestId !== shippingQuoteRequestId) return;
     currentShippingQuoteAmount = null;
