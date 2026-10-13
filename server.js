@@ -2816,29 +2816,42 @@ app.get("/api/admin/dashboard", requireAdmin, (req, res) => {
     SELECT COUNT(*) AS total FROM collections WHERE published = 1
   `).get().total;
 
+  // New orders are paid real orders still being processed; shipped/delivered orders
+  // live in Completed & shipped and are not counted as new.
   const orders = db.prepare(`
     SELECT COUNT(*) AS total FROM orders
     WHERE COALESCE(record_type, 'real_order') = 'real_order'
       AND payment_status = 'paid'
+      AND LOWER(COALESCE(order_status, 'pending')) NOT IN ('shipped', 'delivered')
   `).get().total;
 
   const paidOrders = db.prepare(`
     SELECT COUNT(*) AS total
     FROM orders
-    WHERE payment_status = 'paid'
+    WHERE COALESCE(record_type, 'real_order') = 'real_order'
+      AND payment_status = 'paid'
   `).get().total;
 
-  // Product revenue excludes delivery fees and discounts, and only includes verified payments.
+  // Product revenue uses verified paid order total minus delivery, matching the payments report.
   const revenue = db.prepare(`
-    SELECT COALESCE(SUM(MAX(subtotal - discount, 0)), 0) AS total
+    SELECT COALESCE(SUM(MAX(COALESCE(total, 0) - COALESCE(shipping_fee, 0), 0)), 0) AS total
     FROM orders
-    WHERE payment_status = 'paid'
+    WHERE COALESCE(record_type, 'real_order') = 'real_order'
+      AND payment_status = 'paid'
   `).get().total;
 
+  // Needs attention means a paid real order has a recorded stock-shortfall flag.
   const pendingOrders = db.prepare(`
-    SELECT COUNT(*) AS total
-    FROM orders
-    WHERE payment_status = 'pending'
+    SELECT COUNT(DISTINCT o.id) AS total
+    FROM orders o
+    WHERE COALESCE(o.record_type, 'real_order') = 'real_order'
+      AND o.payment_status = 'paid'
+      AND LOWER(COALESCE(o.order_status, 'pending')) NOT IN ('shipped', 'delivered')
+      AND EXISTS (
+        SELECT 1 FROM order_events e
+        WHERE e.order_id = o.id
+          AND e.message LIKE 'NEEDS ATTENTION%'
+      )
   `).get().total;
 
   const lowStock = db.prepare(`
