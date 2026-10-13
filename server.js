@@ -2939,7 +2939,7 @@ app.get("/api/admin/payments", requireAdmin, (req, res) => {
       paystack_fee: Number(row.paystack_fee || 0)
     }));
 
-    const paid = "payment_status = 'paid'";
+    const paid = "payment_status = 'paid' AND COALESCE(record_type, 'real_order') = 'real_order'";
 
     res.set("Cache-Control", "no-store");
 
