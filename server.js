@@ -288,7 +288,8 @@ const defaults = {
   design_text: "#141414",
   design_accent: "#c6ff4b",
   design_font: "Manrope",
-  design_hero_alignment: "left"
+  design_hero_alignment: "left",
+  design_radius: "square"
 };
 // ============================================================
 // INITIAL ADMIN
