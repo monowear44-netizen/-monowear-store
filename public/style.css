@@ -165,3 +165,54 @@
 body.payment-is-loading{overflow:hidden}
 @keyframes paymentSpin{to{transform:rotate(360deg)}}@keyframes paymentProgress{to{transform:translateX(140%)}}@keyframes paymentFadeIn{from{opacity:0}to{opacity:1}}
 @media(max-width:520px){.checkout-dialog form{padding:0 18px 20px}.checkout-brand-panel{margin:0 -18px 20px;padding:22px 18px 16px}.checkout-brand-index{font-size:8px}.checkout-dialog .drawer-head h2{font-size:24px}}
+
+
+/* Product detail: focused single item with related MONOWEAR pieces below */
+.product-detail-more {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(20, 20, 20, .18);
+}
+.product-detail-more h3 {
+  margin: .35rem 0 1rem;
+  font-size: clamp(1.35rem, 3vw, 2rem);
+}
+.product-detail-more-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .75rem;
+}
+.product-detail-more-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: .35rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.product-detail-more-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background: #e8e6df;
+}
+.product-detail-more-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.product-detail-more-name { font-weight: 700; font-size: .88rem; }
+.product-detail-more-category { font-size: .72rem; opacity: .72; }
+.product-detail-more-price { font-weight: 700; font-size: .82rem; }
+.product-detail-more-card:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .product-detail-more-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
