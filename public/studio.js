@@ -675,6 +675,8 @@ async function loadSettings() {
     const data = await api("/api/store");
 
     currentSettings = data.settings || {};
+    if (!currentSettings.story_title) currentSettings.story_title = "Built for the ones who keep going.";
+    if (!currentSettings.brand_story) currentSettings.brand_story = "MONO is a state of mind: self-reliant, intentional, and unwilling to wait for permission. Every piece carries a reminder to keep showing up for your own future.";
 
     const form = $("settingsForm");
 
