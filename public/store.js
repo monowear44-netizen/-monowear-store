@@ -566,18 +566,18 @@
         return;
       }
       closeCart();
+      const subtotal = cart.reduce(
+        (total, item) => total + Number(item.price || 0) * Number(item.quantity || 1),
+        0
+      );
+      const checkoutSubtotal = $("checkoutSubtotal");
       const checkoutTotal = $("checkoutTotal");
-      if (checkoutTotal) {
-        checkoutTotal.textContent = money(
-          cart.reduce(
-            (total, item) =>
-              total +
-              Number(item.price || 0) *
-                Number(item.quantity || 1),
-            0
-          )
-        );
-      }
+      const checkoutShipping = $("checkoutShipping");
+      const shippingQuoteMessage = $("shippingQuoteMessage");
+      if (checkoutSubtotal) checkoutSubtotal.textContent = money(subtotal);
+      if (checkoutTotal) checkoutTotal.textContent = "—";
+      if (checkoutShipping) checkoutShipping.textContent = "Enter destination";
+      if (shippingQuoteMessage) shippingQuoteMessage.textContent = "Enter your city/LGA and state to fetch a live courier rate.";
       if (checkoutDialog && !checkoutDialog.open) {
         checkoutDialog.showModal();
       }
@@ -611,8 +611,78 @@
     }
      // MONOWEAR CHECKOUT FORM
 const checkoutForm = $("checkoutForm");
+let shippingQuoteRequestId = 0;
+
+async function refreshShippingQuote() {
+  if (!checkoutForm) return;
+  const cityField = checkoutForm.querySelector('[name="city"]');
+  const stateField = checkoutForm.querySelector('[name="state"]');
+  const city = String(cityField?.value || "").trim();
+  const state = String(stateField?.value || "").trim();
+  const shippingNode = $("checkoutShipping");
+  const totalNode = $("checkoutTotal");
+  const messageNode = $("shippingQuoteMessage");
+  const subtotal = cart.reduce(
+    (total, item) => total + Number(item.price || 0) * Number(item.quantity || 1),
+    0
+  );
+  const requestId = ++shippingQuoteRequestId;
+
+  if (!city || !state || !cart.length) {
+    if (shippingNode) shippingNode.textContent = "Enter destination";
+    if (totalNode) totalNode.textContent = "—";
+    if (messageNode) messageNode.textContent = "Enter your city/LGA and state to fetch a live courier rate.";
+    return;
+  }
+
+  if (shippingNode) shippingNode.textContent = "Calculating…";
+  if (totalNode) totalNode.textContent = "Calculating…";
+  if (messageNode) messageNode.textContent = "Getting a live rate from our courier network…";
+
+  try {
+    const response = await fetch("/api/shipping/quote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({
+        city,
+        state,
+        items: cart.map((item) => ({
+          product_id: Number(item.id),
+          quantity: Number(item.quantity),
+          size: String(item.size || "")
+        }))
+      })
+    });
+    const result = await response.json();
+    if (requestId !== shippingQuoteRequestId) return;
+    if (!response.ok || !result.success || !result.quote) {
+      throw new Error(result.error || "Live delivery rates are unavailable.");
+    }
+    const quote = result.quote;
+    if (shippingNode) shippingNode.textContent = money(quote.amount);
+    if (totalNode) totalNode.textContent = money(subtotal + Number(quote.amount || 0));
+    if (messageNode) {
+      const eta = quote.delivery_time ? " · " + quote.delivery_time : "";
+      messageNode.textContent = "Lowest available live quote: " + quote.carrier + eta + ". Final rate is rechecked before payment.";
+    }
+  } catch (error) {
+    if (requestId !== shippingQuoteRequestId) return;
+    if (shippingNode) shippingNode.textContent = "Unavailable";
+    if (totalNode) totalNode.textContent = "—";
+    if (messageNode) messageNode.textContent = error.message || "Could not calculate delivery. Please try again.";
+  }
+}
 
 if (checkoutForm) {
+  const cityField = checkoutForm.querySelector('[name="city"]');
+  const stateField = checkoutForm.querySelector('[name="state"]');
+  if (cityField) {
+    cityField.addEventListener("change", refreshShippingQuote);
+    cityField.addEventListener("blur", refreshShippingQuote);
+  }
+  if (stateField) stateField.addEventListener("change", refreshShippingQuote);
+
   checkoutForm.addEventListener("submit", async (event) => {
     event.preventDefault();
 
