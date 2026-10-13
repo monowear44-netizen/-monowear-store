@@ -610,7 +610,7 @@ async function refreshShippingQuote() {
   currentShippingQuoteAmount = null;
   currentShippingCourier = null;
   currentShippingRequestToken = "";
-  if (optionsNode) optionsNode.innerHTML = '<option value="">Choose a courier after rates load</option>';
+  if (optionsNode) optionsNode.innerHTML = '<option value="">Calculating Travo delivery price…</option>';
   if (!city || !state || !cart.length) {
     if (shippingNode) shippingNode.textContent = "Enter destination";
     if (totalNode) totalNode.textContent = "—";
@@ -683,7 +683,7 @@ async function refreshShippingQuote() {
     currentShippingQuoteAmount = null;
     currentShippingCourier = null;
     currentShippingRequestToken = "";
-    if (shippingNode) shippingNode.textContent = "Unavailable";
+    if (shippingNode) shippingNode.textContent = "Quote unavailable";
     if (totalNode) totalNode.textContent = "—";
     if (messageNode) messageNode.textContent = error.message || "Could not calculate delivery. Please try again.";
   }
