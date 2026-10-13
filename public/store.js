@@ -140,11 +140,22 @@
     setText("announcement", settings.announcement || "");
     const heroTitle = $("heroTitle");
     if (heroTitle) {
-      const title = settings.hero_title || "HELP IS ON THE WAY";
-      heroTitle.textContent = title;
-      // Highlight the final phrase for the default campaign headline.
-      if (title.toUpperCase() === "HELP IS ON THE WAY") {
-        heroTitle.innerHTML = 'HELP IS <br><span>ON THE WAY.</span>';
+      const title = (settings.hero_title || "HELP IS ON THE WAY").trim();
+      const words = title.split(/\s+/).filter(Boolean);
+      // Keep the gradient treatment for every headline, not only the default copy.
+      // Split longer headlines into two balanced lines and gradient the second line.
+      heroTitle.replaceChildren();
+      if (words.length > 1) {
+        const splitAt = Math.ceil(words.length / 2);
+        heroTitle.append(document.createTextNode(words.slice(0, splitAt).join(" ")));
+        heroTitle.append(document.createElement("br"));
+        const gradientLine = document.createElement("span");
+        gradientLine.textContent = words.slice(splitAt).join(" ");
+        heroTitle.append(gradientLine);
+      } else {
+        const gradientLine = document.createElement("span");
+        gradientLine.textContent = title;
+        heroTitle.append(gradientLine);
       }
     }
     setText("heroSubtitle", settings.hero_subtitle || "");
