@@ -239,6 +239,7 @@ if (orderRecordTypeAdded) {
 // only at the moment a column is first created.
 // ------------------------------------------------------------
 ensureColumn("collections", "archived", "INTEGER NOT NULL DEFAULT 0");
+ensureColumn("collections", "release_date", "TEXT DEFAULT ''");
 
 if (ensureColumn("orders", "paid_at", "TEXT")) {
   // Use the exact time recorded when payment was confirmed, if present;
@@ -385,6 +386,13 @@ for (const collection of initialCollections) {
     collection.sort_order
   );
 }
+
+// Seed the announced release date only if it has not already been customised.
+db.prepare(`
+  UPDATE collections SET release_date = '2026-10-21'
+  WHERE slug = 'help-is-on-the-way'
+    AND (release_date IS NULL OR release_date = '')
+`).run();
 
  
 // ============================================================
@@ -1829,7 +1837,10 @@ function normalizeCollectionInput(body) {
     archived: body.archived ? 1 : 0,
     // An archived collection is never published.
     published: body.archived ? 0 : (body.published ? 1 : 0),
-    sort_order: Number(body.sort_order || 0)
+    sort_order: Number(body.sort_order || 0),
+    release_date: /^\d{4}-\d{2}-\d{2}$/.test(String(body.release_date || ""))
+      ? String(body.release_date)
+      : ""
   };
 }
 
@@ -1868,10 +1879,10 @@ app.post("/api/admin/collections", requireAdmin, (req, res) => {
 
     const result = db.prepare(`
       INSERT INTO collections (
-        name, slug, description, cover_image, published, archived, sort_order
+        name, slug, description, cover_image, published, archived, sort_order, release_date
       )
       VALUES (
-        @name, @slug, @description, @cover_image, @published, @archived, @sort_order
+        @name, @slug, @description, @cover_image, @published, @archived, @sort_order, @release_date
       )
     `).run(collection);
 
@@ -1922,6 +1933,7 @@ app.put("/api/admin/collections/:id", requireAdmin, (req, res) => {
         published = @published,
         archived = @archived,
         sort_order = @sort_order,
+        release_date = @release_date,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = @id
     `).run({
