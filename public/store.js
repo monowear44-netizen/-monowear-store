@@ -343,23 +343,9 @@
     const product = products.find((item) => Number(item.id) === Number(productId));
     if (!product) return;
     const modal = ensureProductDetail();
-    const currentCategory = String(product.category || "").trim();
-    const related = products.filter((item) => Number(item.id) !== Number(product.id));
-    const sameCollection = currentCategory
-      ? related.filter((item) => String(item.category || "").trim().toLowerCase() === currentCategory.toLowerCase())
-      : [];
-    const recommendations = (sameCollection.length ? sameCollection : related).slice(0, 4);
+    // Keep this view focused on the one product the customer selected.
     const sizes = Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ["One size"];
     const stock = Number(product.stock ?? 0);
-    const relatedMarkup = recommendations.map((item) => {
-      const id = Number(item.id);
-      return `
-        <button type="button" class="more-product-card" data-detail-product-id="${id}" aria-label="View ${escapeHTML(item.name || "MONOWEAR piece")}">
-          <span class="more-product-image">${productImage(item)}</span>
-          <span class="more-product-info"><span>${escapeHTML(item.name || "MONOWEAR Piece")}</span><span>${money(item.price)}</span></span>
-          <span class="product-category">${escapeHTML(item.category || "MONOWEAR")}</span>
-        </button>`;
-    }).join("");
     $("productDetailContent").innerHTML = `
       <div class="product-detail-layout">
         <div class="product-detail-image">${productImage(product)}</div>
@@ -377,10 +363,7 @@
           <button type="button" class="add-button product-detail-add" ${stock <= 0 ? "disabled" : ""} onclick="addToCartFromDetail(${Number(product.id)})">${stock <= 0 ? "SOLD OUT" : "ADD TO BAG +"}</button>
         </div>
       </div>
-      <section class="more-from-monowear">
-        <div class="more-from-heading"><p class="eyebrow">KEEP EXPLORING</p><h3>More from Monowear<span>.</span></h3></div>
-        ${recommendations.length ? `<div class="more-products-grid">${relatedMarkup}</div>` : '<p class="muted">More pieces from Monowear are coming soon.</p>'}
-      </section>`;
+`;
     const sizeSelect = $("detail-size-" + Number(product.id));
     if (sizeSelect) sizeSelect.value = sizes[0];
     if (!modal.open) modal.showModal();
