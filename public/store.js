@@ -574,7 +574,7 @@
       if (checkoutSubtotal) checkoutSubtotal.textContent = money(subtotal);
       if (checkoutTotal) checkoutTotal.textContent = "—";
       if (checkoutShipping) checkoutShipping.textContent = "Enter destination";
-      if (shippingQuoteMessage) shippingQuoteMessage.textContent = "Enter your city/LGA and state to fetch a live courier rate.";
+      if (shippingQuoteMessage) shippingQuoteMessage.textContent = "Enter your city/LGA and state to calculate delivery.";
       if (checkoutDialog && !checkoutDialog.open) {
         checkoutDialog.showModal();
       }
@@ -636,7 +636,7 @@ async function refreshShippingQuote() {
 
   if (shippingNode) shippingNode.textContent = "Calculating…";
   if (totalNode) totalNode.textContent = "Calculating…";
-  if (messageNode) messageNode.textContent = "Getting a live rate from our courier network…";
+  if (messageNode) messageNode.textContent = "Calculating your delivery fee…";
 
   try {
     const response = await fetch("/api/shipping/quote", {
@@ -663,7 +663,7 @@ async function refreshShippingQuote() {
     if (totalNode) totalNode.textContent = money(subtotal + Number(quote.amount || 0));
     if (messageNode) {
       const eta = quote.delivery_time ? " · " + quote.delivery_time : "";
-      messageNode.textContent = "Lowest available live quote: " + quote.carrier + eta + ". Final rate is rechecked before payment.";
+      messageNode.textContent = "Estimated delivery fee via " + quote.carrier + eta + ". Fee is rechecked before payment; final courier cost is confirmed when booked.";
     }
   } catch (error) {
     if (requestId !== shippingQuoteRequestId) return;
