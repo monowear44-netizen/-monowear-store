@@ -220,7 +220,7 @@ ensureColumn("orders", "payment_method", "TEXT DEFAULT 'paystack'");
 ensureColumn("orders", "payment_reference", "TEXT DEFAULT ''");
 ensureColumn("orders", "notes", "TEXT DEFAULT ''");
 ensureColumn("orders", "updated_at", "TEXT DEFAULT CURRENT_TIMESTAMP");
-const orderRecordTypeAdded = ensureColumn("orders", "record_type", "TEXT DEFAULT 'real_order'");
+const orderRecordTypeAdded = ensureColumn("orders", "record_type", "TEXT DEFAULT 'abandoned_cart'");
 if (orderRecordTypeAdded) {
   db.prepare(`
     UPDATE orders SET record_type = CASE
@@ -2270,9 +2270,10 @@ app.post(
           total,
           payment_status,
           order_status,
-          payment_method
+          payment_method,
+          record_type
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', 'paystack')
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', 'paystack', 'abandoned_cart')
       `).run(
         reference,
         customerName,
@@ -2639,11 +2640,31 @@ app.get("/api/admin/orders", requireAdmin, (req, res) => {
           AND e.message LIKE 'NEEDS ATTENTION%'
       ) AS attention
     FROM orders
+    WHERE COALESCE(record_type, 'real_order') = 'real_order'
+      AND payment_status = 'paid'
     ORDER BY id DESC
     LIMIT 500
   `).all();
 
   res.json(orders.map(safeOrder));
+});
+
+app.get("/api/admin/abandoned-carts", requireAdmin, (req, res) => {
+  const carts = db.prepare(`
+    SELECT orders.*,
+      EXISTS (
+        SELECT 1 FROM order_events e
+        WHERE e.order_id = orders.id
+          AND e.message LIKE 'NEEDS ATTENTION%'
+      ) AS attention
+    FROM orders
+    WHERE COALESCE(record_type, 'real_order') = 'abandoned_cart'
+      AND payment_status != 'paid'
+    ORDER BY id DESC
+    LIMIT 500
+  `).all();
+
+  res.json(carts.map(safeOrder));
 });
 
 app.get("/api/admin/orders/:id", requireAdmin, (req, res) => {
@@ -2765,6 +2786,8 @@ app.get("/api/admin/dashboard", requireAdmin, (req, res) => {
 
   const orders = db.prepare(`
     SELECT COUNT(*) AS total FROM orders
+    WHERE COALESCE(record_type, 'real_order') = 'real_order'
+      AND payment_status = 'paid'
   `).get().total;
 
   const paidOrders = db.prepare(`
