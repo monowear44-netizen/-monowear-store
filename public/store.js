@@ -91,7 +91,24 @@
   /* =========================================================
      STORE SETTINGS
   ========================================================= */
+  function applyDesignSettings() {
+    const root = document.documentElement;
+    const validColor = (value, fallback) => /^#[0-9a-f]{6}$/i.test(String(value || "")) ? value : fallback;
+    root.style.setProperty("--bg", validColor(settings.design_background, "#f0efe9"));
+    root.style.setProperty("--ink", validColor(settings.design_text, "#141414"));
+    root.style.setProperty("--accent", validColor(settings.design_accent, "#c6ff4b"));
+    const fonts = { Manrope: "'Manrope', Arial, sans-serif", Arial: "Arial, sans-serif", Georgia: "Georgia, serif", system: "system-ui, sans-serif" };
+    document.body.style.fontFamily = fonts[settings.design_font] || fonts.Manrope;
+    const hero = document.querySelector(".hero");
+    if (hero) {
+      const alignment = ["left", "center", "right"].includes(settings.design_hero_alignment) ? settings.design_hero_alignment : "left";
+      hero.style.justifyContent = alignment === "left" ? "flex-start" : alignment === "right" ? "flex-end" : "center";
+      const copy = hero.querySelector(".hero-copy");
+      if (copy) copy.style.textAlign = alignment;
+    }
+  }
   function applySettings() {
+    applyDesignSettings();
     const brand = $("brandName");
     if (brand) {
       // Update the text safely without assuming a child exists.
