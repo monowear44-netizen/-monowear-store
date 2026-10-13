@@ -144,3 +144,291 @@
 body.payment-is-loading{overflow:hidden}
 @keyframes paymentSpin{to{transform:rotate(360deg)}}@keyframes paymentProgress{to{transform:translateX(140%)}}@keyframes paymentFadeIn{from{opacity:0}to{opacity:1}}
 @media(max-width:520px){.checkout-dialog form{padding:0 18px 20px}.checkout-brand-panel{margin:0 -18px 20px;padding:22px 18px 16px}.checkout-brand-index{font-size:8px}.checkout-dialog .drawer-head h2{font-size:24px}}
+
+
+/* =========================================================
+   MONOWEAR PRODUCT DETAIL — FULL-SCREEN EDITORIAL EXPERIENCE
+   Keeps the product, description, buying controls and related
+   pieces visually separated instead of appearing as a cluster.
+========================================================= */
+.product-detail-dialog{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  max-width:none;
+  max-height:none;
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  color:#f4f2ea;
+  background:
+    radial-gradient(ellipse at 78% 8%,rgba(198,255,75,.09),transparent 32%),
+    radial-gradient(ellipse at 12% 62%,rgba(255,255,255,.035),transparent 35%),
+    #10110f;
+  isolation:isolate;
+}
+.product-detail-dialog[open]{display:block}
+.product-detail-dialog::backdrop{background:#080908}
+.product-detail-dialog:before{
+  content:"MONOWEAR / OBJECT STUDY";
+  position:absolute;
+  top:112px;
+  right:-36px;
+  z-index:-1;
+  color:rgba(255,255,255,.025);
+  font:800 clamp(48px,10vw,150px) Manrope,sans-serif;
+  letter-spacing:-.09em;
+  white-space:nowrap;
+  transform:rotate(90deg);
+  transform-origin:top right;
+  pointer-events:none;
+}
+.product-detail-close{
+  position:fixed;
+  top:18px;
+  right:22px;
+  z-index:20;
+  display:grid;
+  place-items:center;
+  width:48px;
+  height:48px;
+  border:1px solid rgba(255,255,255,.28);
+  border-radius:50%;
+  color:#fff;
+  background:rgba(15,16,14,.82);
+  font-size:25px;
+  line-height:1;
+  cursor:pointer;
+  backdrop-filter:blur(12px);
+}
+.product-detail-close:hover{background:#c6ff4b;color:#111;border-color:#c6ff4b}
+#productDetailContent{width:100%;min-height:100%;padding:0 0 72px}
+.product-detail-layout{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0,1.08fr) minmax(320px,.92fr);
+  align-items:stretch;
+  gap:clamp(32px,6vw,92px);
+  max-width:1440px;
+  margin:0 auto;
+  padding:82px clamp(22px,6vw,90px) 78px;
+}
+.product-detail-image{
+  position:relative;
+  display:grid;
+  place-items:center;
+  min-width:0;
+  min-height:480px;
+  aspect-ratio:4/5;
+  max-height:760px;
+  overflow:hidden;
+  background:
+    radial-gradient(ellipse at 50% 35%,#35372f 0%,#20211e 45%,#171815 100%);
+  border:1px solid rgba(255,255,255,.1);
+}
+.product-detail-image:after{
+  content:"MONO / INDEPENDENT BY DESIGN";
+  position:absolute;
+  left:20px;
+  bottom:18px;
+  color:rgba(255,255,255,.55);
+  font:9px 'DM Mono',monospace;
+  letter-spacing:.14em;
+  pointer-events:none;
+}
+.product-detail-image img{
+  display:block;
+  width:100%;
+  height:100%;
+  max-height:760px;
+  object-fit:contain;
+  object-position:center;
+  padding:0;
+}
+.product-detail-image .image-placeholder{
+  display:grid;
+  align-content:center;
+  width:100%;
+  height:100%;
+  color:#c6ff4b;
+  background:transparent;
+  font-size:clamp(34px,6vw,82px);
+  letter-spacing:-.1em;
+}
+.product-detail-image .image-placeholder span{display:block;margin-top:12px;font:10px 'DM Mono',monospace;letter-spacing:.16em;color:#aaa99f}
+.product-detail-copy{
+  align-self:center;
+  min-width:0;
+  max-width:550px;
+  padding:35px 0;
+}
+.product-detail-copy .eyebrow{color:#c6ff4b;margin:0 0 32px}
+.product-detail-collection{
+  margin:0 0 14px;
+  color:#a5a69d;
+  font:10px 'DM Mono',monospace;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+}
+.product-detail-copy h2{
+  max-width:600px;
+  margin:0;
+  color:#f5f3eb;
+  font-size:clamp(38px,5.4vw,76px);
+  font-weight:800;
+  line-height:.94;
+  letter-spacing:-.085em;
+  overflow-wrap:anywhere;
+}
+.product-detail-price{
+  margin:24px 0;
+  color:#c6ff4b;
+  font-size:clamp(19px,2vw,25px);
+  font-weight:700;
+  letter-spacing:-.04em;
+}
+.product-detail-description{
+  max-width:470px;
+  padding:20px 0 22px;
+  border-top:1px solid rgba(255,255,255,.16);
+  border-bottom:1px solid rgba(255,255,255,.16);
+  color:#d0d0c8;
+  font-size:14px;
+  line-height:1.95;
+  white-space:pre-line;
+}
+.product-detail-stock{
+  margin:22px 0;
+  color:#c6ff4b;
+  font:10px 'DM Mono',monospace;
+  letter-spacing:.12em;
+}
+.product-detail-size-label{
+  display:block;
+  margin:24px 0 9px;
+  color:#c5c5bb;
+  font:10px 'DM Mono',monospace;
+  letter-spacing:.13em;
+}
+.product-detail-copy .size-select{
+  display:block;
+  width:100%;
+  min-height:48px;
+  padding:14px;
+  border:1px solid rgba(255,255,255,.26);
+  color:#f4f2ea;
+  background:#191a17;
+  font-size:12px;
+}
+.product-detail-copy .size-select option{color:#111;background:#fff}
+.product-detail-add{
+  width:100%;
+  min-height:54px;
+  margin-top:12px;
+  border:1px solid #c6ff4b;
+  background:#c6ff4b;
+  color:#111;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.12em;
+}
+.product-detail-add:hover{background:#f4f2ea;border-color:#f4f2ea}
+.product-detail-add:disabled{border-color:#555;background:#292a26;color:#888;opacity:1}
+.more-from-monowear{
+  position:relative;
+  max-width:1440px;
+  margin:0 auto;
+  padding:58px clamp(22px,6vw,90px) 0;
+  border-top:1px solid rgba(255,255,255,.13);
+}
+.more-from-heading{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:26px}
+.more-from-heading .eyebrow{margin:0 0 10px;color:#c6ff4b}
+.more-from-heading h3{
+  margin:0;
+  color:#f4f2ea;
+  font-size:clamp(28px,4vw,48px);
+  line-height:1;
+  letter-spacing:-.07em;
+}
+.more-from-heading h3 span{color:#c6ff4b}
+.more-products-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:16px;
+}
+.more-product-card{
+  display:block;
+  min-width:0;
+  padding:0 0 14px;
+  overflow:hidden;
+  text-align:left;
+  color:#f4f2ea;
+  background:#171815;
+  border:1px solid rgba(255,255,255,.09);
+  cursor:pointer;
+  transition:transform .2s,border-color .2s,background .2s;
+}
+.more-product-card:hover{transform:translateY(-4px);border-color:rgba(198,255,75,.65);background:#1d1e1a}
+.more-product-image{
+  display:block;
+  aspect-ratio:4/5;
+  overflow:hidden;
+  background:#252621;
+}
+.more-product-image img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .35s}
+.more-product-card:hover .more-product-image img{transform:scale(1.04)}
+.more-product-image .image-placeholder{
+  display:grid;
+  place-content:center;
+  height:100%;
+  color:#b6b8ab;
+  background:linear-gradient(145deg,#2c2e27,#171815);
+  font-size:clamp(20px,2.5vw,34px);
+}
+.more-product-image .image-placeholder span{font-size:8px;letter-spacing:.12em}
+.more-product-info{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding:14px 12px 9px;
+  font-size:12px;
+  line-height:1.4;
+}
+.more-product-info span:first-child{font-weight:700}
+.more-product-info span:last-child{color:#c6ff4b}
+.more-product-card>.product-category{display:block;padding:0 12px;color:#a7a89e;font-size:9px}
+.product-detail-dialog .muted{color:#b8b9af}
+@media(max-width:760px){
+  .product-detail-close{top:12px;right:12px;width:42px;height:42px}
+  .product-detail-layout{
+    grid-template-columns:minmax(0,1fr);
+    gap:0;
+    padding:0 0 36px;
+  }
+  .product-detail-image{
+    width:100%;
+    min-height:0;
+    aspect-ratio:4/4.5;
+    max-height:none;
+    border-left:0;
+    border-right:0;
+    border-top:0;
+  }
+  .product-detail-image img{max-height:none}
+  .product-detail-copy{padding:34px 22px 18px;max-width:none}
+  .product-detail-copy .eyebrow{margin-bottom:24px}
+  .product-detail-copy h2{font-size:clamp(38px,11vw,58px)}
+  .product-detail-description{font-size:13px;line-height:1.85}
+  .more-from-monowear{padding:36px 16px 0}
+  .more-from-heading{display:block;margin-bottom:20px}
+  .more-products-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .more-product-info{padding:12px 9px 8px;font-size:11px}
+  .more-product-card>.product-category{padding:0 9px;font-size:8px}
+}
+@media(prefers-reduced-motion:reduce){
+  .more-product-card,.more-product-image img{transition:none}
+}
