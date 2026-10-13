@@ -121,7 +121,7 @@
   .site-header nav{gap:9px}
   .site-header nav a{font-size:8px;letter-spacing:.04em}
   .header-actions{gap:2px}
-  .account-link{display:none}
+  .account-link{display:inline-flex;font-size:8px;letter-spacing:0;white-space:nowrap}
   .cart-toggle{padding:8px 4px;font-size:9px}
   .section-heading{margin-bottom:26px}
   .product-grid{gap:20px 10px}
