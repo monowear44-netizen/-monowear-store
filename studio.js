@@ -828,8 +828,10 @@ function renderOrders() {
   const query = ($("orderSearch")?.value || "").trim().toLowerCase();
   const pay = $("orderPayFilter")?.value || "all";
   const status = $("orderStatusFilter")?.value || "all";
+  const recordType = $("orderRecordFilter")?.value || "all";
 
   const list = currentOrders.filter((order) => {
+    if (recordType !== "all" && (order.record_type || "real_order") !== recordType) return false;
     if (pay !== "all" && String(order.payment_status).toLowerCase() !== pay) {
       return false;
     }
@@ -869,6 +871,7 @@ function renderOrders() {
         </h3>
 
         <p>
+          ${badge((order.record_type || "real_order") === "abandoned_cart" ? "ABANDONED CART" : "REAL ORDER", (order.record_type || "real_order") === "abandoned_cart" ? "warn" : "good")}
           ${paymentBadge(order.payment_status)}
           ${badge(String(order.order_status || "").toUpperCase())}
           ${emailBadge(order.email_status)}
@@ -915,6 +918,13 @@ function renderOrders() {
           `).join("")}
         </select>
 
+        ${!isPaid ? `
+          <label class="eyebrow">RECORD TYPE</label>
+          <select onchange="updateOrderRecordType(${Number(order.id)}, this.value)">
+            <option value="abandoned_cart" ${(order.record_type || "real_order") === "abandoned_cart" ? "selected" : ""}>Abandoned cart</option>
+            <option value="real_order" ${(order.record_type || "real_order") === "real_order" ? "selected" : ""}>Real order</option>
+          </select>
+        ` : ""}
         ${isPaid ? `
           <button
             class="small-button resend-button"
@@ -931,9 +941,19 @@ function renderOrders() {
   `;
 }
 
-for (const id of ["orderSearch", "orderPayFilter", "orderStatusFilter"]) {
+for (const id of ["orderSearch", "orderRecordFilter", "orderPayFilter", "orderStatusFilter"]) {
   if ($(id)) $(id).addEventListener("input", renderOrders);
 }
+
+window.updateOrderRecordType = async (id, record_type) => {
+  try {
+    await api(`/api/admin/orders/${id}/record-type`, {
+      method: "PUT", body: JSON.stringify({ record_type })
+    });
+    await loadOrders(); await loadSummary();
+    toast(record_type === "abandoned_cart" ? "Moved to abandoned carts." : "Moved to real orders.");
+  } catch (error) { toast(error.message); await loadOrders(); }
+};
 
 window.resendConfirmation = async (id) => {
   if (!confirm("Send the order confirmation email to this customer again?")) {
