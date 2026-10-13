@@ -380,3 +380,27 @@ html[data-theme="white"] .ticker { background:#171815; color:#fff; }
 @media (max-width:700px) {
   #productGrid.product-grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:22px 12px; }
 }
+
+ 
+/* FEATURED BADGE CONTRAST FIX */
+.product-badge {
+  color: #111 !important;
+  background: var(--accent);
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  box-shadow: 0 2px 10px #0001;
+}
+.sold-badge {
+  color: #fff;
+  background: #171815;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+/* Keep the white theme bright while retaining a high-contrast accent. */
+html[data-theme="white"] .announcement,
+html[data-theme="white"] .ticker { background: var(--accent); color: #111; }
+html[data-theme="white"] .product-badge { color: #111 !important; }
