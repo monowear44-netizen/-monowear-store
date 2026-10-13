@@ -108,3 +108,7 @@
     width: 100%;
   }
 }
+
+
+/* Studio-controlled storefront control shape */
+.button,.add-button,.size-select,.checkout-dialog input,.checkout-dialog textarea{border-radius:var(--control-radius,0px)}
