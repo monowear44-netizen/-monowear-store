@@ -596,6 +596,8 @@ let shippingQuoteRequestId = 0;
 let currentShippingQuoteAmount = null;
 let currentShippingCourier = null;
 let currentShippingRequestToken = "";
+let currentShippingCourier = null;
+let currentShippingRequestToken = "";
 
 async function refreshShippingQuote() {
   if (!checkoutForm) return;
@@ -640,10 +642,17 @@ async function refreshShippingQuote() {
     const rates = Array.isArray(result.quote.rates) ? result.quote.rates : [];
     if (!rates.length) throw new Error("Shipbubble returned no courier options for this destination.");
     if (optionsNode) {
-      optionsNode.innerHTML = '<option value="">Select delivery service</option>' + rates.map((rate, index) => {
-        const label = String(rate.courier_name || "Courier") + " — " + money(rate.amount) + (rate.delivery_time ? " · " + rate.delivery_time : "");
-        return '<option value="' + index + '">' + escapeHTML(label) + '</option>';
-      }).join("");
+      optionsNode.innerHTML = "";
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "Select delivery service";
+      optionsNode.appendChild(placeholder);
+      rates.forEach((rate, index) => {
+        const option = document.createElement("option");
+        option.value = String(index);
+        option.textContent = String(rate.courier_name || "Courier") + " — " + money(rate.amount) + (rate.delivery_time ? " · " + rate.delivery_time : "");
+        optionsNode.appendChild(option);
+      });
       optionsNode.onchange = () => {
         const rate = rates[Number(optionsNode.value)];
         if (!rate || optionsNode.value === "") {
@@ -731,6 +740,9 @@ if (checkoutForm) {
       shipping_courier_id: currentShippingCourier ? currentShippingCourier.courier_id : "",
       shipping_service_code: currentShippingCourier ? currentShippingCourier.service_code : "",
       shipping_request_token: currentShippingRequestToken,
+      shipping_courier_id: currentShippingCourier ? currentShippingCourier.courier_id : "",
+      shipping_service_code: currentShippingCourier ? currentShippingCourier.service_code : "",
+      shipping_request_token: currentShippingRequestToken,
 
       items: cart.map((item) => ({
         product_id: Number(item.id),
@@ -738,6 +750,12 @@ if (checkoutForm) {
         size: String(item.size || "")
       }))
     };
+
+    if (!currentShippingCourier || !Number.isFinite(currentShippingQuoteAmount)) {
+      const quoteMessage = $("shippingQuoteMessage");
+      if (quoteMessage) quoteMessage.textContent = "Choose a live Shipbubble courier rate before continuing.";
+      return;
+    }
 
     if (!currentShippingCourier || !Number.isFinite(currentShippingQuoteAmount)) {
       const quoteMessage = $("shippingQuoteMessage");
