@@ -505,6 +505,62 @@ function renderProductCollectionPicker(
   `).join("") || `<p class="muted">No collections yet. Create one below.</p>`;
 }
 
+function readColorImageMap() {
+  const field = $("productForm").elements.color_images;
+  try {
+    const value = JSON.parse(field?.value || "{}");
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  } catch {
+    return {};
+  }
+}
+
+function renderColorImageAssignments(savedMap = readColorImageMap()) {
+  const container = $("colorImageAssignments");
+  const form = $("productForm");
+  if (!container || !form) return;
+
+  const colors = String(form.elements.colors.value || "")
+    .split(",").map((value) => value.trim()).filter(Boolean)
+    .filter((value, index, all) => all.findIndex((item) => item.toLowerCase() === value.toLowerCase()) === index);
+
+  const map = {};
+  for (const color of colors) {
+    const oldKey = Object.keys(savedMap || {}).find((key) => key.toLowerCase() === color.toLowerCase());
+    if (oldKey && savedMap[oldKey]) map[color] = savedMap[oldKey];
+  }
+  form.elements.color_images.value = JSON.stringify(map);
+
+  container.innerHTML = colors.length ? colors.map((color, index) => {
+    const url = map[color] || "";
+    return `<label class="color-image-assignment">
+      <strong>${esc(color)}</strong>
+      <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" data-color-image="${esc(color)}" aria-label="Upload photo for ${esc(color)}">
+      <small class="muted">Choose the photo that shows this exact colour.</small>
+      ${url ? `<img src="${esc(url)}" alt="${esc(color)} product preview" style="display:block;max-width:140px;max-height:160px;object-fit:contain;">` : '<small class="muted">No colour photo assigned yet.</small>'}
+    </label>`;
+  }).join("") : '<p class="muted">Add colour names above to assign a matching photo to each one.</p>';
+
+  container.querySelectorAll("input[data-color-image]").forEach((input) => {
+    input.addEventListener("change", () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024 || !["image/jpeg","image/png","image/webp","image/gif"].includes(file.type)) {
+        showError("productError", "Each colour photo must be a JPG, PNG, WEBP or GIF image no larger than 5 MB.");
+        input.value = "";
+        return;
+      }
+      showError("productError", "");
+      const preview = input.parentElement.querySelector("img");
+      if (preview) preview.src = URL.createObjectURL(file);
+      else {
+        const note = input.parentElement.querySelector(".muted:last-child");
+        if (note) note.textContent = "New photo selected for " + input.dataset.colorImage + ".";
+      }
+    });
+  });
+}
+
 function newProduct() {
   const form = $("productForm");
 
@@ -515,6 +571,8 @@ function newProduct() {
   form.elements.sizes.value = "S,M,L,XL";
   form.elements.colors.value = "";
   form.elements.images.value = "";
+  form.elements.color_images.value = "{}";
+  renderColorImageAssignments({});
   form.elements.stock.value = 0;
   form.elements.published.checked = true;
   form.elements.sort_order.value = 0;
@@ -560,6 +618,7 @@ window.editProduct = (id) => {
     "stock",
     "image",
     "images",
+    "color_images",
     "description",
     "sort_order"
   ]) {
@@ -573,6 +632,10 @@ window.editProduct = (id) => {
       value = Array.isArray(product.images) ? product.images.join("\n") : product.images || "";
     }
 
+    if (key === "color_images") {
+      value = JSON.stringify(product.color_images || {});
+    }
+
     if (key === "sizes" || key === "colors") {
       value = Array.isArray(product[key])
         ? product[key].join(", ")
@@ -584,6 +647,7 @@ window.editProduct = (id) => {
 
   form.elements.featured.checked = !!product.featured;
   form.elements.published.checked = !!product.published;
+  renderColorImageAssignments(product.color_images || {});
 
   renderProductCollectionPicker(
     (product.collections || []).map((collection) => Number(collection.id))
@@ -607,6 +671,7 @@ window.editProduct = (id) => {
 };
 
 $("newProductButton").addEventListener("click", newProduct);
+$("productForm").elements.colors.addEventListener("input", () => renderColorImageAssignments(readColorImageMap()));
 
 $("cancelProduct").addEventListener("click", () => {
   $("productForm").hidden = true;
@@ -677,9 +742,26 @@ $("productForm").addEventListener("submit", async (event) => {
 
     // Upload all selected files together using the server's multi-image route.
     const uploadedImages = await uploadImages(selectedFiles);
-    body.images = [...existingImages, ...uploadedImages]
+
+    let colorImages = readColorImageMap();
+    for (const input of $("colorImageAssignments").querySelectorAll("input[data-color-image]")) {
+      const file = input.files && input.files[0];
+      if (!file) continue;
+      const urls = await uploadImages([file]);
+      colorImages[input.dataset.colorImage] = urls[0];
+    }
+    // Keep only mappings for colours that are currently offered for this product.
+    const normalizedColorImages = {};
+    for (const color of body.colors) {
+      const key = Object.keys(colorImages).find((item) => item.toLowerCase() === color.toLowerCase());
+      if (key && colorImages[key]) normalizedColorImages[color] = colorImages[key];
+    }
+    body.color_images = normalizedColorImages;
+
+    body.images = [...existingImages, ...uploadedImages, ...Object.values(normalizedColorImages)]
       .filter((url, index, all) => all.indexOf(url) === index);
     body.image = body.images[0] || body.image || "";
+
 
     await api(
       id ? `/api/admin/products/${id}` : "/api/admin/products",
