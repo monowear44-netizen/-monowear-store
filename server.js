@@ -1581,6 +1581,22 @@ app.get("/api/collections", (req, res) => {
   }));
 });
 
+// Public release index includes active published drops and deliberately archived drops.
+app.get("/api/drops", (req, res) => {
+  const drops = db.prepare(`
+    SELECT *
+    FROM collections
+    WHERE (published = 1 AND archived = 0) OR archived = 1
+    ORDER BY archived ASC, sort_order ASC, id ASC
+  `).all();
+
+  res.set("Cache-Control", "no-store");
+  res.json(drops.map((drop) => ({
+    ...safeCollection(drop),
+    products: getCollectionProducts(drop.id)
+  })));
+});
+
 app.get("/api/collections/:slug", (req, res) => {
   const collection = db.prepare(`
     SELECT *
