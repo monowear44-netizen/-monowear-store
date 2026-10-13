@@ -704,6 +704,7 @@
             <span class="mw-status">
               ${escapeHTML(status)}
             </span>
+            <p><a class="mw-button" href="/track.html?reference=${encodeURIComponent(order.reference || "")}&amp;email=${encodeURIComponent(order.customer_email || "")}">TRACK THIS ORDER ↗</a></p>
           </article>
         `;
       }).join("");
