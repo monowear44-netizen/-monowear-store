@@ -237,8 +237,8 @@
               .join("")
           : '<option value="One size">One size</option>';
         return `
-          <article class="product-card" data-product-id="${id}">
-            <div class="product-image">
+          <article class="product-card product-card-clickable" data-product-id="${id}" tabindex="0" role="button" aria-label="View details for ${escapeHTML(product.name || "MONOWEAR Piece")}">
+            <div class="product-image" onclick="openProductDetail(${id})" role="button" tabindex="0" aria-label="View product details">
               ${productImage(product)}
               ${
                 product.featured
@@ -252,7 +252,7 @@
               }
             </div>
             <div class="product-meta">
-              <h3>${escapeHTML(product.name || "MONOWEAR Piece")}</h3>
+              <h3><button type="button" class="product-name-link" onclick="openProductDetail(${id})">${escapeHTML(product.name || "MONOWEAR Piece")}</button></h3>
               <span class="price">${money(product.price)}</span>
             </div>
             <div class="product-category">
@@ -287,6 +287,88 @@
       })
       .join("");
   }
+  /* =========================================================
+     PRODUCT DETAIL + MORE FROM MONOWEAR
+  ========================================================= */
+  function ensureProductDetail() {
+    let modal = $("productDetail");
+    if (modal) return modal;
+    modal = document.createElement("dialog");
+    modal.id = "productDetail";
+    modal.className = "product-detail-dialog";
+    modal.setAttribute("aria-label", "Product details");
+    modal.innerHTML = '<button type="button" class="product-detail-close" aria-label="Close product details">×</button><div id="productDetailContent"></div>';
+    document.body.appendChild(modal);
+    modal.querySelector(".product-detail-close").addEventListener("click", () => modal.close());
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) modal.close();
+    });
+    modal.addEventListener("click", (event) => {
+      const card = event.target.closest("[data-detail-product-id]");
+      if (card) {
+        event.preventDefault();
+        event.stopPropagation();
+        openProductDetail(Number(card.dataset.detailProductId));
+      }
+    });
+    return modal;
+  }
+
+  function openProductDetail(productId) {
+    const product = products.find((item) => Number(item.id) === Number(productId));
+    if (!product) return;
+    const modal = ensureProductDetail();
+    const currentCategory = String(product.category || "").trim();
+    const related = products.filter((item) => Number(item.id) !== Number(product.id));
+    const sameCollection = currentCategory
+      ? related.filter((item) => String(item.category || "").trim().toLowerCase() === currentCategory.toLowerCase())
+      : [];
+    const recommendations = (sameCollection.length ? sameCollection : related).slice(0, 4);
+    const sizes = Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ["One size"];
+    const stock = Number(product.stock ?? 0);
+    const relatedMarkup = recommendations.map((item) => {
+      const id = Number(item.id);
+      return `
+        <button type="button" class="more-product-card" data-detail-product-id="${id}" aria-label="View ${escapeHTML(item.name || "MONOWEAR piece")}">
+          <span class="more-product-image">${productImage(item)}</span>
+          <span class="more-product-info"><span>${escapeHTML(item.name || "MONOWEAR Piece")}</span><span>${money(item.price)}</span></span>
+          <span class="product-category">${escapeHTML(item.category || "MONOWEAR")}</span>
+        </button>`;
+    }).join("");
+    $("productDetailContent").innerHTML = `
+      <div class="product-detail-layout">
+        <div class="product-detail-image">${productImage(product)}</div>
+        <div class="product-detail-copy">
+          <p class="eyebrow">MONOWEAR / PRODUCT DETAIL</p>
+          <p class="product-detail-collection">COLLECTION · ${escapeHTML(product.category || "MONOWEAR")}</p>
+          <h2>${escapeHTML(product.name || "MONOWEAR Piece")}</h2>
+          <p class="product-detail-price">${money(product.price)}</p>
+          <div class="product-detail-description">${escapeHTML(product.description || "A MONOWEAR piece. More details coming soon.")}</div>
+          <p class="product-detail-stock">${stock > 0 ? "IN STOCK · " + stock + " AVAILABLE" : "SOLD OUT"}</p>
+          <label class="product-detail-size-label" for="detail-size-${Number(product.id)}">SELECT SIZE</label>
+          <select id="detail-size-${Number(product.id)}" class="size-select" ${stock <= 0 ? "disabled" : ""}>
+            ${sizes.map((size) => `<option value="${escapeHTML(size)}">${escapeHTML(size)}</option>`).join("")}
+          </select>
+          <button type="button" class="add-button product-detail-add" ${stock <= 0 ? "disabled" : ""} onclick="addToCartFromDetail(${Number(product.id)})">${stock <= 0 ? "SOLD OUT" : "ADD TO BAG +"}</button>
+        </div>
+      </div>
+      <section class="more-from-monowear">
+        <div class="more-from-heading"><p class="eyebrow">KEEP EXPLORING</p><h3>More from Monowear<span>.</span></h3></div>
+        ${recommendations.length ? `<div class="more-products-grid">${relatedMarkup}</div>` : '<p class="muted">More pieces from Monowear are coming soon.</p>'}
+      </section>`;
+    const sizeSelect = $("detail-size-" + Number(product.id));
+    if (sizeSelect) sizeSelect.value = sizes[0];
+    if (!modal.open) modal.showModal();
+  }
+
+  window.openProductDetail = openProductDetail;
+  window.addToCartFromDetail = function(productId) {
+    const size = $("detail-size-" + Number(productId));
+    const cardSelect = $("size-" + Number(productId));
+    if (cardSelect && size) cardSelect.value = size.value;
+    window.addToCart(productId);
+  };
+
   /* =========================================================
      CART STORAGE
   ========================================================= */
@@ -347,6 +429,18 @@
       cartPanel.setAttribute("aria-live", "polite");
     }
   }
+  document.addEventListener("click", (event) => {
+    const card = event.target.closest(".product-card");
+    if (!card || event.target.closest("button, select, input, a, .product-image")) return;
+    openProductDetail(Number(card.dataset.productId));
+  });
+  document.addEventListener("keydown", (event) => {
+    const card = event.target.closest(".product-card");
+    if (!card || !["Enter", " "].includes(event.key) || event.target.closest("button, select, input, a")) return;
+    event.preventDefault();
+    openProductDetail(Number(card.dataset.productId));
+  });
+
   /* =========================================================
      ADD TO CART
   ========================================================= */
