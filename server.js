@@ -282,6 +282,8 @@ const defaults = {
   store_name: "MONOWEAR",
   brand_name: "MONOWEAR",
   tagline: "LIVE THE NAME. WEAR THE MEANING.",
+  story_title: "Built for the ones who keep going.",
+  brand_story: "MONO is a state of mind: self-reliant, intentional, and unwilling to wait for permission. Every piece carries a reminder to keep showing up for your own future.",
   hero_title: "HELP IS ON THE WAY.",
   hero_subtitle: "A distressed collection about pressure, persistence and finding a way through.",
   hero_cta: "SHOP THE DROP ↗",
