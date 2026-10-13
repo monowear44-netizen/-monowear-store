@@ -3,9 +3,27 @@
   const $ = (id) => document.getElementById(id);
   const money = (amount) => new Intl.NumberFormat("en-NG", {style:"currency",currency:"NGN",maximumFractionDigits:0}).format(Number(amount)||0);
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-  const imageMarkup = (p) => p.image
-    ? '<img src="'+esc(p.image)+'" alt="'+esc(p.name)+'" onerror="this.style.display=\'none\';this.nextElementSibling.hidden=false;"><div class="image-placeholder" hidden>MONO<br><span>IMAGE UNAVAILABLE</span></div>'
-    : '<div class="image-placeholder">MONO<br><span>— '+esc(p.category||"MONOWEAR").toUpperCase()+' —</span></div>';
+  function imageSources(p) {
+    let saved = p && p.images;
+    if (typeof saved === "string") {
+      try { saved = JSON.parse(saved); } catch { saved = []; }
+    }
+    if (!Array.isArray(saved)) saved = [];
+    const values = [p && p.image, ...saved].map((item) => {
+      if (item && typeof item === "object") item = item.url || item.src || item.path || "";
+      item = String(item || "").trim();
+      if (!item) return "";
+      if (/^(data:|blob:|https?:\/\/)/i.test(item)) return item;
+      if (item.startsWith("//")) return location.protocol + item;
+      return "/" + item.replace(/^\/+/, "");
+    }).filter(Boolean);
+    return [...new Set(values)];
+  }
+  const imageMarkup = (p) => {
+    const sources = imageSources(p);
+    if (!sources.length) return '<div class="image-placeholder">MONO<br><span>— '+esc(p.category||"MONOWEAR").toUpperCase()+' —</span></div>';
+    return '<img src="'+esc(sources[0])+'" data-sources="'+esc(JSON.stringify(sources))+'" data-index="0" alt="'+esc(p.name)+'" loading="eager" onerror="const s=JSON.parse(this.dataset.sources||\'[]\');const i=Number(this.dataset.index||0)+1;if(i<s.length){this.dataset.index=i;this.src=s[i]}else{this.style.display=\'none\';this.nextElementSibling.hidden=false}"><div class="image-placeholder" hidden>MONO<br><span>IMAGE UNAVAILABLE</span></div>';
+  };
   const query = new URLSearchParams(location.search);
   const slug = query.get("slug"), id = query.get("id");
   let product = null, products = [];
@@ -23,7 +41,7 @@
     let cart=[]; try { const saved=JSON.parse(localStorage.getItem("monowear-cart")||"[]"); cart=Array.isArray(saved)?saved:[]; } catch {}
     const existing=cart.find(item=>Number(item.id)===Number(product.id)&&item.size===size);
     if(existing) { if(Number(existing.quantity)>=Number(product.stock)){alert("You've reached the available stock for this piece.");return;} existing.quantity=(Number(existing.quantity)||0)+1; }
-    else cart.push({id:Number(product.id),name:product.name||"MONOWEAR Piece",price:Number(product.price)||0,image:product.image||"",size,quantity:1});
+    else cart.push({id:Number(product.id),name:product.name||"MONOWEAR Piece",price:Number(product.price)||0,image:imageSources(product)[0]||"",size,quantity:1});
     localStorage.setItem("monowear-cart",JSON.stringify(cart)); updateBagCount();
     $("standaloneAddToBag").textContent="ADDED TO BAG ✓";
     $("productAddedNote").textContent="Added to your bag. Your selection is saved.";
