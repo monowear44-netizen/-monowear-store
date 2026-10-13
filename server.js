@@ -211,6 +211,7 @@ ensureColumn("orders", "shipping_address", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipping_city", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipping_state", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipping_postcode", "TEXT DEFAULT ''");
+ensureColumn("orders", "dispatch_location", "TEXT DEFAULT 'Ikorodu, Lagos'");
 ensureColumn("orders", "subtotal", "REAL DEFAULT 0");
 ensureColumn("orders", "shipping_fee", "REAL DEFAULT 0");
 ensureColumn("orders", "discount", "REAL DEFAULT 0");
@@ -284,6 +285,7 @@ const defaults = {
   currency: "NGN",
   shipping_fee: "0",
   free_shipping_threshold: "0",
+  active_dispatch_location: "Ikorodu, Lagos",
   announcement: "HELP IS ON THE WAY — COMING SOON",
   x: "https://x.com/monowear44",
   contact_email: process.env.CONTACT_EMAIL || "",
@@ -2214,10 +2216,11 @@ app.post(
       const shippingCity = String(body.shipping_city || body.city || "").trim();
       const shippingState = String(body.shipping_state || body.state || "").trim();
       const shippingPostcode = String(body.shipping_postcode || body.postcode || "").trim();
+      const dispatchLocation = String(getSetting("active_dispatch_location", "Ikorodu, Lagos")).trim() || "Ikorodu, Lagos";
 
-      if (!customerName || !validEmail(customerEmail) || !shippingAddress) {
+      if (!customerName || !validEmail(customerEmail) || !shippingAddress || !shippingCity || !shippingState) {
         return res.status(400).json({
-          error: "Enter your name, valid email address and shipping address."
+          error: "Enter your name, valid email address, full delivery address, city/LGA and state."
         });
       }
 
@@ -2263,6 +2266,7 @@ app.post(
           shipping_city,
           shipping_state,
           shipping_postcode,
+          dispatch_location,
           items,
           subtotal,
           shipping_fee,
@@ -2273,7 +2277,7 @@ app.post(
           payment_method,
           record_type
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', 'paystack', 'abandoned_cart')
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', 'paystack', 'abandoned_cart')
       `).run(
         reference,
         customerName,
@@ -2283,6 +2287,7 @@ app.post(
         shippingCity,
         shippingState,
         shippingPostcode,
+        dispatchLocation,
         JSON.stringify(items),
         subtotal,
         actualShipping,
