@@ -82,6 +82,7 @@ db.exec(`
     category TEXT DEFAULT '',
     sizes TEXT DEFAULT '[]',
     colors TEXT DEFAULT '[]',
+    color_images TEXT DEFAULT '{}',
     stock INTEGER NOT NULL DEFAULT 0,
     published INTEGER NOT NULL DEFAULT 0,
     featured INTEGER NOT NULL DEFAULT 0,
@@ -201,6 +202,7 @@ ensureColumn("products", "images", "TEXT DEFAULT '[]'");
 ensureColumn("products", "category", "TEXT DEFAULT ''");
 ensureColumn("products", "sizes", "TEXT DEFAULT '[]'");
 ensureColumn("products", "colors", "TEXT DEFAULT '[]'");
+ensureColumn("products", "color_images", "TEXT DEFAULT '{}'");
 ensureColumn("products", "stock", "INTEGER DEFAULT 0");
 ensureColumn("products", "published", "INTEGER DEFAULT 0");
 ensureColumn("products", "featured", "INTEGER DEFAULT 0");
@@ -701,7 +703,8 @@ function safeProduct(product) {
     featured: Boolean(product.featured),
     images: parseJSON(product.images, []),
     sizes: parseJSON(product.sizes, []),
-    colors: parseJSON(product.colors, [])
+    colors: parseJSON(product.colors, []),
+    color_images: parseJSON(product.color_images, {})
   };
 }
 
@@ -1691,6 +1694,9 @@ function normalizeProductInput(body) {
     colors: JSON.stringify(
       Array.isArray(body.colors) ? body.colors : []
     ),
+    color_images: JSON.stringify(
+      body.color_images && typeof body.color_images === "object" && !Array.isArray(body.color_images) ? body.color_images : {}
+    ),
     stock,
     published: body.published ? 1 : 0,
     featured: body.featured ? 1 : 0,
@@ -1714,12 +1720,12 @@ app.post("/api/admin/products", requireAdmin, (req, res) => {
     const result = db.prepare(`
       INSERT INTO products (
         name, slug, description, price, compare_price,
-        image, images, category, sizes, colors,
+        image, images, category, sizes, colors, color_images,
         stock, published, featured, sort_order
       )
       VALUES (
         @name, @slug, @description, @price, @compare_price,
-        @image, @images, @category, @sizes, @colors,
+        @image, @images, @category, @sizes, @colors, @color_images,
         @stock, @published, @featured, @sort_order
       )
     `).run(product);
@@ -1763,6 +1769,7 @@ app.put("/api/admin/products/:id", requireAdmin, (req, res) => {
       images: parseJSON(existing.images, []),
       sizes: parseJSON(existing.sizes, []),
       colors: parseJSON(existing.colors, []),
+      color_images: parseJSON(existing.color_images, {}),
       ...req.body
     });
 
@@ -1778,6 +1785,7 @@ app.put("/api/admin/products/:id", requireAdmin, (req, res) => {
         category = @category,
         sizes = @sizes,
         colors = @colors,
+        color_images = @color_images,
         stock = @stock,
         published = @published,
         featured = @featured,
