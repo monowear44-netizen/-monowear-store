@@ -757,7 +757,7 @@
             <h2>Shipping settings</h2>
           </div>
         </div>
-        <p class="muted">Choose the dispatch point you are operating from today. New orders will save this location. Live courier prices are not connected yet; the delivery fee below remains the fallback until a courier rate integration is configured.</p>
+        <p class="muted">Delivery is priced from live Terminal Africa courier quotes. Choose the dispatch point you are operating from today; new orders save this origin. Before enabling checkout, add your private TERMINAL_AFRICA_SECRET_KEY in Render → Environment. The API key is kept server-side and must never be added to storefront code or GitHub.</p>
         <div class="form-grid">
           <label class="span2">
             Active dispatch location
@@ -765,22 +765,6 @@
               <option value="Ikorodu, Lagos">Ikorodu, Lagos State</option>
               <option value="Ijebu, Ogun">Ijebu, Ogun State</option>
             </select>
-          </label>
-          <label>
-            Fallback delivery fee (₦)
-            <input
-              name="shipping_fee"
-              type="number"
-              min="0"
-            >
-          </label>
-          <label>
-            Free shipping from (₦; 0 = off)
-            <input
-              name="free_shipping_threshold"
-              type="number"
-              min="0"
-            >
           </label>
           <label class="span2">
             Shipping policy
