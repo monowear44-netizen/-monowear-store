@@ -785,6 +785,11 @@
         placeholder="Search by reference, name or email"
         aria-label="Search orders"
       >
+      <select id="orderRecordFilter" aria-label="Filter real orders and abandoned carts">
+        <option value="all">Real orders + abandoned carts</option>
+        <option value="real_order">Real orders</option>
+        <option value="abandoned_cart">Abandoned carts</option>
+      </select>
       <select id="orderPayFilter" aria-label="Filter by payment">
         <option value="all">All payments</option>
         <option value="paid">Paid</option>
