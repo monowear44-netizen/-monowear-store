@@ -295,7 +295,7 @@ const defaults = {
   currency: "NGN",
   shipping_fee: "0",
   free_shipping_threshold: "0",
-  active_dispatch_location: "Ikorodu, Lagos",
+  active_dispatch_location: "Ijebu Ode, Ogun State",
   shipping_ikorodu_lagos: "",
   shipping_ikorodu_ogun: "",
   shipping_ikorodu_nationwide: "",
@@ -2529,6 +2529,137 @@ function markOrderFailed(reference, message = "Payment was not completed.") {
 }
 
 // ============================================================
+// MONOWEAR FIXED SHIPPING FEES
+// Origin: Ijebu Ode, Ogun State. Customer pays one fee per order.
+// These are MONOWEAR's provisional customer-facing fees, not live
+// GIG Logistics quotes. Confirm current carrier rates before relying
+// on them as exact courier costs.
+// ============================================================
+const MONOWEAR_FIXED_SHIPPING_FEES = {
+  "ogun": 2500,
+  "lagos": 3500,
+  "oyo": 4000,
+  "osun": 4000,
+  "ondo": 4000,
+  "ekiti": 4500,
+  "kwara": 5000,
+  "edo": 5500,
+  "delta": 5500,
+  "kogi": 5500,
+  "federal capital territory": 6000,
+  "fct": 6000,
+  "abuja": 6000,
+  "abia": 6000,
+  "anambra": 6000,
+  "ebonyi": 6000,
+  "enugu": 6000,
+  "imo": 6000,
+  "benue": 6000,
+  "nasarawa": 6000,
+  "nassarawa": 6000,
+  "niger": 6000,
+  "plateau": 6000,
+  "kaduna": 6500,
+  "rivers": 6500,
+  "akwa ibom": 6500,
+  "cross river": 6500,
+  "bayelsa": 6500,
+  "bauchi": 7000,
+  "gombe": 7000,
+  "adamawa": 7000,
+  "jigawa": 7000,
+  "kano": 7000,
+  "taraba": 7000,
+  "katsina": 7500,
+  "kebbi": 7500,
+  "sokoto": 7500,
+  "zamfara": 7500,
+  "yobe": 7500,
+  "borno": 8000
+};
+
+function normalizeShippingState(value) {
+  const state = String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+  const aliases = {
+    "federal capital territory (fct)": "federal capital territory",
+    "federal capital territory, abuja": "federal capital territory",
+    "abuja fct": "federal capital territory",
+    "fct abuja": "federal capital territory",
+    "nassarawa state": "nasarawa",
+    "ogun state": "ogun",
+    "lagos state": "lagos",
+    "oyo state": "oyo",
+    "osun state": "osun",
+    "ondo state": "ondo",
+    "ekiti state": "ekiti",
+    "kwara state": "kwara",
+    "edo state": "edo",
+    "delta state": "delta",
+    "kogi state": "kogi",
+    "abia state": "abia",
+    "anambra state": "anambra",
+    "ebonyi state": "ebonyi",
+    "enugu state": "enugu",
+    "imo state": "imo",
+    "benue state": "benue",
+    "nasarawa state": "nasarawa",
+    "niger state": "niger",
+    "plateau state": "plateau",
+    "kaduna state": "kaduna",
+    "rivers state": "rivers",
+    "akwa ibom state": "akwa ibom",
+    "cross river state": "cross river",
+    "bayelsa state": "bayelsa",
+    "bauchi state": "bauchi",
+    "gombe state": "gombe",
+    "adamawa state": "adamawa",
+    "jigawa state": "jigawa",
+    "kano state": "kano",
+    "taraba state": "taraba",
+    "katsina state": "katsina",
+    "kebbi state": "kebbi",
+    "sokoto state": "sokoto",
+    "zamfara state": "zamfara",
+    "yobe state": "yobe",
+    "borno state": "borno"
+  };
+  return aliases[state] || state.replace(/ state$/, "");
+}
+
+function getFixedShippingQuote(stateValue) {
+  const state = normalizeShippingState(stateValue);
+  const amount = MONOWEAR_FIXED_SHIPPING_FEES[state];
+  if (!Number.isFinite(amount)) {
+    const error = new Error("We cannot calculate a fixed delivery fee for that state yet. Please contact MONOWEAR before paying.");
+    error.statusCode = 400;
+    throw error;
+  }
+  const rate = {
+    courier_id: "monowear-fixed",
+    service_code: state,
+    courier_name: "MONOWEAR fixed delivery",
+    service_type: "standard delivery",
+    amount,
+    delivery_time: "Delivery estimate confirmed after dispatch",
+    request_token: "fixed-" + state.replace(/[^a-z0-9]+/g, "-")
+  };
+  return {
+    amount,
+    carrier: "MONOWEAR fixed delivery",
+    delivery_time: rate.delivery_time,
+    rates: [rate],
+    origin: "Ijebu Ode, Ogun State",
+    destination: { state: String(stateValue || "").trim() },
+    currency: "NGN",
+    provider: "MONOWEAR fixed delivery",
+    request_token: rate.request_token
+  };
+}
+
+// The previous Travo helper remains in this file for possible future
+// reactivation, but fixed delivery fees are used at checkout.
+
+// ============================================================
 // LIVE SHIPPING QUOTES — TRAVO
 // ============================================================
 const TRAVO_API_KEY = process.env.TRAVO_API_KEY || "";
@@ -2691,16 +2822,16 @@ async function getTravoRates({ body, items, dispatchLocation }) {
   };
 }
 
-app.post("/api/shipping/quote", checkoutLimiter, async (req, res) => {
+app.post("/api/shipping/quote", checkoutLimiter, (req, res) => {
   try {
     const body = req.body || {};
-    if (!String(body.city || "").trim() || !String(body.state || "").trim()) return res.status(400).json({ error: "Enter the delivery city/LGA and state to calculate shipping." });
-    const dispatchLocation = String(getSetting("active_dispatch_location", "Ikorodu, Lagos")).trim() || "Ikorodu, Lagos";
-    const items = normalizeCheckoutItems(body.items || []);
-    const quote = await getTravoRates({ body, items, dispatchLocation });
+    if (!String(body.city || "").trim() || !String(body.state || "").trim()) {
+      return res.status(400).json({ error: "Enter the delivery city/LGA and state to calculate shipping." });
+    }
+    const quote = getFixedShippingQuote(body.state);
     return res.json({ success: true, quote });
   } catch (error) {
-    return res.status(error.statusCode || 400).json({ error: error.message || "Could not calculate live delivery rates." });
+    return res.status(error.statusCode || 400).json({ error: error.message || "Could not calculate the fixed delivery fee." });
   }
 });
 
@@ -2732,7 +2863,7 @@ app.post(
       const shippingCity = String(body.shipping_city || body.city || "").trim();
       const shippingState = String(body.shipping_state || body.state || "").trim();
       const shippingPostcode = String(body.shipping_postcode || body.postcode || "").trim();
-      const dispatchLocation = String(getSetting("active_dispatch_location", "Ikorodu, Lagos")).trim() || "Ikorodu, Lagos";
+      const dispatchLocation = String(getSetting("active_dispatch_location", "Ijebu Ode, Ogun State")).trim() || "Ijebu Ode, Ogun State";
 
       if (!customerName || !validEmail(customerEmail) || !shippingAddress || !shippingCity || !shippingState) {
         return res.status(400).json({
@@ -2747,14 +2878,17 @@ app.post(
         0
       );
 
-      // Re-fetch live rates on the server and validate the selected courier and price.
-      const shippingQuote = await getTravoRates({ body, items, dispatchLocation });
+      // Recalculate the fixed state fee on the server so the browser cannot
+      // change the delivery charge. One fixed fee applies per order.
+      const shippingQuote = getFixedShippingQuote(shippingState);
       const selectedCourierId = String(body.shipping_courier_id || "");
       const selectedServiceCode = String(body.shipping_service_code || "");
-      const selectedRate = shippingQuote.rates.find((rate) => rate.courier_id === selectedCourierId && rate.service_code === selectedServiceCode);
+      const selectedRate = shippingQuote.rates.find((rate) =>
+        rate.courier_id === selectedCourierId && rate.service_code === selectedServiceCode
+      );
       if (!selectedRate || Number(body.shipping_quote_amount) !== selectedRate.amount) {
         return res.status(409).json({
-          error: "The delivery price has changed. Please select a current courier rate and continue again.",
+          error: "The fixed delivery fee has changed. Please refresh the delivery price and try again.",
           shipping_quote: { amount: shippingQuote.amount, carrier: shippingQuote.carrier, delivery_time: shippingQuote.delivery_time, rates: shippingQuote.rates }
         });
       }
@@ -2819,7 +2953,7 @@ app.post(
         actualShipping,
         discount,
         total,
-        "Travo",
+        selectedRate.courier_name,
         selectedRate.request_token,
         selectedRate.courier_id,
         selectedRate.service_code,
