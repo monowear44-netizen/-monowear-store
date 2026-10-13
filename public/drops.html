@@ -41,11 +41,11 @@
       function card(drop){
         var date=localDate(drop.release_date);
         var upcoming=date&&date.getTime()>new Date(new Date().toDateString()).getTime();
-        var status=upcoming?"COMING SOON":"LIVE / RELEASE";
+        var status=drop.archived?"FROM THE ARCHIVE":(upcoming?"COMING SOON":"LIVE / RELEASE");
         var cover=drop.cover_image?'<img class="cover" src="'+safe(drop.cover_image)+'" alt="'+safe(drop.name)+' cover">':'<div class="cover-empty" aria-hidden="true">MONO</div>';
         var names=(drop.products||[]).map(function(p){return '<span>'+safe(p.name)+'</span>';}).join("");
         var release=date?'<div class="date">RELEASE DATE · '+safe(drop.release_date)+'</div>':"";
-        var countdown=upcoming?'<div class="countdown" data-countdown="'+safe(drop.release_date)+'">COUNTDOWN LOADING…</div>':"";
+        var countdown=upcoming&&!drop.archived?'<div class="countdown" data-countdown="'+safe(drop.release_date)+'">COUNTDOWN LOADING…</div>':"";
         return '<article class="drop-card">'+cover+'<div class="drop-copy"><span class="status">'+status+'</span><h2>'+safe(drop.name)+'</h2><p>'+safe(drop.description||"A MONOWEAR release.")+'</p>'+release+countdown+(names?'<div class="products">'+names+'</div>':'<p>Pieces will appear here as products are published.</p>')+'<a class="status" href="/#shop">SHOP THE STORE ↗</a></div></article>';
       }
       function tick(){
@@ -61,7 +61,7 @@
           el.textContent=days+"D  "+hours+"H  "+minutes+"M  "+seconds+"S";
         });
       }
-      fetch("/api/collections",{cache:"no-store"}).then(function(response){
+      fetch("/api/drops",{cache:"no-store"}).then(function(response){
         if(!response.ok)throw new Error("Unable to load drops.");
         return response.json();
       }).then(function(drops){
