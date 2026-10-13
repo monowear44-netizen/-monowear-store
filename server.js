@@ -2571,7 +2571,8 @@ function requestTravoQuote(payload) {
       return reject(error);
     }
     const https = require("https");
-    const url = new URL("https://api.travo.ng/v1/service-quotes");
+    const TRAVO_API_BASE_URL = String(process.env.TRAVO_API_BASE_URL || "https://api.travo.ng/v1").replace(/\/+$/, "");
+    const url = new URL(TRAVO_API_BASE_URL + "/service-quotes");
     const body = JSON.stringify(payload);
     const req = https.request(url, {
       method: "GET",
