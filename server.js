@@ -2610,16 +2610,25 @@ function requestTravoQuote(payload) {
   });
 }
 
-async function geocodeTravoAddress(query) {
-  const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ng&q=" + encodeURIComponent(query);
-  const response = await fetch(url, {
-    headers: { "Accept": "application/json", "User-Agent": "MONOWEAR-Store/1.0 (delivery quote geocoding)" },
-    signal: AbortSignal.timeout(12000)
-  });
-  if (!response.ok) throw new Error("Could not locate the delivery address. Please check the address and try again.");
-  const data = await response.json();
-  if (!Array.isArray(data) || !data.length) throw new Error("We could not locate that address on the map. Add a clearer street address, city/LGA and state.");
-  return { type: "Point", coordinates: [Number(data[0].lon), Number(data[0].lat)] };
+async function geocodeTravoAddress(query, fallbackQuery = "") {
+  async function searchAddress(text) {
+    const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ng&q=" + encodeURIComponent(text);
+    const response = await fetch(url, {
+      headers: { "Accept": "application/json", "User-Agent": "MONOWEAR-Store/1.0 (delivery quote geocoding)" },
+      signal: AbortSignal.timeout(12000)
+    });
+    if (!response.ok) throw new Error("Address lookup is temporarily unavailable. Please try again.");
+    const data = await response.json();
+    if (!Array.isArray(data) || !data.length) return null;
+    return { type: "Point", coordinates: [Number(data[0].lon), Number(data[0].lat)] };
+  }
+  const exactMatch = await searchAddress(query);
+  if (exactMatch) return exactMatch;
+  if (fallbackQuery) {
+    const areaMatch = await searchAddress(fallbackQuery);
+    if (areaMatch) return areaMatch;
+  }
+  throw new Error("We could not locate this area. Check the city/LGA and state, or enter a nearby well-known landmark.");
 }
 
 async function getTravoRates({ body, items, dispatchLocation }) {
@@ -2637,8 +2646,8 @@ async function getTravoRates({ body, items, dispatchLocation }) {
   const origin = String(dispatchLocation || "Ikorodu, Lagos").trim();
   const destination = [address, city, state, "Nigeria"].filter(Boolean).join(", ");
   const [pickupCoordinates, dropoffCoordinates] = await Promise.all([
-    geocodeTravoAddress(origin + ", Nigeria"),
-    geocodeTravoAddress(destination)
+    geocodeTravoAddress(origin + ", Nigeria", "Ikorodu, Lagos, Nigeria"),
+    geocodeTravoAddress(destination, [city, state, "Nigeria"].filter(Boolean).join(", "))
   ]);
   const totalWeight = Math.max(0.1, items.reduce((sum, item) => sum + (Number(item.quantity) || 1) * MONOWEAR_ITEM_WEIGHT_KG, 0));
   const service = TRAVO_PARCEL_SERVICES.find((option) => totalWeight <= option.max);
