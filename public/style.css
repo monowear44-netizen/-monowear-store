@@ -523,3 +523,40 @@ html[data-theme="gold"] .product-pagination .pagination-number:not(.is-active) {
   .product-pagination .pagination-numbers { gap:7px; }
   .product-pagination .pagination-number { width:48px; height:52px; font-size:20px; border-radius:15px; }
 }
+
+
+/* Checkout stability: keep the dialog fixed in the viewport and scroll its
+   contents instead of moving the storefront behind it on mobile browsers. */
+.checkout-dialog{
+  position:fixed;
+  inset:12px;
+  margin:auto;
+  width:min(520px,calc(100vw - 24px));
+  max-width:520px;
+  max-height:calc(100dvh - 24px);
+  height:max-content;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  box-sizing:border-box;
+  padding:clamp(16px,4vw,25px);
+  scrollbar-gutter:stable;
+}
+.checkout-dialog[open]{display:block}
+.checkout-dialog form{min-width:0}
+.checkout-dialog select,
+.checkout-dialog input,
+.checkout-dialog textarea{box-sizing:border-box;max-width:100%;min-width:0}
+.checkout-dialog .checkout-brand-panel{margin-bottom:18px}
+.checkout-dialog .drawer-head{position:sticky;top:-1px;z-index:3;background:var(--bg);padding:8px 0}
+body:has(.checkout-dialog[open]){overflow:hidden;overscroll-behavior:none}
+@supports not (height:100dvh){
+  .checkout-dialog{max-height:calc(100vh - 24px)}
+}
+@media(max-width:600px){
+  .checkout-dialog{inset:8px;margin:auto;width:calc(100vw - 16px);max-height:calc(100dvh - 16px);padding:16px}
+  .checkout-dialog .checkout-brand-panel{padding-bottom:10px}
+  .checkout-dialog .checkout-brand-wordmark{font-size:clamp(26px,8vw,38px)}
+  .checkout-dialog label{margin:12px 0}
+  .checkout-dialog input,.checkout-dialog textarea,.checkout-dialog select{font-size:16px}
+}
