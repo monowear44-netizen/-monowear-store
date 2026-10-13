@@ -2529,55 +2529,99 @@ function markOrderFailed(reference, message = "Payment was not completed.") {
 }
 
 // ============================================================
-// LIVE SHIPPING QUOTES — SHIPBUBBLE
+// LIVE SHIPPING QUOTES — TRAVO
 // ============================================================
-const SHIPBUBBLE_API_KEY = process.env.SHIPBUBBLE_API_KEY || "";
-const SHIPBUBBLE_CATEGORY_ID = Number(process.env.SHIPBUBBLE_CATEGORY_ID || 98246239);
+const TRAVO_API_KEY = process.env.TRAVO_API_KEY || "";
 const MONOWEAR_ITEM_WEIGHT_KG = Number(process.env.MONOWEAR_ITEM_WEIGHT_KG || 0.5);
-const SHIPBUBBLE_PACKAGE_LENGTH_CM = Number(process.env.SHIPBUBBLE_PACKAGE_LENGTH_CM || 30);
-const SHIPBUBBLE_PACKAGE_WIDTH_CM = Number(process.env.SHIPBUBBLE_PACKAGE_WIDTH_CM || 25);
-const SHIPBUBBLE_PACKAGE_HEIGHT_CM = Number(process.env.SHIPBUBBLE_PACKAGE_HEIGHT_CM || 5);
 
-function parseDispatchLocation(value) {
-  const n = String(value || "Ikorodu, Lagos").trim().toLowerCase();
-  return n.includes("ijebu") || n.includes("ogun") ? { city: "Ijebu-Ode", state: "Ogun" } : { city: "Ikorodu", state: "Lagos" };
-}
-async function shipbubbleRequest(endpoint, options = {}) {
-  if (!SHIPBUBBLE_API_KEY) { const e = new Error("Shipbubble is not configured. Check SHIPBUBBLE_API_KEY in Render."); e.statusCode = 503; throw e; }
-  const response = await fetch("https://api.shipbubble.com/v1" + endpoint, {
-    ...options,
-    headers: { Authorization: "Bearer " + SHIPBUBBLE_API_KEY, Accept: "application/json", "Content-Type": "application/json", ...(options.headers || {}) },
-    signal: AbortSignal.timeout(20000)
+const TRAVO_PARCEL_SERVICES = [
+  { max: 1, id: "32b07dd9-33ba-43d7-b27f-59b76bbc409c" },
+  { max: 2.5, id: "a82479f9-8d14-4dcb-b5c1-71c9e456d570" },
+  { max: 3, id: "59400ffd-11d2-4768-a9ae-a3d86c9d00ac" },
+  { max: 3.5, id: "be985ea0-ce91-476e-b6dc-b6c698103131" },
+  { max: 4, id: "34be13dd-2ea2-4246-9bd2-66c98ac33ef7" },
+  { max: 4.5, id: "3c7858ee-f2d7-48c1-95fc-40f3bd382d2c" },
+  { max: 5, id: "fe4fb778-5eca-40bd-a997-7d4b762e99d2" },
+  { max: 5.5, id: "f5cd8a17-6723-445f-b77d-db5f3713957d" },
+  { max: 6, id: "dd0cd7c2-4bb4-4628-9468-bdffb1f8177b" },
+  { max: 7, id: "25d8118e-ebff-4742-8da7-8f9f7abcb142" },
+  { max: 8, id: "45659774-7a31-4994-8ad3-31d8fb2bf8b5" },
+  { max: 9, id: "1860243e-1bdc-4a8f-a50c-84317b4b42e8" },
+  { max: 10, id: "b61fbb31-2361-4dc9-9b16-cc6735a78cc1" },
+  { max: 11, id: "13e28f94-bf3a-4a14-ab8c-c713d2efed0e" },
+  { max: 12, id: "ec09a906-f224-4552-9fc7-c00abf2b5a9e" },
+  { max: 13, id: "17269244-6d9c-428d-93b0-1484d1ab33a5" },
+  { max: 14, id: "4414b293-de9b-4911-8e9d-70b674bf270d" },
+  { max: 15, id: "55bbb20d-d50b-44ea-8d45-ff60e33c2cc4" },
+  { max: 16, id: "3d09d256-7520-4cd4-84d5-58007794538b" },
+  { max: 17, id: "4849084b-84ac-491b-84bd-0cba6515dbe3" },
+  { max: 18, id: "c65b2f67-4987-49e5-9afe-5b65a139a3d8" },
+  { max: 19, id: "3aacbb5b-5be1-4c71-88eb-aae58d21a902" },
+  { max: 20, id: "753f0e94-7c25-4358-bb05-91c598495632" },
+  { max: 30, id: "df243b05-708c-4088-88c3-af26f39e7c00" },
+  { max: 40, id: "d89ad206-a7f6-4f34-891d-c88c027ec6bd" },
+  { max: 50, id: "9a3f5e8b-91e4-4b04-ab9a-e35b2f977020" }
+];
+
+function requestTravoQuote(payload) {
+  return new Promise((resolve, reject) => {
+    if (!TRAVO_API_KEY) {
+      const error = new Error("Travo is not configured yet. Add TRAVO_API_KEY in Render environment variables.");
+      error.statusCode = 503;
+      return reject(error);
+    }
+    const https = require("https");
+    const url = new URL("https://api.travo.ng/v1/service-quotes");
+    const body = JSON.stringify(payload);
+    const req = https.request(url, {
+      method: "GET",
+      headers: {
+        Authorization: "Bearer " + TRAVO_API_KEY,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(body),
+        "User-Agent": "MONOWEAR-Store/1.0"
+      },
+      timeout: 20000
+    }, (response) => {
+      let raw = "";
+      response.setEncoding("utf8");
+      response.on("data", (chunk) => { raw += chunk; });
+      response.on("end", () => {
+        let result = {};
+        try { result = JSON.parse(raw || "{}"); } catch (_) {}
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          console.error("Travo quote failed:", response.statusCode, String(result.message || result.error || "provider error").slice(0, 180));
+          const error = new Error(response.statusCode === 401 ? "Travo rejected the API key. Confirm it is active and configured correctly." : String(result.message || result.error || "Travo could not calculate this delivery. Check the address and try again.").slice(0, 260));
+          error.statusCode = response.statusCode === 401 || response.statusCode === 403 ? 503 : 422;
+          return reject(error);
+        }
+        resolve(result);
+      });
+    });
+    req.on("timeout", () => req.destroy(new Error("Travo quote request timed out. Please try again.")));
+    req.on("error", (error) => {
+      error.statusCode = error.statusCode || 502;
+      reject(error);
+    });
+    req.write(body);
+    req.end();
   });
-  let result = {};
-  try { result = await response.json(); } catch (_) {}
-  if (!response.ok || result.status === "failed" || result.status === false) {
-    console.error("Shipbubble request failed:", response.status, String(result.message || "provider error").slice(0, 180));
-    const e = new Error(String(result.message || "Shipbubble could not calculate delivery. Check the delivery address and try again.").slice(0, 300));
-    e.statusCode = response.status === 401 || response.status === 403 ? 503 : 422; throw e;
-  }
-  return result;
 }
-async function getShipbubbleSavedAddresses() {
-  const result = await shipbubbleRequest("/shipping/address?Page=1&PerPage=50");
-  const data = result.data || {};
-  return Array.isArray(data.results) ? data.results : Array.isArray(data) ? data : [];
+
+async function geocodeTravoAddress(query) {
+  const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ng&q=" + encodeURIComponent(query);
+  const response = await fetch(url, {
+    headers: { "Accept": "application/json", "User-Agent": "MONOWEAR-Store/1.0 (delivery quote geocoding)" },
+    signal: AbortSignal.timeout(12000)
+  });
+  if (!response.ok) throw new Error("Could not locate the delivery address. Please check the address and try again.");
+  const data = await response.json();
+  if (!Array.isArray(data) || !data.length) throw new Error("We could not locate that address on the map. Add a clearer street address, city/LGA and state.");
+  return { type: "Point", coordinates: [Number(data[0].lon), Number(data[0].lat)] };
 }
-function findShipbubbleSenderAddress(addresses, origin) {
-  return addresses.find((entry) => {
-    const a = entry.address_data || entry;
-    const text = [a.city, a.city_code, a.state, a.state_code, a.street, a.address, a.formatted_address, a.postal_code].join(" ").toLowerCase();
-    const stateMatch = text.includes(origin.state.toLowerCase()) || (origin.state === "Lagos" && /\bla\b/.test(text)) || (origin.state === "Ogun" && /\bog\b/.test(text));
-    const cityMatch = text.includes(origin.city.toLowerCase()) || (origin.city === "Ijebu-Ode" && /ijebu[ -]?ode/.test(text));
-    return stateMatch && cityMatch && entry.address_code;
-  }) || null;
-}
-function nigeriaDateString() {
-  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Lagos", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
-  const part = (type) => parts.find((item) => item.type === type)?.value || "";
-  return part("year") + "-" + part("month") + "-" + part("day");
-}
-async function getShipbubbleRates({ body, items, dispatchLocation }) {
+
+async function getTravoRates({ body, items, dispatchLocation }) {
   const customerName = String(body.customer_name || body.name || "").trim();
   const email = String(body.email || body.customer_email || "").trim().toLowerCase();
   const phone = String(body.phone || body.customer_phone || "").trim();
@@ -2585,57 +2629,65 @@ async function getShipbubbleRates({ body, items, dispatchLocation }) {
   const city = String(body.city || body.shipping_city || "").trim();
   const state = String(body.state || body.shipping_state || "").trim();
   if (!customerName || !validEmail(email) || !phone || !address || !city || !state) {
-    const e = new Error("Enter your full name, valid email, phone, full delivery address, city/LGA and state to calculate live shipping."); e.statusCode = 400; throw e;
+    const error = new Error("Enter your full name, valid email, phone, full delivery address, city/LGA and state to calculate live shipping.");
+    error.statusCode = 400;
+    throw error;
   }
-  const origin = parseDispatchLocation(dispatchLocation);
-  const savedAddresses = await getShipbubbleSavedAddresses();
-  const sender = findShipbubbleSenderAddress(savedAddresses, origin);
-  if (!sender) {
-    const e = new Error("Your MONOWEAR pickup address is not saved and validated in Shipbubble for " + origin.city + ", " + origin.state + ". Add/validate the pickup address in Shipbubble, then try again."); e.statusCode = 422; throw e;
+  const origin = String(dispatchLocation || "Ikorodu, Lagos").trim();
+  const destination = [address, city, state, "Nigeria"].filter(Boolean).join(", ");
+  const [pickupCoordinates, dropoffCoordinates] = await Promise.all([
+    geocodeTravoAddress(origin + ", Nigeria"),
+    geocodeTravoAddress(destination)
+  ]);
+  const totalWeight = Math.max(0.1, items.reduce((sum, item) => sum + (Number(item.quantity) || 1) * MONOWEAR_ITEM_WEIGHT_KG, 0));
+  const service = TRAVO_PARCEL_SERVICES.find((option) => totalWeight <= option.max);
+  if (!service) {
+    const error = new Error("This order exceeds the currently configured parcel weight limit. Please contact MONOWEAR to arrange delivery.");
+    error.statusCode = 422;
+    throw error;
   }
-  const receiverResult = await shipbubbleRequest("/shipping/address/validate", {
-    method: "POST",
-    body: JSON.stringify({ name: customerName, email, phone, address: [address, city, state, "Nigeria"].filter(Boolean).join(", ") })
+  const result = await requestTravoQuote({
+    pickup: { street1: origin, location: pickupCoordinates },
+    dropoff: { street1: destination, location: dropoffCoordinates },
+    entities: [{ type: "parcel" }],
+    service: service.id,
+    service_type: "ship-a-parcel-or-package-send-parcel",
+    total_weight: totalWeight,
+    single: true
   });
-  const receiverData = receiverResult.data || {};
-  const receiverCode = receiverData.address_code || receiverData.code || receiverData.address?.address_code;
-  if (!receiverCode) { const e = new Error("Shipbubble could not validate this delivery address. Check the address, city/LGA and state."); e.statusCode = 422; throw e; }
-  const ratesResult = await shipbubbleRequest("/shipping/fetch_rates", {
-    method: "POST",
-    body: JSON.stringify({
-      sender_address_code: Number(sender.address_code) || sender.address_code,
-      reciever_address_code: Number(receiverCode) || receiverCode,
-      pickup_date: nigeriaDateString(),
-      category_id: SHIPBUBBLE_CATEGORY_ID,
-      package_items: items.map((item) => ({
-        name: String(item.name || "MONOWEAR clothing").slice(0, 120),
-        description: "MONOWEAR clothing order",
-        unit_weight: String(MONOWEAR_ITEM_WEIGHT_KG),
-        unit_amount: String(Math.round(Number(item.price) || 0)),
-        quantity: String(Number(item.quantity) || 1)
-      })),
-      package_dimension: { length: SHIPBUBBLE_PACKAGE_LENGTH_CM, width: SHIPBUBBLE_PACKAGE_WIDTH_CM, height: SHIPBUBBLE_PACKAGE_HEIGHT_CM }
-    })
-  });
-  const data = ratesResult.data || {};
-  const token = String(data.request_token || "");
-  const rates = (Array.isArray(data.couriers) ? data.couriers : []).map((c) => ({
-    courier_id: String(c.courier_id), service_code: String(c.service_code || ""),
-    courier_name: String(c.courier_name || "Courier"), service_type: String(c.service_type || ""),
-    amount: Math.round(Number(c.rate_card_amount ?? c.total)),
-    delivery_time: String(c.delivery_eta || c.delivery_eta_time || "ETA provided by courier"),
-    request_token: token
-  })).filter((c) => c.courier_id && c.service_code && Number.isFinite(c.amount) && c.amount > 0 && token);
-  if (!rates.length) { const e = new Error("Shipbubble returned no delivery options for this destination. Check the address or try another destination."); e.statusCode = 422; throw e; }
-  return { amount: rates[0].amount, carrier: rates[0].courier_name, delivery_time: rates[0].delivery_time, rates, origin, destination: { city, state }, currency: "NGN", provider: "Shipbubble", request_token: token };
+  const quoteData = result.data || result.quote || result;
+  const amountKobo = Number(quoteData.amount);
+  const quoteId = String(quoteData.id || quoteData.quote_id || "");
+  if (!quoteId || !Number.isFinite(amountKobo) || amountKobo <= 0) {
+    console.error("Travo quote response missing quote id or amount.");
+    const error = new Error("Travo did not return a valid delivery price. Please try again or contact MONOWEAR.");
+    error.statusCode = 502;
+    throw error;
+  }
+  const amount = Math.round(amountKobo) / 100;
+  const rate = {
+    courier_id: "travo",
+    service_code: service.id,
+    courier_name: "Travo",
+    service_type: "parcel delivery",
+    amount,
+    delivery_time: "Estimated delivery",
+    request_token: quoteId
+  };
+  return {
+    amount, carrier: "Travo", delivery_time: rate.delivery_time,
+    rates: [rate], origin, destination: { city, state }, currency: "NGN",
+    provider: "Travo", request_token: quoteId, quote_id: quoteId
+  };
 }
+
 app.post("/api/shipping/quote", checkoutLimiter, async (req, res) => {
   try {
     const body = req.body || {};
     if (!String(body.city || "").trim() || !String(body.state || "").trim()) return res.status(400).json({ error: "Enter the delivery city/LGA and state to calculate shipping." });
     const dispatchLocation = String(getSetting("active_dispatch_location", "Ikorodu, Lagos")).trim() || "Ikorodu, Lagos";
     const items = normalizeCheckoutItems(body.items || []);
-    const quote = await getShipbubbleRates({ body, items, dispatchLocation });
+    const quote = await getTravoRates({ body, items, dispatchLocation });
     return res.json({ success: true, quote });
   } catch (error) {
     return res.status(error.statusCode || 400).json({ error: error.message || "Could not calculate live delivery rates." });
@@ -2686,7 +2738,7 @@ app.post(
       );
 
       // Re-fetch live rates on the server and validate the selected courier and price.
-      const shippingQuote = await getShipbubbleRates({ body, items, dispatchLocation });
+      const shippingQuote = await getTravoRates({ body, items, dispatchLocation });
       const selectedCourierId = String(body.shipping_courier_id || "");
       const selectedServiceCode = String(body.shipping_service_code || "");
       const selectedRate = shippingQuote.rates.find((rate) => rate.courier_id === selectedCourierId && rate.service_code === selectedServiceCode);
@@ -2757,7 +2809,7 @@ app.post(
         actualShipping,
         discount,
         total,
-        "Shipbubble",
+        "Travo",
         selectedRate.request_token,
         selectedRate.courier_id,
         selectedRate.service_code,
