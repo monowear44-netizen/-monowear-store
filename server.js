@@ -872,6 +872,8 @@ app.get("/api/health", (req, res) => {
   res.json({
     ok: true,
     store: "MONOWEAR",
+    // Render supplies this value for the deployed Git revision.
+    revision: process.env.RENDER_GIT_COMMIT || process.env.COMMIT_SHA || "unknown",
     time: new Date().toISOString()
   });
 });
