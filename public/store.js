@@ -668,11 +668,16 @@ async function refreshShippingQuote() {
         if (totalNode) totalNode.textContent = money(subtotal + Number(rate.amount || 0));
         if (messageNode) messageNode.textContent = "Live Travo rate selected. Delivery estimate: " + (rate.delivery_time || "provided by courier") + ". The rate is rechecked before payment.";
       };
-      optionsNode.value = "";
+      optionsNode.value = rates.length === 1 ? "0" : "";
+      if (rates.length === 1) optionsNode.dispatchEvent(new Event("change"));
     }
-    if (shippingNode) shippingNode.textContent = "Choose courier";
-    if (totalNode) totalNode.textContent = "—";
-    if (messageNode) messageNode.textContent = rates.length + " live Travo courier option(s) found. Select your preferred delivery service.";
+    if (rates.length === 1) {
+      if (messageNode) messageNode.textContent = "Live Travo delivery price loaded and selected. The rate is rechecked before payment.";
+    } else {
+      if (shippingNode) shippingNode.textContent = "Choose courier";
+      if (totalNode) totalNode.textContent = "—";
+      if (messageNode) messageNode.textContent = rates.length + " live Travo courier option(s) found. Select your preferred delivery service.";
+    }
   } catch (error) {
     if (requestId !== shippingQuoteRequestId) return;
     currentShippingQuoteAmount = null;
