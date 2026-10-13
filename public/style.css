@@ -314,7 +314,7 @@ body:has(#checkoutDialog[open]) {
  .product-page-header{padding:0 4%;gap:8px}
  .product-page-header nav{gap:10px}
  .product-page-header nav a{font-size:8px}
- .product-page-header .account-link{display:none}
+ .product-page-header .account-link{display:inline-flex;align-items:center;font-size:8px;letter-spacing:0;white-space:nowrap;flex-shrink:0}
  .standalone-product-layout{grid-template-columns:1fr;gap:0;padding:0 0 45px}
  .standalone-product-visual{aspect-ratio:4/4.5;max-height:none;border-left:0;border-right:0;border-top:0}
  .standalone-product-visual>img{max-height:none}
