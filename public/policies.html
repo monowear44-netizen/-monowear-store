@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MONOWEAR — Policies</title>
+  <style>
+    body{margin:0;background:#f0efe9;color:#141414;font-family:Manrope,Arial,sans-serif;line-height:1.7}
+    main{max-width:720px;margin:0 auto;padding:48px 22px 80px}
+    a.back{display:inline-block;margin-bottom:32px;color:#141414;font-size:12px;letter-spacing:.08em;text-decoration:none;border-bottom:1px solid #141414}
+    h1{letter-spacing:-.04em;font-size:34px;margin:0 0 6px}
+    h2{font-size:15px;letter-spacing:.12em;margin:40px 0 10px}
+    .body{white-space:pre-wrap}
+    .empty{color:#6d6d63}
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back" href="/">← BACK TO STORE</a>
+    <h1>Policies</h1>
+    <h2>SHIPPING</h2>
+    <div class="body" id="shipping">Loading…</div>
+    <h2>RETURNS</h2>
+    <div class="body" id="returns">Loading…</div>
+  </main>
+  <script>
+    (async () => {
+      const show = (id, text) => {
+        const el = document.getElementById(id);
+        el.textContent = text && text.trim() ? text : "Details coming soon. Please contact us if you have a question.";
+        if (!(text && text.trim())) el.className = "body empty";
+      };
+      try {
+        const res = await fetch("/api/settings", { cache: "no-store" });
+        const s = await res.json();
+        show("shipping", s.policy_shipping);
+        show("returns", s.policy_returns);
+      } catch {
+        show("shipping", "");
+        show("returns", "");
+      }
+    })();
+  </script>
+</body>
+</html>
