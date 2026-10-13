@@ -614,12 +614,12 @@ async function refreshShippingQuote() {
   if (!city || !state || !cart.length) {
     if (shippingNode) shippingNode.textContent = "Enter destination";
     if (totalNode) totalNode.textContent = "—";
-    if (messageNode) messageNode.textContent = "Enter your delivery details to fetch live Shipbubble courier rates.";
+    if (messageNode) messageNode.textContent = "Enter your delivery details to fetch live Travo courier rates.";
     return;
   }
   if (shippingNode) shippingNode.textContent = "Calculating…";
   if (totalNode) totalNode.textContent = "Calculating…";
-  if (messageNode) messageNode.textContent = "Fetching live courier prices from Shipbubble…";
+  if (messageNode) messageNode.textContent = "Fetching live courier prices from Travo…";
   try {
     const response = await fetch("/api/shipping/quote", {
       method: "POST",
@@ -636,9 +636,9 @@ async function refreshShippingQuote() {
     });
     const result = await response.json();
     if (requestId !== shippingQuoteRequestId) return;
-    if (!response.ok || !result.success || !result.quote) throw new Error(result.error || "Live Shipbubble rates are unavailable.");
+    if (!response.ok || !result.success || !result.quote) throw new Error(result.error || "Live Travo rates are unavailable.");
     const rates = Array.isArray(result.quote.rates) ? result.quote.rates : [];
-    if (!rates.length) throw new Error("Shipbubble returned no courier options for this destination.");
+    if (!rates.length) throw new Error("Travo returned no courier options for this destination.");
     if (optionsNode) {
       optionsNode.innerHTML = "";
       const placeholder = document.createElement("option");
@@ -666,13 +666,13 @@ async function refreshShippingQuote() {
         currentShippingRequestToken = String(rate.request_token || "");
         if (shippingNode) shippingNode.textContent = money(rate.amount) + " · " + rate.courier_name;
         if (totalNode) totalNode.textContent = money(subtotal + Number(rate.amount || 0));
-        if (messageNode) messageNode.textContent = "Live Shipbubble rate selected. Delivery estimate: " + (rate.delivery_time || "provided by courier") + ". The rate is rechecked before payment.";
+        if (messageNode) messageNode.textContent = "Live Travo rate selected. Delivery estimate: " + (rate.delivery_time || "provided by courier") + ". The rate is rechecked before payment.";
       };
       optionsNode.value = "";
     }
     if (shippingNode) shippingNode.textContent = "Choose courier";
     if (totalNode) totalNode.textContent = "—";
-    if (messageNode) messageNode.textContent = rates.length + " live Shipbubble courier option(s) found. Select your preferred delivery service.";
+    if (messageNode) messageNode.textContent = rates.length + " live Travo courier option(s) found. Select your preferred delivery service.";
   } catch (error) {
     if (requestId !== shippingQuoteRequestId) return;
     currentShippingQuoteAmount = null;
@@ -749,7 +749,7 @@ if (checkoutForm) {
 
     if (!currentShippingCourier || !Number.isFinite(currentShippingQuoteAmount)) {
       const quoteMessage = $("shippingQuoteMessage");
-      if (quoteMessage) quoteMessage.textContent = "Choose a live Shipbubble courier rate before continuing.";
+      if (quoteMessage) quoteMessage.textContent = "Choose a live Travo courier rate before continuing.";
       return;
     }
 
