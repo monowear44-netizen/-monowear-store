@@ -343,12 +343,18 @@
         <span>Live delivery quote</span>
         <strong id="checkoutShipping">Enter destination</strong>
       </div>
+      <label for="checkoutShippingOptions">
+        Delivery service
+        <select id="checkoutShippingOptions" name="shipping_service" required>
+          <option value="">Enter your details to load courier rates</option>
+        </select>
+      </label>
       <div class="cart-total">
         <span>Estimated order total</span>
         <strong id="checkoutTotal">—</strong>
       </div>
       <p id="shippingQuoteMessage" class="tiny muted" role="status" aria-live="polite">
-        Enter your city/LGA and state to fetch a live courier rate.
+        Enter your name, email, phone, full address, city/LGA and state to fetch live Shipbubble courier rates.
       </p>
 
       <button class="button button-light full" type="submit">
