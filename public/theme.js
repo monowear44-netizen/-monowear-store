@@ -25,7 +25,7 @@
   }
   async function load() {
     try {
-      const response = await fetch("/api/store-settings", { cache:"no-store" });
+      const response = await fetch("/api/settings", { cache:"no-store" });
       if (!response.ok) throw new Error("Theme settings unavailable");
       const data = await response.json();
       apply(data.settings || data);
