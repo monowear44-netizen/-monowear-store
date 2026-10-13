@@ -45,3 +45,14 @@ code{background:#ecebe3;padding:2px 5px;font-size:11px;word-break:break-all}
 @media (max-width:900px){
   .stats-row-2{grid-template-columns:1fr 1fr}
 }
+
+
+/* Storefront visual designer controls */
+#settingsForm input[type="color"]{display:block;width:100%;height:44px;margin-top:8px;padding:4px;border:1px solid var(--line);background:var(--panel);cursor:pointer}
+#settingsForm select{display:block;width:100%;margin-top:8px;padding:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:12px Manrope,Arial,sans-serif}
+.designer-preview-wrap{margin-top:24px}
+.designer-preview{min-height:220px;margin-top:12px;padding:28px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:16px;background:var(--preview-bg,#f0efe9);color:var(--preview-ink,#141414);border:1px solid var(--line)}
+.designer-preview span{font:10px 'DM Mono',monospace;letter-spacing:.12em}
+.designer-preview strong{font-size:clamp(25px,5vw,46px);line-height:.95;letter-spacing:-.06em}
+.designer-preview small{font-size:12px;opacity:.75}
+.designer-preview i{font-style:normal;padding:10px 14px;background:var(--preview-accent,#c6ff4b);color:var(--preview-ink,#141414);font:10px 'DM Mono',monospace}
