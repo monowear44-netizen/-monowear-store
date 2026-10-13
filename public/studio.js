@@ -695,6 +695,7 @@ async function loadSettings() {
     if (window.refreshStudioImagePreviews) {
       window.refreshStudioImagePreviews();
     }
+    if (window.refreshDesignPreview) window.refreshDesignPreview();
   } catch (error) {
     showError("settingsMessage", "Could not load settings: " + error.message);
   }
@@ -781,6 +782,7 @@ $("settingsForm").addEventListener("submit", async (event) => {
     );
 
     toast("Store settings saved.");
+    if (window.refreshDesignPreview) window.refreshDesignPreview();
     loadEmailStatus();
   } catch (error) {
     showError(
@@ -1571,6 +1573,7 @@ checkAuth();
     preview.style.textAlign = alignment;
   }
 
+  window.refreshDesignPreview = refreshDesignPreview;
   form.addEventListener("input", refreshDesignPreview);
   form.addEventListener("change", refreshDesignPreview);
   refreshDesignPreview();
