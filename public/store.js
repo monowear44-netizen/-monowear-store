@@ -148,6 +148,8 @@
       }
     }
     setText("heroSubtitle", settings.hero_subtitle || "");
+    setText("storyTitle", settings.story_title || "Built for the ones who keep going.");
+    setText("storyBody", settings.brand_story || "MONO is a state of mind: self-reliant, intentional, and unwilling to wait for permission. Every piece carries a reminder to keep showing up for your own future.");
     const heroButton = $("heroCta");
     if (heroButton) {
       heroButton.textContent =
