@@ -94,9 +94,22 @@
   function applyDesignSettings() {
     const root = document.documentElement;
     const validColor = (value, fallback) => /^#[0-9a-f]{6}$/i.test(String(value || "")) ? value : fallback;
-    root.style.setProperty("--bg", validColor(settings.design_background, "#f0efe9"));
-    root.style.setProperty("--ink", validColor(settings.design_text, "#141414"));
-    root.style.setProperty("--accent", validColor(settings.design_accent, "#c6ff4b"));
+    const theme = String(settings.design_theme || "dark").toLowerCase();
+    const palettes = {
+      dark: { bg: "#111210", ink: "#f4f2ea", muted: "#a6a69d", line: "#34352f", accent: "#c6ff4b", panel: "#1b1c19", soft: "#242520" },
+      white: { bg: "#ffffff", ink: "#171815", muted: "#77786f", line: "#deded8", accent: "#171815", panel: "#f7f7f3", soft: "#ededE7" },
+      emerald: { bg: "#073f32", ink: "#f2f5ef", muted: "#b8d0c5", line: "#286b59", accent: "#57d6a0", panel: "#0c4d3d", soft: "#145a48" },
+      gold: { bg: "#171510", ink: "#f6f0df", muted: "#c1b58f", line: "#51452a", accent: "#d5b15a", panel: "#211d14", soft: "#302817" }
+    };
+    const palette = palettes[theme] || palettes.dark;
+    root.dataset.theme = palettes[theme] ? theme : "dark";
+    root.style.setProperty("--bg", palette.bg);
+    root.style.setProperty("--ink", palette.ink);
+    root.style.setProperty("--muted", palette.muted);
+    root.style.setProperty("--line", palette.line);
+    root.style.setProperty("--accent", palette.accent);
+    root.style.setProperty("--panel", palette.panel);
+    root.style.setProperty("--surface-soft", palette.soft);
     const fonts = { Manrope: "'Manrope', Arial, sans-serif", Arial: "Arial, sans-serif", Georgia: "Georgia, serif", system: "system-ui, sans-serif" };
     document.body.style.fontFamily = fonts[settings.design_font] || fonts.Manrope;
     const radius = { square: "0px", soft: "8px", round: "999px" };
