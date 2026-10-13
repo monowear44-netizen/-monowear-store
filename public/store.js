@@ -596,8 +596,6 @@ let shippingQuoteRequestId = 0;
 let currentShippingQuoteAmount = null;
 let currentShippingCourier = null;
 let currentShippingRequestToken = "";
-let currentShippingCourier = null;
-let currentShippingRequestToken = "";
 
 async function refreshShippingQuote() {
   if (!checkoutForm) return;
@@ -740,9 +738,7 @@ if (checkoutForm) {
       shipping_courier_id: currentShippingCourier ? currentShippingCourier.courier_id : "",
       shipping_service_code: currentShippingCourier ? currentShippingCourier.service_code : "",
       shipping_request_token: currentShippingRequestToken,
-      shipping_courier_id: currentShippingCourier ? currentShippingCourier.courier_id : "",
-      shipping_service_code: currentShippingCourier ? currentShippingCourier.service_code : "",
-      shipping_request_token: currentShippingRequestToken,
+
 
       items: cart.map((item) => ({
         product_id: Number(item.id),
@@ -750,12 +746,6 @@ if (checkoutForm) {
         size: String(item.size || "")
       }))
     };
-
-    if (!currentShippingCourier || !Number.isFinite(currentShippingQuoteAmount)) {
-      const quoteMessage = $("shippingQuoteMessage");
-      if (quoteMessage) quoteMessage.textContent = "Choose a live Shipbubble courier rate before continuing.";
-      return;
-    }
 
     if (!currentShippingCourier || !Number.isFinite(currentShippingQuoteAmount)) {
       const quoteMessage = $("shippingQuoteMessage");
