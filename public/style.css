@@ -404,3 +404,59 @@ html[data-theme="white"] .ticker { background:#171815; color:#fff; }
 html[data-theme="white"] .announcement,
 html[data-theme="white"] .ticker { background: var(--accent); color: #111; }
 html[data-theme="white"] .product-badge { color: #111 !important; }
+
+
+/* MONOWEAR product catalogue: featured first, then numbered category sections */
+.product-section-block,
+.product-category-section {
+  margin-top: 42px;
+}
+.product-subheading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.product-subheading .eyebrow {
+  margin: 0 0 8px;
+}
+.product-subheading h3 {
+  margin: 0;
+  font-size: clamp(23px, 3vw, 38px);
+  line-height: 1.05;
+  letter-spacing: -.055em;
+  text-transform: uppercase;
+}
+.product-subheading h3 i {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  text-transform: lowercase;
+}
+.product-category-heading {
+  margin-top: 52px;
+}
+.product-category-section:first-child .product-category-heading {
+  margin-top: 0;
+}
+#featuredProductsSection[hidden] {
+  display: none !important;
+}
+.product-sections:empty {
+  display: none;
+}
+@media (max-width: 600px) {
+  .product-section-block,
+  .product-category-section {
+    margin-top: 30px;
+  }
+  .product-subheading {
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+  .product-category-heading {
+    margin-top: 36px;
+  }
+}
