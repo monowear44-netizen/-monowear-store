@@ -327,3 +327,56 @@ body:has(#checkoutDialog[open]) {
  .standalone-related-meta{padding:12px 9px 8px;font-size:11px}
  .standalone-related-card>small{padding:0 9px;font-size:8px}
 }
+
+
+/* MONOWEAR THEME PALETTES — controlled from the private Studio */
+html[data-theme="dark"] body,
+html[data-theme="emerald"] body,
+html[data-theme="gold"] body { background:var(--bg); color:var(--ink); }
+html[data-theme="dark"] .site-header,
+html[data-theme="dark"] footer,
+html[data-theme="dark"] .newsletter,
+html[data-theme="emerald"] .site-header,
+html[data-theme="emerald"] footer,
+html[data-theme="emerald"] .newsletter,
+html[data-theme="gold"] .site-header,
+html[data-theme="gold"] footer,
+html[data-theme="gold"] .newsletter { background:var(--bg); color:var(--ink); border-color:var(--line); }
+html[data-theme="dark"] .manifesto,
+html[data-theme="emerald"] .manifesto,
+html[data-theme="gold"] .manifesto { background:var(--surface-soft); color:var(--ink); }
+html[data-theme="dark"] .manifesto .eyebrow,
+html[data-theme="dark"] .manifesto>p:not(.eyebrow),
+html[data-theme="emerald"] .manifesto .eyebrow,
+html[data-theme="emerald"] .manifesto>p:not(.eyebrow),
+html[data-theme="gold"] .manifesto .eyebrow,
+html[data-theme="gold"] .manifesto>p:not(.eyebrow) { color:var(--muted); }
+html[data-theme="dark"] .ticker,
+html[data-theme="dark"] .announcement,
+html[data-theme="emerald"] .ticker,
+html[data-theme="emerald"] .announcement,
+html[data-theme="gold"] .ticker,
+html[data-theme="gold"] .announcement { background:var(--accent); color:#111; }
+html[data-theme="dark"] .product-image,
+html[data-theme="emerald"] .product-image,
+html[data-theme="gold"] .product-image { background:var(--surface-soft); }
+html[data-theme="dark"] .button-outline,
+html[data-theme="emerald"] .button-outline,
+html[data-theme="gold"] .button-outline { color:var(--ink); border-color:var(--line); }
+html[data-theme="dark"] .add-button,
+html[data-theme="emerald"] .add-button,
+html[data-theme="gold"] .add-button { background:var(--accent); border-color:var(--accent); color:#111; }
+html[data-theme="dark"] .cart-toggle span,
+html[data-theme="emerald"] .cart-toggle span,
+html[data-theme="gold"] .cart-toggle span { background:var(--accent); color:#111; }
+html[data-theme="white"] body { background:#fff; color:#171815; }
+html[data-theme="white"] .manifesto { background:#f0f0e9; color:#171815; }
+html[data-theme="white"] .announcement,
+html[data-theme="white"] .ticker { background:#171815; color:#fff; }
+
+/* Keep products in a real wrapping grid at every screen size. */
+#productGrid.product-grid { display:grid !important; grid-template-columns:repeat(var(--product-columns,3),minmax(0,1fr)) !important; align-items:start; width:100%; }
+#productGrid > .product-card { min-width:0; width:100%; }
+@media (max-width:700px) {
+  #productGrid.product-grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:22px 12px; }
+}
