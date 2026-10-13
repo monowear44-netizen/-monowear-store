@@ -594,34 +594,32 @@
 const checkoutForm = $("checkoutForm");
 let shippingQuoteRequestId = 0;
 let currentShippingQuoteAmount = null;
+let currentShippingCourier = null;
+let currentShippingRequestToken = "";
 
 async function refreshShippingQuote() {
   if (!checkoutForm) return;
-  const cityField = checkoutForm.querySelector('[name="city"]');
-  const stateField = checkoutForm.querySelector('[name="state"]');
-  const city = String(cityField?.value || "").trim();
-  const state = String(stateField?.value || "").trim();
+  const city = String(checkoutForm.querySelector('[name="city"]')?.value || "").trim();
+  const state = String(checkoutForm.querySelector('[name="state"]')?.value || "").trim();
   const shippingNode = $("checkoutShipping");
   const totalNode = $("checkoutTotal");
   const messageNode = $("shippingQuoteMessage");
-  const subtotal = cart.reduce(
-    (total, item) => total + Number(item.price || 0) * Number(item.quantity || 1),
-    0
-  );
+  const optionsNode = $("checkoutShippingOptions");
+  const subtotal = cart.reduce((total, item) => total + Number(item.price || 0) * Number(item.quantity || 1), 0);
   const requestId = ++shippingQuoteRequestId;
-
+  currentShippingQuoteAmount = null;
+  currentShippingCourier = null;
+  currentShippingRequestToken = "";
+  if (optionsNode) optionsNode.innerHTML = '<option value="">Choose a courier after rates load</option>';
   if (!city || !state || !cart.length) {
-    currentShippingQuoteAmount = null;
     if (shippingNode) shippingNode.textContent = "Enter destination";
     if (totalNode) totalNode.textContent = "—";
-    if (messageNode) messageNode.textContent = "Enter your city/LGA and state to fetch a live courier rate.";
+    if (messageNode) messageNode.textContent = "Enter your delivery details to fetch live Shipbubble courier rates.";
     return;
   }
-
   if (shippingNode) shippingNode.textContent = "Calculating…";
   if (totalNode) totalNode.textContent = "Calculating…";
-  if (messageNode) messageNode.textContent = "Calculating your delivery fee…";
-
+  if (messageNode) messageNode.textContent = "Fetching live courier prices from Shipbubble…";
   try {
     const response = await fetch("/api/shipping/quote", {
       method: "POST",
@@ -638,20 +636,41 @@ async function refreshShippingQuote() {
     });
     const result = await response.json();
     if (requestId !== shippingQuoteRequestId) return;
-    if (!response.ok || !result.success || !result.quote) {
-      throw new Error(result.error || "Live delivery rates are unavailable.");
+    if (!response.ok || !result.success || !result.quote) throw new Error(result.error || "Live Shipbubble rates are unavailable.");
+    const rates = Array.isArray(result.quote.rates) ? result.quote.rates : [];
+    if (!rates.length) throw new Error("Shipbubble returned no courier options for this destination.");
+    if (optionsNode) {
+      optionsNode.innerHTML = '<option value="">Select delivery service</option>' + rates.map((rate, index) => {
+        const label = String(rate.courier_name || "Courier") + " — " + money(rate.amount) + (rate.delivery_time ? " · " + rate.delivery_time : "");
+        return '<option value="' + index + '">' + escapeHTML(label) + '</option>';
+      }).join("");
+      optionsNode.onchange = () => {
+        const rate = rates[Number(optionsNode.value)];
+        if (!rate || optionsNode.value === "") {
+          currentShippingQuoteAmount = null;
+          currentShippingCourier = null;
+          currentShippingRequestToken = "";
+          if (shippingNode) shippingNode.textContent = "Choose courier";
+          if (totalNode) totalNode.textContent = "—";
+          return;
+        }
+        currentShippingQuoteAmount = Number(rate.amount);
+        currentShippingCourier = { courier_id: String(rate.courier_id), service_code: String(rate.service_code), courier_name: String(rate.courier_name) };
+        currentShippingRequestToken = String(rate.request_token || "");
+        if (shippingNode) shippingNode.textContent = money(rate.amount) + " · " + rate.courier_name;
+        if (totalNode) totalNode.textContent = money(subtotal + Number(rate.amount || 0));
+        if (messageNode) messageNode.textContent = "Live Shipbubble rate selected. Delivery estimate: " + (rate.delivery_time || "provided by courier") + ". The rate is rechecked before payment.";
+      };
+      optionsNode.value = "";
     }
-    const quote = result.quote;
-    currentShippingQuoteAmount = Number(quote.amount);
-    if (shippingNode) shippingNode.textContent = money(quote.amount);
-    if (totalNode) totalNode.textContent = money(subtotal + Number(quote.amount || 0));
-    if (messageNode) {
-      const eta = quote.delivery_time ? " · " + quote.delivery_time : "";
-      messageNode.textContent = "Estimated delivery fee via " + quote.carrier + eta + ". Fee is rechecked before payment; final courier cost is confirmed when booked.";
-    }
+    if (shippingNode) shippingNode.textContent = "Choose courier";
+    if (totalNode) totalNode.textContent = "—";
+    if (messageNode) messageNode.textContent = rates.length + " live Shipbubble courier option(s) found. Select your preferred delivery service.";
   } catch (error) {
     if (requestId !== shippingQuoteRequestId) return;
     currentShippingQuoteAmount = null;
+    currentShippingCourier = null;
+    currentShippingRequestToken = "";
     if (shippingNode) shippingNode.textContent = "Unavailable";
     if (totalNode) totalNode.textContent = "—";
     if (messageNode) messageNode.textContent = error.message || "Could not calculate delivery. Please try again.";
@@ -709,6 +728,9 @@ if (checkoutForm) {
       city: String(formData.get("city") || "").trim(),
       state: String(formData.get("state") || "").trim(),
       shipping_quote_amount: currentShippingQuoteAmount,
+      shipping_courier_id: currentShippingCourier ? currentShippingCourier.courier_id : "",
+      shipping_service_code: currentShippingCourier ? currentShippingCourier.service_code : "",
+      shipping_request_token: currentShippingRequestToken,
 
       items: cart.map((item) => ({
         product_id: Number(item.id),
@@ -716,6 +738,12 @@ if (checkoutForm) {
         size: String(item.size || "")
       }))
     };
+
+    if (!currentShippingCourier || !Number.isFinite(currentShippingQuoteAmount)) {
+      const quoteMessage = $("shippingQuoteMessage");
+      if (quoteMessage) quoteMessage.textContent = "Choose a live Shipbubble courier rate before continuing.";
+      return;
+    }
 
     let redirectingToPaystack = false;
     const paymentLoading = $("paymentLoading");
