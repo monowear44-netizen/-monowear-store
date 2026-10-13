@@ -696,6 +696,7 @@ async function loadSettings() {
       if (input) input.value = "";
     }
 
+    if (window.applyMonowearThemePreset) window.applyMonowearThemePreset();
     if (window.refreshStudioImagePreviews) {
       window.refreshStudioImagePreviews();
     }
@@ -1656,6 +1657,7 @@ checkAuth();
      form.elements.design_accent.value = preset.accent;
      if (window.refreshDesignPreview) window.refreshDesignPreview();
    }
+   window.applyMonowearThemePreset = applyPreset;
    form.elements.design_theme.addEventListener("change", applyPreset);
    // Theme is the source of truth when the Studio settings are loaded.
    const originalRefresh = window.refreshDesignPreview;
