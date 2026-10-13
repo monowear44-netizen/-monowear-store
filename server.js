@@ -2595,7 +2595,7 @@ async function getShipbubbleRates({ body, items, dispatchLocation }) {
   }
   const receiverResult = await shipbubbleRequest("/shipping/address/validate", {
     method: "POST",
-    body: JSON.stringify({ name: customerName, email, phone, address, city, state, country: "Nigeria" })
+    body: JSON.stringify({ name: customerName, email, phone, address: [address, city, state, "Nigeria"].filter(Boolean).join(", ") })
   });
   const receiverData = receiverResult.data || {};
   const receiverCode = receiverData.address_code || receiverData.code || receiverData.address?.address_code;
