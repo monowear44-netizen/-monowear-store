@@ -1571,6 +1571,8 @@ checkAuth();
     preview.style.fontFamily = fonts[value("design_font", "Manrope")] || fonts.Manrope;
     preview.style.alignItems = alignment === "left" ? "flex-start" : alignment === "right" ? "flex-end" : "center";
     preview.style.textAlign = alignment;
+    const radius = { square: "0px", soft: "8px", round: "999px" };
+    preview.style.setProperty("--control-radius", radius[value("design_radius", "square")] || "0px");
   }
 
   window.refreshDesignPreview = refreshDesignPreview;
