@@ -2642,6 +2642,26 @@ app.get("/api/admin/orders", requireAdmin, (req, res) => {
     FROM orders
     WHERE COALESCE(record_type, 'real_order') = 'real_order'
       AND payment_status = 'paid'
+      AND LOWER(COALESCE(order_status, 'pending')) NOT IN ('shipped', 'delivered')
+    ORDER BY id DESC
+    LIMIT 500
+  `).all();
+
+  res.json(orders.map(safeOrder));
+});
+
+app.get("/api/admin/completed-orders", requireAdmin, (req, res) => {
+  const orders = db.prepare(`
+    SELECT orders.*,
+      EXISTS (
+        SELECT 1 FROM order_events e
+        WHERE e.order_id = orders.id
+          AND e.message LIKE 'NEEDS ATTENTION%'
+      ) AS attention
+    FROM orders
+    WHERE COALESCE(record_type, 'real_order') = 'real_order'
+      AND payment_status = 'paid'
+      AND LOWER(COALESCE(order_status, 'pending')) IN ('shipped', 'delivered')
     ORDER BY id DESC
     LIMIT 500
   `).all();
@@ -2718,6 +2738,15 @@ app.put("/api/admin/orders/:id/status", requireAdmin, (req, res) => {
     });
   }
 
+  // Once an order is shipped or delivered, it is archived as completed
+  // and cannot be edited through the admin status endpoint.
+  const currentStatus = String(order.order_status || "").toLowerCase();
+  if (["shipped", "delivered"].includes(currentStatus)) {
+    return res.status(409).json({
+      error: "This order is completed and locked. Completed orders cannot be edited."
+    });
+  }
+
   // Admin order-status updates do not mark a payment as paid.
   // Only verified Paystack payments can do that.
   db.prepare(`
@@ -2754,6 +2783,9 @@ app.put("/api/admin/orders/:id/record-type", requireAdmin, (req, res) => {
   if (!order) return res.status(404).json({ error: "Order not found." });
   if (order.payment_status === "paid" && recordType !== "real_order") {
     return res.status(400).json({ error: "A verified paid order must stay in Real orders." });
+  }
+  if (["shipped", "delivered"].includes(String(order.order_status || "").toLowerCase())) {
+    return res.status(409).json({ error: "This completed order is locked and cannot be reclassified." });
   }
   db.prepare(`UPDATE orders SET record_type = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
     .run(recordType, id);
