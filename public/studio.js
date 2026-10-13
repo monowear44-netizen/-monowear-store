@@ -192,7 +192,7 @@ document.querySelectorAll(".nav").forEach((button) => {
 
 function switchTab(tab) {
   window.monowearActiveTab = tab;
-  const panelTab = tab === "abandoned" ? "orders" : tab;
+  const panelTab = (tab === "abandoned" || tab === "completed") ? "orders" : tab;
   document.querySelectorAll(".nav").forEach((button) => {
     button.classList.toggle("active", button.dataset.tab === tab);
   });
@@ -207,6 +207,7 @@ function switchTab(tab) {
     appearance: "Store editor",
     orders: "Orders",
     abandoned: "Abandoned carts",
+    completed: "Completed & shipped",
     collections: "Collections",
     payments: "Payments"
   };
@@ -803,7 +804,12 @@ $("settingsForm").addEventListener("submit", async (event) => {
 
 async function loadOrders() {
   try {
-    currentOrders = await api(window.monowearActiveTab === "abandoned" ? "/api/admin/abandoned-carts" : "/api/admin/orders");
+    const endpoint = window.monowearActiveTab === "abandoned"
+      ? "/api/admin/abandoned-carts"
+      : window.monowearActiveTab === "completed"
+        ? "/api/admin/completed-orders"
+        : "/api/admin/orders";
+    currentOrders = await api(endpoint);
 
     if ($("orderCount")) {
       $("orderCount").textContent = currentOrders.length;
@@ -908,38 +914,33 @@ function renderOrders() {
       </div>
 
       <div>
-        <label class="eyebrow">ORDER STATUS</label>
-
-        <select
-          onchange="updateOrder(${Number(order.id)}, this.value)"
-        >
-          ${statuses.map((value) => `
-            <option
-              value="${value}"
-              ${String(order.order_status).toLowerCase() === value ? "selected" : ""}
-            >
-              ${value.charAt(0).toUpperCase() + value.slice(1)}
-            </option>
-          `).join("")}
-        </select>
-
-        ${!isPaid ? `
-          <label class="eyebrow">RECORD TYPE</label>
-          <select onchange="updateOrderRecordType(${Number(order.id)}, this.value)">
-            <option value="abandoned_cart" ${(order.record_type || "real_order") === "abandoned_cart" ? "selected" : ""}>Abandoned cart</option>
-            <option value="real_order" ${(order.record_type || "real_order") === "real_order" ? "selected" : ""}>Real order</option>
+        ${window.monowearActiveTab === "completed" ? `
+          <p class="muted"><strong>LOCKED</strong></p>
+          <p class="muted">This order has shipped or been delivered. Its status and classification can no longer be edited.</p>
+        ` : `
+          <label class="eyebrow">ORDER STATUS</label>
+          <select onchange="updateOrder(${Number(order.id)}, this.value)">
+            ${statuses.map((value) => `
+              <option value="${value}" ${String(order.order_status).toLowerCase() === value ? "selected" : ""}>
+                ${value.charAt(0).toUpperCase() + value.slice(1)}
+              </option>
+            `).join("")}
           </select>
-        ` : ""}
-        ${isPaid ? `
-          <button
-            class="small-button resend-button"
-            type="button"
-            onclick="resendConfirmation(${Number(order.id)})"
-          >
-            RESEND CONFIRMATION EMAIL
-          </button>
-        ` : ""}
+          ${!isPaid ? `
+            <label class="eyebrow">RECORD TYPE</label>
+            <select onchange="updateOrderRecordType(${Number(order.id)}, this.value)">
+              <option value="abandoned_cart" ${(order.record_type || "real_order") === "abandoned_cart" ? "selected" : ""}>Abandoned cart</option>
+              <option value="real_order" ${(order.record_type || "real_order") === "real_order" ? "selected" : ""}>Real order</option>
+            </select>
+          ` : ""}
+          ${isPaid ? `
+            <button class="small-button resend-button" type="button" onclick="resendConfirmation(${Number(order.id)})">
+              RESEND CONFIRMATION EMAIL
+            </button>
+          ` : ""}
+        `}
       </div>
+/div>
     </article>`;
   }).join("") || `
     <p class="muted">${currentOrders.length ? "No orders match these filters." : "No orders yet."}</p>
