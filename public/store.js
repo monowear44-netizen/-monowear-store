@@ -610,16 +610,19 @@ async function refreshShippingQuote() {
   currentShippingQuoteAmount = null;
   currentShippingCourier = null;
   currentShippingRequestToken = "";
-  if (optionsNode) optionsNode.innerHTML = '<option value="">Calculating Travo delivery price…</option>';
+
+  if (optionsNode) optionsNode.innerHTML = '<option value="">Fixed delivery fee</option>';
   if (!city || !state || !cart.length) {
     if (shippingNode) shippingNode.textContent = "Enter destination";
     if (totalNode) totalNode.textContent = "—";
-    if (messageNode) messageNode.textContent = "Enter your delivery details to fetch live Travo courier rates.";
+    if (messageNode) messageNode.textContent = "Enter your city/LGA and state to calculate your fixed delivery fee.";
     return;
   }
+
   if (shippingNode) shippingNode.textContent = "Calculating…";
   if (totalNode) totalNode.textContent = "Calculating…";
-  if (messageNode) messageNode.textContent = "Fetching live courier prices from Travo…";
+  if (messageNode) messageNode.textContent = "Calculating MONOWEAR's fixed delivery fee…";
+
   try {
     const response = await fetch("/api/shipping/quote", {
       method: "POST",
@@ -630,65 +633,53 @@ async function refreshShippingQuote() {
         email: String(checkoutForm.querySelector('[name="email"]')?.value || "").trim(),
         phone: String(checkoutForm.querySelector('[name="phone"]')?.value || "").trim(),
         address: String(checkoutForm.querySelector('[name="address"]')?.value || "").trim(),
-        city, state,
-        items: cart.map((item) => ({ product_id: Number(item.id), quantity: Number(item.quantity), size: String(item.size || "") }))
+        city,
+        state,
+        items: cart.map((item) => ({
+          product_id: Number(item.id),
+          quantity: Number(item.quantity),
+          size: String(item.size || "")
+        }))
       })
     });
     const result = await response.json();
     if (requestId !== shippingQuoteRequestId) return;
-    if (!response.ok || !result.success || !result.quote) throw new Error(result.error || "Live Travo rates are unavailable.");
+    if (!response.ok || !result.success || !result.quote) {
+      throw new Error(result.error || "The fixed delivery fee is unavailable for this state.");
+    }
     const rates = Array.isArray(result.quote.rates) ? result.quote.rates : [];
-    if (!rates.length) throw new Error("Travo returned no courier options for this destination.");
+    if (!rates.length) throw new Error("No fixed delivery fee is configured for this state.");
+
+    const rate = rates[0];
+    currentShippingQuoteAmount = Number(rate.amount);
+    currentShippingCourier = {
+      courier_id: String(rate.courier_id),
+      service_code: String(rate.service_code),
+      courier_name: String(rate.courier_name)
+    };
+    currentShippingRequestToken = String(rate.request_token || "");
+
     if (optionsNode) {
       optionsNode.innerHTML = "";
-      const placeholder = document.createElement("option");
-      placeholder.value = "";
-      placeholder.textContent = "Select delivery service";
-      optionsNode.appendChild(placeholder);
-      rates.forEach((rate, index) => {
-        const option = document.createElement("option");
-        option.value = String(index);
-        option.textContent = String(rate.courier_name || "Courier") + " — " + money(rate.amount) + (rate.delivery_time ? " · " + rate.delivery_time : "");
-        optionsNode.appendChild(option);
-      });
-      optionsNode.onchange = () => {
-        const rate = rates[Number(optionsNode.value)];
-        if (!rate || optionsNode.value === "") {
-          currentShippingQuoteAmount = null;
-          currentShippingCourier = null;
-          currentShippingRequestToken = "";
-          if (shippingNode) shippingNode.textContent = "Choose courier";
-          if (totalNode) totalNode.textContent = "—";
-          return;
-        }
-        currentShippingQuoteAmount = Number(rate.amount);
-        currentShippingCourier = { courier_id: String(rate.courier_id), service_code: String(rate.service_code), courier_name: String(rate.courier_name) };
-        currentShippingRequestToken = String(rate.request_token || "");
-        if (shippingNode) shippingNode.textContent = money(rate.amount) + " · " + rate.courier_name;
-        if (totalNode) totalNode.textContent = money(subtotal + Number(rate.amount || 0));
-        if (messageNode) messageNode.textContent = "Live Travo rate selected. Delivery estimate: " + (rate.delivery_time || "provided by courier") + ". The rate is rechecked before payment.";
-      };
-      optionsNode.value = rates.length === 1 ? "0" : "";
-      if (rates.length === 1) optionsNode.dispatchEvent(new Event("change"));
+      const option = document.createElement("option");
+      option.value = "0";
+      option.textContent = String(rate.courier_name || "Fixed delivery") + " — " + money(rate.amount);
+      option.selected = true;
+      optionsNode.appendChild(option);
     }
-    if (rates.length === 1) {
-      if (messageNode) messageNode.textContent = "Live Travo delivery price loaded and selected. The rate is rechecked before payment.";
-    } else {
-      if (shippingNode) shippingNode.textContent = "Choose courier";
-      if (totalNode) totalNode.textContent = "—";
-      if (messageNode) messageNode.textContent = rates.length + " live Travo courier option(s) found. Select your preferred delivery service.";
-    }
+    if (shippingNode) shippingNode.textContent = money(rate.amount) + " · Fixed delivery";
+    if (totalNode) totalNode.textContent = money(subtotal + Number(rate.amount || 0));
+    if (messageNode) messageNode.textContent = "Fixed MONOWEAR delivery fee for " + state + ". The fee applies once per order, not per item.";
   } catch (error) {
     if (requestId !== shippingQuoteRequestId) return;
     currentShippingQuoteAmount = null;
     currentShippingCourier = null;
     currentShippingRequestToken = "";
-    if (shippingNode) shippingNode.textContent = "Quote unavailable";
+    if (shippingNode) shippingNode.textContent = "Fee unavailable";
     if (totalNode) totalNode.textContent = "—";
-    if (messageNode) messageNode.textContent = error.message || "Could not calculate delivery. Please try again.";
+    if (messageNode) messageNode.textContent = error.message || "Could not calculate the fixed delivery fee. Please try again.";
   }
 }
-
 if (checkoutForm) {
   const cityField = checkoutForm.querySelector('[name="city"]');
   const stateField = checkoutForm.querySelector('[name="state"]');
@@ -754,7 +745,7 @@ if (checkoutForm) {
 
     if (!currentShippingCourier || !Number.isFinite(currentShippingQuoteAmount)) {
       const quoteMessage = $("shippingQuoteMessage");
-      if (quoteMessage) quoteMessage.textContent = "Choose a live Travo courier rate before continuing.";
+      if (quoteMessage) quoteMessage.textContent = "Enter a supported delivery state and wait for the fixed fee to load before continuing.";
       return;
     }
 
