@@ -6,3 +6,40 @@
 .image-setting h3{margin:0}
 .image-setting input[type=file]{max-width:100%;font-size:13px}
 .site-image-preview{width:100%;max-height:220px;object-fit:cover;border-radius:8px;background:#eee}
+
+
+/* MONOWEARS Studio: clearly labelled, colour-coded tab navigation */
+.sidebar .nav{
+  color:#fff;
+  border-radius:8px;
+  margin:3px 0;
+  gap:8px;
+  align-items:center;
+  transition:filter .15s ease, transform .15s ease;
+}
+.sidebar .nav:hover{filter:brightness(1.12);transform:translateX(2px);color:#fff}
+.sidebar .nav.active{outline:2px solid rgba(255,255,255,.82);outline-offset:-2px;color:#fff}
+.sidebar .nav[data-tab="overview"]{background:#2463eb}
+.sidebar .nav[data-tab="products"]{background:#087f5b}
+.sidebar .nav[data-tab="collections"]{background:#7c3aed}
+.sidebar .nav[data-tab="appearance"]{background:#c2410c}
+.sidebar .nav[data-tab="orders"]{background:#0369a1}
+.sidebar .nav[data-tab="abandoned"]{background:#b45309}
+.sidebar .nav[data-tab="completed"]{background:#15803d}
+.sidebar .nav[data-tab="payments"]{background:#be185d}
+.sidebar .nav span{color:#fff;background:rgba(0,0,0,.18);border-radius:20px;padding:3px 6px}
+@media(max-width:800px){
+  .sidebar{
+    position:sticky;inset:0 auto auto 0;width:100%;height:auto;
+    padding:12px;display:flex;flex-direction:row;align-items:center;
+    gap:6px;overflow-x:auto;white-space:nowrap;z-index:20;
+  }
+  .sidebar .logo,.sidebar .side-label,.sidebar .side-bottom{display:none}
+  .sidebar .nav{
+    flex:0 0 auto;width:auto;font-size:10px;justify-content:center;
+    padding:11px 12px;margin:0;transform:none;min-height:38px;
+  }
+  .sidebar .nav span{font-size:9px}
+  .sidebar .nav:hover{transform:none}
+  .main{margin-left:0;padding:20px 4%}
+}
