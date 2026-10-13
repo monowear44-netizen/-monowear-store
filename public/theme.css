@@ -1,0 +1,69 @@
+/* Global theme coverage for storefront, product detail, account, policies and Studio. */
+html[data-theme] body { background:var(--bg)!important; color:var(--ink)!important; }
+html[data-theme] input, html[data-theme] textarea, html[data-theme] select {
+  color:var(--ink); border-color:var(--line);
+}
+html[data-theme] .site-header, html[data-theme] footer,
+html[data-theme] .newsletter, html[data-theme] .section-wrap,
+html[data-theme] .account-main, html[data-theme] .policy-page,
+html[data-theme] .confirmation { background:var(--bg); color:var(--ink); }
+html[data-theme] .announcement, html[data-theme] .ticker,
+html[data-theme] .cart-drawer .drawer-head { background:var(--accent)!important; color:#111!important; }
+html[data-theme] .cart-drawer, html[data-theme] .checkout-dialog,
+html[data-theme] .account-panel, html[data-theme] .mw-panel,
+html[data-theme] .panel, html[data-theme] .settings-form,
+html[data-theme] .standalone-related-card { background:var(--panel)!important; color:var(--ink); border-color:var(--line); }
+html[data-theme] .standalone-product-page,
+html[data-theme] .standalone-product-main,
+html[data-theme] .product-page-header,
+html[data-theme] .standalone-product-page footer { background:var(--bg)!important; color:var(--ink)!important; }
+html[data-theme] .standalone-product-visual,
+html[data-theme] .standalone-related-image { background:var(--surface-soft)!important; }
+html[data-theme] .product-page-header nav a,
+html[data-theme] .product-page-header .account-link,
+html[data-theme] .product-page-header .cart-toggle,
+html[data-theme] .standalone-product-info h1,
+html[data-theme] .standalone-product-description,
+html[data-theme] .standalone-product-category,
+html[data-theme] .standalone-size-label,
+html[data-theme] .standalone-size-select { color:var(--ink)!important; }
+html[data-theme] .standalone-product-price,
+html[data-theme] .standalone-stock,
+html[data-theme] .product-page-status,
+html[data-theme] .product-page-breadcrumb a:hover,
+html[data-theme] .standalone-more-heading .eyebrow,
+html[data-theme] .standalone-more-heading h2 i,
+html[data-theme] .standalone-related-meta strong { color:var(--accent)!important; }
+html[data-theme] .standalone-size-select { background:var(--panel)!important; border-color:var(--line)!important; }
+html[data-theme] .standalone-add-button,
+html[data-theme] .add-button,
+html[data-theme] .mw-button-primary { background:var(--accent)!important; border-color:var(--accent)!important; color:#111!important; }
+html[data-theme] .product-image { background:var(--surface-soft); }
+html[data-theme] .product-description,
+html[data-theme] .policy-page section p,
+html[data-theme] .confirmation>p { color:var(--muted); }
+html[data-theme] .manifesto { background:var(--surface-soft)!important; color:var(--ink)!important; }
+html[data-theme] .manifesto .eyebrow,
+html[data-theme] .manifesto>p:not(.eyebrow) { color:var(--muted)!important; }
+html[data-theme] .button-outline { border-color:var(--line); }
+html[data-theme] .checkout-brand-panel,
+html[data-theme] .payment-loading-card { background:var(--panel)!important; color:var(--ink)!important; }
+html[data-theme] .payment-loading { background:var(--bg)!important; color:var(--ink)!important; }
+html[data-theme] .payment-loading-kicker,
+html[data-theme] .payment-loading-rule span,
+html[data-theme] .payment-spinner { border-top-color:var(--accent); background-color:var(--accent); color:var(--accent); }
+html[data-theme] .mw-header { background:var(--bg)!important; color:var(--ink)!important; border-color:var(--line)!important; }
+html[data-theme] .mw-hero { background:var(--panel)!important; color:var(--ink)!important; }
+html[data-theme] .mw-panel, html[data-theme] .mw-shortcut { background:var(--panel)!important; border-color:var(--line)!important; color:var(--ink)!important; }
+html[data-theme] .mw-button, html[data-theme] .mw-shortcut:hover { border-color:var(--accent)!important; }
+html[data-theme] .sidebar { background:var(--theme-sidebar)!important; color:var(--ink); border-color:var(--line); }
+html[data-theme] .sidebar .logo { color:var(--ink); }
+html[data-theme] .sidebar .nav { color:var(--muted); }
+html[data-theme] .sidebar .nav.active,
+html[data-theme] .sidebar .nav:hover { background:var(--panel)!important; color:var(--accent)!important; }
+html[data-theme] .main, html[data-theme] .topbar { color:var(--ink); border-color:var(--line); }
+html[data-theme] .eyebrow, html[data-theme] .muted { color:var(--muted); }
+html[data-theme] .designer-preview { background:var(--preview-bg)!important; color:var(--preview-ink)!important; border-color:var(--line)!important; }
+html[data-theme] .designer-preview i { background:var(--accent)!important; color:#111!important; }
+html[data-theme] .announcement, html[data-theme] .ticker { color:#111!important; }
+html[data-theme] .product-badge { background:var(--accent)!important; color:#111!important; }
