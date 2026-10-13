@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101010">
+  <meta name="description" content="Your personal MONOWEAR space. Manage your account, orders and shopping bag.">
+  <title>My Account — MONOWEAR</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101010;
+      --panel: #171717;
+      --panel2: #1e1e1e;
+      --line: #303030;
+      --text: #f5f5f5;
+      --muted: #929292;
+      --accent: #d8ff62;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    button, input { font: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    a { color: inherit; text-decoration: none; }
+    [hidden] { display: none !important; }
+    .mw-header {
+      min-height: 78px;
+      padding: 20px 6%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .mw-brand {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -1.5px;
+    }
+    .mw-brand span {
+      font-size: 10px;
+      vertical-align: top;
+      margin-left: 2px;
+    }
+    .mw-nav {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      font-size: 10px;
+      letter-spacing: 1.4px;
+    }
+    .mw-nav a:hover { color: var(--accent); }
+    .mw-wrap {
+      width: min(1120px, calc(100% - 40px));
+      margin: 55px auto 80px;
+    }
+    .mw-eyebrow {
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+    .mw-hero {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(28px, 6vw, 65px);
+      background: var(--panel);
+      border: 1px solid var(--line);
+    }
+    .mw-hero::after {
+      content: "MONO";
+      position: absolute;
+      right: -15px;
+      bottom: -45px;
+      color: rgba(255,255,255,.025);
+      font-size: clamp(100px, 22vw, 260px);
+      font-weight: 900;
+      letter-spacing: -15px;
+      pointer-events: none;
+    }
+    .mw-hero h1 {
+      position: relative;
+      z-index: 1;
+      margin: 22px 0 15px;
+      max-width: 750px;
+      font-size: clamp(38px, 7vw, 78px);
+      line-height: .98;
+      letter-spacing: -4px;
+      overflow-wrap: anywhere;
+    }
+    .mw-hero p {
+      position: relative;
+      z-index: 1;
+      color: #aaa;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+    .mw-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 14px 20px;
+      border: 1px solid var(--text);
+      background: var(--text);
+      color: #111;
+      font-size: 10px;
+      font-weight: bold;
+      letter-spacing: 1.3px;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+    .mw-button:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .mw-button:disabled {
+      opacity: .5;
+      cursor: wait;
+    }
+    .mw-button-outline {
+      background: transparent;
+      color: var(--text);
+      border-color: #454545;
+    }
+    .mw-button-outline:hover { color: #111; }
+    .mw-actions {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+    .mw-shortcuts {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 18px 0 45px;
+    }
+    .mw-shortcut {
+      display: block;
+      padding: 23px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      transition: border-color .2s;
+    }
+    .mw-shortcut:hover { border-color: #777; }
+    .mw-shortcut strong {
+      display: block;
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+    .mw-shortcut span {
+      display: block;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .mw-section { margin-top: 42px; }
+    .mw-section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 18px;
+    }
+    .mw-section-heading h2 {
+      margin: 0;
+      font-size: clamp(20px, 4vw, 29px);
+      letter-spacing: -1px;
+    }
+    .mw-panel {
+      padding: 25px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+    }
+    .mw-muted {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+    .mw-order {
+      padding: 23px 0;
+      border-top: 1px solid var(--line);
+    }
+    .mw-order:first-child {
+      padding-top: 0;
+      border-top: 0;
+    }
+    .mw-order:last-child { padding-bottom: 0; }
+    .mw-order-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .mw-order h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+    .mw-order p {
+      margin: 6px 0;
+      color: #aaa;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+    .mw-status {
+      display: inline-block;
+      padding: 7px 9px;
+      border: 1px solid #424242;
+      font-size: 9px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .mw-cart-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 15px 0;
+      border-top: 1px solid var(--line);
+      font-size: 12px;
+    }
+    .mw-cart-item:first-child { border-top: 0; }
+    .mw-cart-item p {
+      margin: 6px 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .mw-profile-row {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      gap: 20px;
+      padding: 17px 0;
+      border-top: 1px solid var(--line);
+      font-size: 12px;
+    }
+    .mw-profile-row:first-child { border-top: 0; }
+    .mw-profile-label {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 10px;
+    }
+    .mw-account-footer {
+      padding: 30px 20px;
+      border-top: 1px solid var(--line);
+      text-align: center;
+      color: #777;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      line-height: 2;
+    }
+    .mw-account-footer .mw-brand {
+      display: inline-block;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    /* Authentication */
+    .mw-auth-wrap {
+      width: min(470px, calc(100% - 32px));
+      margin: 65px auto 90px;
+    }
+    .mw-auth {
+      padding: clamp(23px, 6vw, 40px);
+      background: var(--panel);
+      border: 1px solid var(--line);
+    }
+    .mw-auth h1 {
+      margin: 20px 0 12px;
+      font-size: clamp(32px, 7vw, 46px);
+      line-height: 1;
+      letter-spacing: -2px;
+    }
+    .mw-auth-intro {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.8;
+      margin-bottom: 28px;
+    }
+    .mw-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 25px;
+    }
+    .mw-tab {
+      padding: 14px 8px;
+      background: transparent;
+      color: #aaa;
+      border: 1px solid #393939;
+      cursor: pointer;
+      font-size: 10px;
+      letter-spacing: 1px;
+    }
+    .mw-tab.active {
+      background: var(--text);
+      color: #111;
+      border-color: var(--text);
+    }
+    .mw-form {
+      display: grid;
+      gap: 17px;
+    }
+    .mw-form label {
+      display: grid;
+      gap: 9px;
+      font-size: 10px;
+      letter-spacing: 1.3px;
+    }
+    .mw-form input {
+      width: 100%;
+      padding: 15px;
+      background: #101010;
+      border: 1px solid #393939;
+      color: #fff;
+      border-radius: 0;
+      font-size: 14px;
+    }
+    .mw-form input:focus {
+      outline: 1px solid #fff;
+      border-color: #fff;
+    }
+    .mw-form .mw-button { width: 100%; }
+    .mw-message {
+      min-height: 18px;
+      font-size: 12px;
+      line-height: 1.7;
+      overflow-wrap: anywhere;
+    }
+    .mw-message.error { color: #ff9696; }
+    .mw-message.success { color: #a5e6b1; }
+    @media (max-width: 650px) {
+      .mw-header { padding: 20px; }
+      .mw-brand { font-size: 21px; }
+      .mw-nav { gap: 14px; font-size: 9px; }
+      .mw-wrap { margin-top: 25px; }
+      .mw-shortcuts { grid-template-columns: 1fr; }
+      .mw-shortcut { padding: 19px; }
+      .mw-hero h1 { letter-spacing: -2px; }
+      .mw-panel { padding: 19px; }
+      .mw-profile-row { grid-template-columns: 1fr; gap: 8px; }
+      .mw-auth-wrap { margin-top: 30px; }
+    }
+  </style>
+</head>
+<body>
+<header class="mw-header">
+  <a class="mw-brand" href="/">MONOWEAR<span>®</span></a>
+  <nav class="mw-nav" aria-label="Main navigation">
+    <a href="/#shop">SHOP</a>
+    <a href="/account.html" aria-current="page">MY ACCOUNT</a>
+    <a href="/#shop" id="headerBagLink">BAG</a>
+  </nav>
+</header>
+<!-- SIGN IN / REGISTRATION -->
+<main id="authView" class="mw-auth-wrap" hidden>
+  <section class="mw-auth">
+    <p class="mw-eyebrow">THE MONOWEAR COMMUNITY</p>
+    <h1 id="authTitle">Your space.</h1>
+    <p class="mw-auth-intro" id="authIntro">
+      Sign in to manage your account, shopping bag and orders.
+    </p>
+    <div class="mw-tabs">
+      <button class="mw-tab" id="signupTab" type="button">
+        CREATE ACCOUNT
+      </button>
+      <button class="mw-tab active" id="loginTab" type="button">
+        SIGN IN
+      </button>
+    </div>
+    <form class="mw-form" id="signupForm" hidden>
+      <label>
+        FULL NAME
+        <input
+          name="name"
+          type="text"
+          autocomplete="name"
+          minlength="2"
+          maxlength="100"
+          required
+        >
+      </label>
+      <label>
+        EMAIL ADDRESS
+        <input
+          name="email"
+          type="email"
+          autocomplete="email"
+          maxlength="254"
+          required
+        >
+      </label>
+      <label>
+        PASSWORD — MINIMUM 8 CHARACTERS
+        <input
+          name="password"
+          type="password"
+          autocomplete="new-password"
+          minlength="8"
+          maxlength="128"
+          required
+        >
+      </label>
+      <button class="mw-button" type="submit">
+        CREATE MY ACCOUNT ↗
+      </button>
+      <p class="mw-message" id="signupMessage" aria-live="polite"></p>
+    </form>
+    <form class="mw-form" id="loginForm">
+      <label>
+        EMAIL ADDRESS
+        <input
+          name="email"
+          type="email"
+          autocomplete="email"
+          maxlength="254"
+          required
+        >
+      </label>
+      <label>
+        PASSWORD
+        <input
+          name="password"
+          type="password"
+          autocomplete="current-password"
+          required
+        >
+      </label>
+      <button class="mw-button" type="submit">
+        SIGN IN ↗
+      </button>
+      <p class="mw-message" id="loginMessage" aria-live="polite"></p>
+    </form>
+    <p class="mw-muted">
+      Your space. Your wardrobe. Your MONOWEAR.
+    </p>
+  </section>
+</main>
+<!-- CUSTOMER DASHBOARD -->
+<main id="dashboardView" class="mw-wrap" hidden>
+  <section class="mw-hero">
+    <p class="mw-eyebrow">YOUR MONOWEAR SPACE</p>
+    <h1 id="welcomeHeading">WELCOME BACK.</h1>
+    <p>
+      Your space. Your wardrobe. Your MONOWEAR.
+      <br>
+      Everything you need, all in one place.
+    </p>
+    <div class="mw-actions">
+      <a class="mw-button" href="/#shop">
+        SHOP THE COLLECTION ↗
+      </a>
+      <button
+        class="mw-button mw-button-outline"
+        id="signoutButton"
+        type="button"
+      >
+        SIGN OUT
+      </button>
+    </div>
+  </section>
+  <nav class="mw-shortcuts" aria-label="Account sections">
+    <a class="mw-shortcut" href="#orders">
+      <strong>01 / MY ORDERS ↗</strong>
+      <span>View your purchases and order statuses.</span>
+    </a>
+    <a class="mw-shortcut" href="#bag">
+      <strong>02 / MY BAG ↗</strong>
+      <span>Return to the pieces you've selected.</span>
+    </a>
+    <a class="mw-shortcut" href="#profile">
+      <strong>03 / MY PROFILE ↗</strong>
+      <span>View your customer account information.</span>
+    </a>
+  </nav>
+  <section class="mw-section" id="orders">
+    <div class="mw-section-heading">
+      <div>
+        <p class="mw-eyebrow">YOUR PURCHASES</p>
+        <h2>RECENT ORDERS</h2>
+      </div>
+      <button
+        class="mw-button mw-button-outline"
+        id="refreshOrders"
+        type="button"
+      >
+        REFRESH ↻
+      </button>
+    </div>
+    <div class="mw-panel">
+      <div id="ordersContent" class="mw-muted">
+        Loading your orders…
+      </div>
+      <p class="mw-message" id="ordersMessage" aria-live="polite"></p>
+    </div>
+  </section>
+  <section class="mw-section" id="bag">
+    <div class="mw-section-heading">
+      <div>
+        <p class="mw-eyebrow">YOUR SELECTION</p>
+        <h2>MY BAG</h2>
+      </div>
+      <a class="mw-button mw-button-outline" href="/#shop">
+        CONTINUE SHOPPING ↗
+      </a>
+    </div>
+    <div class="mw-panel">
+      <div id="bagContent" class="mw-muted">
+        Checking your shopping bag…
+      </div>
+      <p class="mw-muted">
+        Your bag is stored in this browser. Items added on another
+        device or browser may not appear here.
+      </p>
+    </div>
+  </section>
+  <section class="mw-section" id="profile">
+    <div class="mw-section-heading">
+      <div>
+        <p class="mw-eyebrow">YOUR DETAILS</p>
+        <h2>MY PROFILE</h2>
+      </div>
+    </div>
+    <div class="mw-panel">
+      <div class="mw-profile-row">
+        <span class="mw-profile-label">Full name</span>
+        <strong id="profileName">—</strong>
+      </div>
+      <div class="mw-profile-row">
+        <span class="mw-profile-label">Email address</span>
+        <span id="profileEmail">—</span>
+      </div>
+      <p class="mw-muted">
+        Need to update your details? Contact MONOWEAR support.
+      </p>
+      <a
+        class="mw-button mw-button-outline"
+        href="mailto:monowear44@gmail.com"
+      >
+        CONTACT SUPPORT ↗
+      </a>
+    </div>
+  </section>
+  <section class="mw-section">
+    <div class="mw-panel">
+      <p class="mw-eyebrow">THE NEXT CHAPTER</p>
+      <h2>THE COLLECTION AWAITS.</h2>
+      <p class="mw-muted">
+        Explore the latest MONOWEAR pieces and find what speaks to you.
+      </p>
+      <a class="mw-button" href="/#shop">
+        RETURN TO THE STORE ↗
+      </a>
+    </div>
+  </section>
+</main>
+<footer class="mw-account-footer">
+  <a class="mw-brand" href="/">MONOWEAR<span>®</span></a>
+  <br>
+  LIVE THE NAME. WEAR THE MEANING.
+  <br>
+  © <span id="footerYear"></span> MONOWEAR
+</footer>
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const money = (amount) =>
+    new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      maximumFractionDigits: 0
+    }).format(Number(amount) || 0);
+  const escapeHTML = (value) =>
+    String(value ?? "").replace(/[&<>"']/g, (character) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[character]);
+  $("footerYear").textContent = new Date().getFullYear();
+  /* ======================================================
+     MESSAGE HELPERS
+  ====================================================== */
+  function message(id, text, type = "") {
+    const element = $(id);
+    if (!element) return;
+    element.textContent = text;
+    element.className = "mw-message" + (type ? " " + type : "");
+  }
+  /* ======================================================
+     API HELPER
+  ====================================================== */
+  async function api(url, options = {}) {
+    const response = await fetch(url, {
+      ...options,
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+        ...(options.body
+          ? { "Content-Type": "application/json" }
+          : {}),
+        ...(options.headers || {})
+      }
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(
+        result.error ||
+        result.message ||
+        `Request failed (${response.status}). Please try again.`
+      );
+    }
+    return result;
+  }
+  /* ======================================================
+     LOGIN / REGISTRATION TABS
+  ====================================================== */
+  function setAuthMode(mode) {
+    const signup = mode === "signup";
+    $("signupForm").hidden = !signup;
+    $("loginForm").hidden = signup;
+    $("signupTab").classList.toggle("active", signup);
+    $("loginTab").classList.toggle("active", !signup);
+    $("authTitle").textContent = signup
+      ? "Create your account."
+      : "Welcome back.";
+    $("authIntro").textContent = signup
+      ? "Join the MONOWEAR community and create your personal space."
+      : "Sign in to access your MONOWEAR account and orders.";
+    message("signupMessage", "");
+    message("loginMessage", "");
+  }
+  $("signupTab").addEventListener("click", () => {
+    setAuthMode("signup");
+  });
+  $("loginTab").addEventListener("click", () => {
+    setAuthMode("login");
+  });
+  /* ======================================================
+     CUSTOMER ORDERS
+     Server route:
+     GET /api/customer/orders
+  ====================================================== */
+  async function loadOrders() {
+    const content = $("ordersContent");
+    content.textContent = "Loading your orders…";
+    message("ordersMessage", "");
+    try {
+      const orders = await api("/api/customer/orders");
+      if (!Array.isArray(orders) || orders.length === 0) {
+        content.innerHTML = `
+          <p>You haven't placed any orders yet.</p>
+          <a class="mw-button" href="/#shop">
+            DISCOVER THE COLLECTION ↗
+          </a>
+        `;
+        return;
+      }
+      content.innerHTML = orders.map((order) => {
+        const items = Array.isArray(order.items) ? order.items : [];
+        const itemDescription = items.length
+          ? items.map((item) => `
+              ${escapeHTML(item.name || "MONOWEAR product")}
+              ${item.size
+                ? ` — Size: ${escapeHTML(item.size)}`
+                : ""}
+              × ${escapeHTML(item.quantity ?? item.qty ?? 1)}
+            `).join("<br>")
+          : "Order items";
+        const status = order.order_status || order.status || "pending";
+        return `
+          <article class="mw-order">
+            <div class="mw-order-top">
+              <div>
+                <h3>${escapeHTML(order.reference || "MONOWEAR ORDER")}</h3>
+                <p>${escapeHTML(order.created_at || "")}</p>
+              </div>
+              <strong>${money(order.total)}</strong>
+            </div>
+            <p>${itemDescription}</p>
+            <p>
+              Payment:
+              ${escapeHTML(order.payment_status || "pending")}
+            </p>
+            <p>
+              Order status:
+              ${escapeHTML(status)}
+            </p>
+            <span class="mw-status">
+              ${escapeHTML(status)}
+            </span>
+          </article>
+        `;
+      }).join("");
+    } catch (error) {
+      content.textContent = "Your orders could not be loaded right now.";
+      message("ordersMessage", error.message, "error");
+    }
+  }
+  /* ======================================================
+     SHOPPING BAG
+     The current storefront saves its cart using:
+     localStorage key: monowear-cart
+  ====================================================== */
+  function readLocalBag() {
+    try {
+      const raw = localStorage.getItem("monowear-cart");
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+      if (parsed && Array.isArray(parsed.items)) {
+        return parsed.items;
+      }
+      return [];
+    } catch (error) {
+      console.warn("MONOWEAR bag could not be read:", error);
+      return [];
+    }
+  }
+  function renderBag() {
+    const content = $("bagContent");
+    const bag = readLocalBag();
+    if (!bag.length) {
+      content.innerHTML = `
+        <p>Your bag is currently empty.</p>
+        <a class="mw-button" href="/#shop">
+          FIND YOUR NEXT PIECE ↗
+        </a>
+      `;
+      return;
+    }
+    const total = bag.reduce((sum, item) => {
+      const quantity = Number(item.quantity ?? item.qty ?? 1);
+      const price = Number(item.price || 0);
+      return sum + price * quantity;
+    }, 0);
+    content.innerHTML = bag.map((item) => {
+      const name =
+        item.name ||
+        item.title ||
+        item.product_name ||
+        "MONOWEAR piece";
+      const quantity = Number(item.quantity ?? item.qty ?? 1);
+      const size = item.size || "One size";
+      const price = Number(item.price || 0);
+      return `
+        <article class="mw-cart-item">
+          <div>
+            <strong>${escapeHTML(name)}</strong>
+            <p>
+              Size: ${escapeHTML(size)}
+              · Quantity: ${escapeHTML(quantity)}
+            </p>
+          </div>
+          <strong>${money(price * quantity)}</strong>
+        </article>
+      `;
+    }).join("") + `
+      <div class="mw-cart-item">
+        <strong>SUBTOTAL</strong>
+        <strong>${money(total)}</strong>
+      </div>
+    `;
+  }
+  /* ======================================================
+     LOAD CUSTOMER ACCOUNT
+     Server route:
+     GET /api/customer/me
+     Successful response:
+     { authenticated: true, customer: {...} }
+  ====================================================== */
+  async function loadAccount() {
+    $("authView").hidden = true;
+    $("dashboardView").hidden = true;
+    try {
+      const result = await api("/api/customer/me");
+      if (!result.authenticated || !result.customer) {
+        $("authView").hidden = false;
+        setAuthMode("login");
+        return false;
+      }
+      const customer = result.customer;
+      $("dashboardView").hidden = false;
+      $("welcomeHeading").textContent =
+        "WELCOME BACK, " +
+        (customer.name || "MONOWEAR CUSTOMER") +
+        ".";
+      $("profileName").textContent = customer.name || "—";
+      $("profileEmail").textContent = customer.email || "—";
+      renderBag();
+      await loadOrders();
+      return true;
+    } catch (error) {
+      $("dashboardView").hidden = true;
+      $("authView").hidden = false;
+      setAuthMode("login");
+      // A normal signed-out visitor should simply see the login form.
+      if (!error.message.includes("Please log in")) {
+        message("loginMessage", error.message, "error");
+      }
+      return false;
+    }
+  }
+  /* ======================================================
+     LOGIN AND REGISTRATION
+     POST /api/customer/register
+     POST /api/customer/login
+  ====================================================== */
+  async function submitAccountForm(
+    event,
+    endpoint,
+    formId,
+    messageId
+  ) {
+    event.preventDefault();
+    const form = $(formId);
+    const button = form.querySelector('button[type="submit"]');
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = "PLEASE WAIT…";
+    message(messageId, "");
+    try {
+      const payload = Object.fromEntries(
+        new FormData(form).entries()
+      );
+      const result = await api(endpoint, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      if (result.success !== true || !result.customer) {
+        throw new Error(
+          result.error || "Unable to complete your request."
+        );
+      }
+      form.reset();
+      const authenticated = await loadAccount();
+      if (!authenticated) {
+        message(
+          messageId,
+          "Your request succeeded, but your session could not be confirmed. Please sign in again.",
+          "error"
+        );
+      }
+    } catch (error) {
+      message(messageId, error.message, "error");
+    } finally {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  }
+  $("signupForm").addEventListener("submit", (event) => {
+    submitAccountForm(
+      event,
+      "/api/customer/register",
+      "signupForm",
+      "signupMessage"
+    );
+  });
+  $("loginForm").addEventListener("submit", (event) => {
+    submitAccountForm(
+      event,
+      "/api/customer/login",
+      "loginForm",
+      "loginMessage"
+    );
+  });
+  /* ======================================================
+     CUSTOMER LOGOUT
+     POST /api/customer/logout
+  ====================================================== */
+  $("signoutButton").addEventListener("click", async () => {
+    const button = $("signoutButton");
+    button.disabled = true;
+    try {
+      await api("/api/customer/logout", {
+        method: "POST",
+        body: JSON.stringify({})
+      });
+      $("dashboardView").hidden = true;
+      $("authView").hidden = false;
+      setAuthMode("login");
+      message(
+        "loginMessage",
+        "You've signed out successfully.",
+        "success"
+      );
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      button.disabled = false;
+    }
+  });
+  /* ======================================================
+     REFRESH ORDERS AND BAG
+  ====================================================== */
+  $("refreshOrders").addEventListener("click", loadOrders);
+  window.addEventListener("pageshow", () => {
+    if (!$("dashboardView").hidden) {
+      renderBag();
+    }
+  });
+  window.addEventListener("storage", (event) => {
+    if (event.key === "monowear-cart" &&
+        !$("dashboardView").hidden) {
+      renderBag();
+    }
+  });
+  /* ======================================================
+     START
+  ====================================================== */
+  loadAccount();
+})();
+</script>
+</body>
+</html>
