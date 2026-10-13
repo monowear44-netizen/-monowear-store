@@ -67,3 +67,38 @@ html[data-theme] .designer-preview { background:var(--preview-bg)!important; col
 html[data-theme] .designer-preview i { background:var(--accent)!important; color:#111!important; }
 html[data-theme] .announcement, html[data-theme] .ticker { color:#111!important; }
 html[data-theme] .product-badge { background:var(--accent)!important; color:#111!important; }
+
+/* Ensure every interactive area follows the selected palette, including Studio and size choices. */
+html[data-theme] .sidebar { background:var(--theme-sidebar)!important; color:var(--ink)!important; }
+html[data-theme] .sidebar .logo, html[data-theme] .sidebar a { color:var(--ink); }
+html[data-theme] .sidebar .side-label { color:var(--muted); }
+html[data-theme] .main, html[data-theme] .topbar, html[data-theme] .toolbar,
+html[data-theme] .editor, html[data-theme] .editor-head { color:var(--ink)!important; border-color:var(--line)!important; }
+html[data-theme] .panel, html[data-theme] .product-row, html[data-theme] .order-card,
+html[data-theme] .stat, html[data-theme] .login-panel, html[data-theme] .note,
+html[data-theme] .monitoring-metric, html[data-theme] .monitoring-attention,
+html[data-theme] .payout-table, html[data-theme] .settings-form { background:var(--panel)!important; color:var(--ink)!important; border-color:var(--line)!important; }
+html[data-theme] .primary, html[data-theme] .standalone-add-button,
+html[data-theme] .add-button, html[data-theme] .mw-button-primary,
+html[data-theme] .form-actions .primary, html[data-theme] .login-panel .primary {
+  background:var(--accent)!important; color:#111!important; border-color:var(--accent)!important;
+}
+html[data-theme] .secondary, html[data-theme] .quiet, html[data-theme] .small-button,
+html[data-theme] .button-outline { background:transparent!important; color:var(--ink)!important; border-color:var(--line)!important; }
+html[data-theme] .form-grid input:not([type=checkbox]),
+html[data-theme] .form-grid textarea, html[data-theme] .login-panel input,
+html[data-theme] .size-select, html[data-theme] .standalone-size-select,
+html[data-theme] input, html[data-theme] textarea, html[data-theme] select {
+  background:var(--panel)!important; color:var(--ink)!important; border-color:var(--line)!important;
+}
+html[data-theme] .note, html[data-theme] .monitoring-ok { color:var(--ink)!important; }
+html[data-theme] .product-row p, html[data-theme] .order-card p,
+html[data-theme] .stat span, html[data-theme] .detail,
+html[data-theme] .intro, html[data-theme] .support { color:var(--muted)!important; }
+html[data-theme] .size-select { min-height:44px; padding:10px 12px; }
+html[data-theme] .size-select option, html[data-theme] select option { background:var(--panel); color:var(--ink); }
+html[data-theme] form, html[data-theme] .result { background:var(--panel)!important; color:var(--ink)!important; border-color:var(--line)!important; }
+html[data-theme] button:not(.cart-toggle) { border-color:var(--accent); }
+html[data-theme] .event:before { border-color:var(--ink); }
+html[data-theme] .designer-preview { background:var(--bg)!important; color:var(--ink)!important; }
+html[data-theme] .designer-preview .primary, html[data-theme] .designer-preview button { background:var(--accent)!important; color:#111!important; }
