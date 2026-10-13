@@ -222,105 +222,105 @@
   /* =========================================================
      PRODUCT DISPLAY
   ========================================================= */
+  function renderProductCards(items) {
+    return items.map((product) => {
+      const id = Number(product.id);
+      const stock = Number(product.stock ?? 0);
+      const sizes = Array.isArray(product.sizes) ? product.sizes : [];
+      const soldOut = stock <= 0;
+      const sizeOptions = sizes.length
+        ? sizes.map((size) => `<option value="${escapeHTML(size)}">${escapeHTML(size)}</option>`).join("")
+        : '<option value="One size">One size</option>';
+      return `
+        <article class="product-card" data-product-id="${id}">
+          <a class="product-image product-page-link" href="/product.html?slug=${encodeURIComponent(product.slug || "")}&id=${id}" aria-label="View product details">
+            ${productImage(product)}
+            ${product.featured ? '<span class="product-badge">FEATURED</span>' : ""}
+            ${soldOut ? '<span class="sold-badge">SOLD OUT</span>' : ""}
+          </a>
+          <div class="product-meta">
+            <h3><a class="product-name-link" href="/product.html?slug=${encodeURIComponent(product.slug || "")}&id=${id}">${escapeHTML(product.name || "MONOWEAR Piece")}</a></h3>
+            <span class="price">${money(product.price)}</span>
+          </div>
+          <div class="product-category">
+            ${escapeHTML(product.category || "MONOWEAR")}
+            ${stock > 0 ? ` · ${stock} available` : ""}
+          </div>
+          <div class="product-actions">
+            <select class="size-select" id="size-${id}" aria-label="Choose size for ${escapeHTML(product.name)}" ${soldOut ? "disabled" : ""}>
+              ${sizeOptions}
+            </select>
+            <button class="add-button" type="button" ${soldOut ? "disabled" : ""} onclick="addToCart(${id})">
+              ${soldOut ? "SOLD OUT" : "ADD TO BAG +"}
+            </button>
+          </div>
+        </article>
+      `;
+    }).join("");
+  }
+
+  /* =========================================================
+     PRODUCT DISPLAY
+     Featured products lead; remaining products are grouped
+     into numbered sections by category.
+  ========================================================= */
   function renderProducts() {
-    const grid = $("productGrid");
-    if (!grid) {
-      console.error(
-        "MONOWEAR: Could not find #productGrid in the storefront HTML."
-      );
+    const featuredGrid = $("featuredProductGrid");
+    const sections = $("productSections");
+    if (!featuredGrid || !sections) {
+      console.error("MONOWEAR: Product section containers are missing from storefront HTML.");
       return;
     }
     const searchInput = $("searchProducts");
     const categoryInput = $("categoryFilter");
-    const query = searchInput
-      ? searchInput.value.trim().toLowerCase()
-      : "";
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
     const category = categoryInput ? categoryInput.value : "";
     const visibleProducts = products.filter((product) => {
-      const matchesCategory =
-        !category ||
-        String(product.category || "").trim() === category;
-      const searchableText = [
-        product.name,
-        product.category,
-        product.description
-      ]
-        .join(" ")
-        .toLowerCase();
+      const matchesCategory = !category || String(product.category || "").trim() === category;
+      const searchableText = [product.name, product.category, product.description].join(" ").toLowerCase();
       return matchesCategory && searchableText.includes(query);
     });
+
     if (!visibleProducts.length) {
-      grid.innerHTML = products.length
+      const empty = products.length
         ? '<p class="empty-state">No pieces match your search.</p>'
-        : `
-          <div class="empty-state">
-            <p>THE COLLECTION IS BEING UPDATED.</p>
-            <p>Check back soon for the latest MONOWEAR pieces.</p>
-          </div>
-        `;
+        : '<div class="empty-state"><p>THE COLLECTION IS BEING UPDATED.</p><p>Check back soon for the latest MONOWEAR pieces.</p></div>';
+      featuredGrid.innerHTML = "";
+      sections.innerHTML = empty;
+      const featuredSection = $("featuredProductsSection");
+      if (featuredSection) featuredSection.hidden = true;
       return;
     }
-    grid.innerHTML = visibleProducts
-      .map((product) => {
-        const id = Number(product.id);
-        const stock = Number(product.stock ?? 0);
-        const sizes = Array.isArray(product.sizes)
-          ? product.sizes
-          : [];
-        const soldOut = stock <= 0;
-        const sizeOptions = sizes.length
-          ? sizes
-              .map(
-                (size) =>
-                  `<option value="${escapeHTML(size)}">${escapeHTML(size)}</option>`
-              )
-              .join("")
-          : '<option value="One size">One size</option>';
-        return `
-          <article class="product-card" data-product-id="${id}">
-            <a class="product-image product-page-link" href="/product.html?slug=${encodeURIComponent(product.slug || "")}&id=${id}" aria-label="View product details">
-              ${productImage(product)}
-              ${
-                product.featured
-                  ? '<span class="product-badge">FEATURED</span>'
-                  : ""
-              }
-              ${
-                soldOut
-                  ? '<span class="sold-badge">SOLD OUT</span>'
-                  : ""
-              }
-            </a>
-            <div class="product-meta">
-              <h3><a class="product-name-link" href="/product.html?slug=${encodeURIComponent(product.slug || "")}&id=${id}">${escapeHTML(product.name || "MONOWEAR Piece")}</a></h3>
-              <span class="price">${money(product.price)}</span>
-            </div>
-            <div class="product-category">
-              ${escapeHTML(product.category || "MONOWEAR")}
-              ${stock > 0 ? ` · ${stock} available` : ""}
-            </div>
-<div class="product-actions">
-              <select
-                class="size-select"
-                id="size-${id}"
-                aria-label="Choose size for ${escapeHTML(product.name)}"
-                ${soldOut ? "disabled" : ""}
-              >
-                ${sizeOptions}
-              </select>
-              <button
-                class="add-button"
-                type="button"
-                ${soldOut ? "disabled" : ""}
-                onclick="addToCart(${id})"
-              >
-                ${soldOut ? "SOLD OUT" : "ADD TO BAG +"}
-              </button>
-            </div>
-          </article>
-        `;
-      })
-      .join("");
+
+    const featured = visibleProducts.filter((product) => Boolean(Number(product.featured)));
+    const otherProducts = visibleProducts.filter((product) => !Boolean(Number(product.featured)));
+    const featuredSection = $("featuredProductsSection");
+    if (featuredSection) featuredSection.hidden = featured.length === 0;
+    featuredGrid.innerHTML = featured.length
+      ? renderProductCards(featured)
+      : "";
+
+    if (!otherProducts.length) {
+      sections.innerHTML = "";
+      return;
+    }
+
+    const groups = new Map();
+    otherProducts.forEach((product) => {
+      const label = String(product.category || "").trim() || "More pieces";
+      if (!groups.has(label)) groups.set(label, []);
+      groups.get(label).push(product);
+    });
+
+    sections.innerHTML = Array.from(groups.entries()).map(([label, items], index) => `
+      <section class="product-category-section" aria-labelledby="product-section-title-${index + 1}">
+        <div class="product-subheading product-category-heading">
+          <p class="eyebrow">${String(index + 1).padStart(2, "0")} / MONOWEAR SELECTION</p>
+          <h3 id="product-section-title-${index + 1}">${escapeHTML(label)} <i>pieces.</i></h3>
+        </div>
+        <div class="product-grid">${renderProductCards(items)}</div>
+      </section>
+    `).join("");
   }
   /* =========================================================
      PRODUCT DETAIL NAVIGATION
