@@ -757,15 +757,23 @@
             <h2>Shipping settings</h2>
           </div>
         </div>
-        <p class="muted">Delivery is priced from live Terminal Africa courier quotes. Choose the dispatch point you are operating from today; new orders save this origin. Before enabling checkout, add your private TERMINAL_AFRICA_SECRET_KEY in Render → Environment. The API key is kept server-side and must never be added to storefront code or GitHub.</p>
+        <p class="muted">Set delivery fees using the GIG Logistics calculator, then save. Customers see the fee and total before Paystack. These are configured estimates, not live courier quotes; check the final amount with GIG when booking. Switch the active dispatch point when you change where orders ship from.</p>
         <div class="form-grid">
           <label class="span2">
             Active dispatch location
             <select name="active_dispatch_location">
               <option value="Ikorodu, Lagos">Ikorodu, Lagos State</option>
-              <option value="Ijebu, Ogun">Ijebu, Ogun State</option>
+              <option value="Ijebu, Ogun">Ijebu-Ode, Ogun State</option>
             </select>
           </label>
+          <div class="span2"><h3>Dispatch from Ikorodu, Lagos</h3><p class="muted">Enter the fee in naira for each destination zone.</p></div>
+          <label>Lagos State delivery fee (₦)<input type="number" min="1" step="1" name="shipping_ikorodu_lagos" placeholder="Enter verified fee"></label>
+          <label>Ogun State delivery fee (₦)<input type="number" min="1" step="1" name="shipping_ikorodu_ogun" placeholder="Enter verified fee"></label>
+          <label class="span2">Other states delivery fee (₦)<input type="number" min="1" step="1" name="shipping_ikorodu_nationwide" placeholder="Enter verified fee"></label>
+          <div class="span2"><h3>Dispatch from Ijebu-Ode, Ogun</h3><p class="muted">Keep these ready for when you switch your active dispatch location.</p></div>
+          <label>Lagos State delivery fee (₦)<input type="number" min="1" step="1" name="shipping_ijebu_lagos" placeholder="Enter verified fee"></label>
+          <label>Ogun State delivery fee (₦)<input type="number" min="1" step="1" name="shipping_ijebu_ogun" placeholder="Enter verified fee"></label>
+          <label class="span2">Other states delivery fee (₦)<input type="number" min="1" step="1" name="shipping_ijebu_nationwide" placeholder="Enter verified fee"></label>
           <label class="span2">
             Shipping policy
             <textarea
