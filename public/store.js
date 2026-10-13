@@ -284,12 +284,7 @@
               ${escapeHTML(product.category || "MONOWEAR")}
               ${stock > 0 ? ` · ${stock} available` : ""}
             </div>
-            ${
-              product.description
-                ? `<p class="product-description">${escapeHTML(product.description)}</p>`
-                : ""
-            }
-            <div class="product-actions">
+<div class="product-actions">
               <select
                 class="size-select"
                 id="size-${id}"
@@ -649,13 +644,12 @@ async function refreshShippingQuote() {
       headers: { "Content-Type": "application/json", "Accept": "application/json" },
       credentials: "same-origin",
       body: JSON.stringify({
-        city,
-        state,
-        items: cart.map((item) => ({
-          product_id: Number(item.id),
-          quantity: Number(item.quantity),
-          size: String(item.size || "")
-        }))
+        customer_name: String(checkoutForm.querySelector('[name="customer_name"]')?.value || "").trim(),
+        email: String(checkoutForm.querySelector('[name="email"]')?.value || "").trim(),
+        phone: String(checkoutForm.querySelector('[name="phone"]')?.value || "").trim(),
+        address: String(checkoutForm.querySelector('[name="address"]')?.value || "").trim(),
+        city, state,
+        items: cart.map((item) => ({ product_id: Number(item.id), quantity: Number(item.quantity), size: String(item.size || "") }))
       })
     });
     const result = await response.json();
@@ -683,10 +677,10 @@ async function refreshShippingQuote() {
 if (checkoutForm) {
   const cityField = checkoutForm.querySelector('[name="city"]');
   const stateField = checkoutForm.querySelector('[name="state"]');
-  if (cityField) {
-    cityField.addEventListener("change", refreshShippingQuote);
-  }
-  if (stateField) stateField.addEventListener("change", refreshShippingQuote);
+  ["customer_name", "email", "phone", "address", "city", "state"].forEach((fieldName) => {
+    const field = checkoutForm.querySelector('[name="' + fieldName + '"]');
+    if (field) field.addEventListener("change", refreshShippingQuote);
+  });
   const checkoutDialogForQuote = $("checkoutDialog");
   if (checkoutDialogForQuote) {
     checkoutDialogForQuote.addEventListener("toggle", () => {
