@@ -101,6 +101,12 @@
     document.body.style.fontFamily = fonts[settings.design_font] || fonts.Manrope;
     const radius = { square: "0px", soft: "8px", round: "999px" };
     root.style.setProperty("--control-radius", radius[settings.design_radius] || radius.square);
+    const columns = { "2": "2", "3": "3", "4": "4" };
+    root.style.setProperty("--product-columns", columns[String(settings.design_product_columns)] || "3");
+    const ratios = { portrait: "4 / 5", square: "1 / 1", landscape: "5 / 4" };
+    root.style.setProperty("--product-image-ratio", ratios[settings.design_product_ratio] || ratios.portrait);
+    const heroHeights = { compact: "480px", standard: "650px", tall: "820px" };
+    root.style.setProperty("--hero-min-height", heroHeights[settings.design_hero_height] || heroHeights.standard);
     const hero = document.querySelector(".hero");
     if (hero) {
       const alignment = ["left", "center", "right"].includes(settings.design_hero_alignment) ? settings.design_hero_alignment : "left";
