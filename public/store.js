@@ -260,10 +260,31 @@
   }
 
   /* =========================================================
-     PRODUCT DISPLAY
-     Featured products lead; remaining products are grouped
-     into numbered sections by category.
+     PRODUCT DISPLAY + REAL PAGINATION
+     Featured pieces stay first. Other products are paged below.
   ========================================================= */
+  let productPage = 1;
+  const PRODUCTS_PER_PAGE = 8;
+
+  function renderPagination(totalPages) {
+    const pagination = $("productPagination");
+    if (!pagination) return;
+    if (totalPages <= 1) {
+      pagination.innerHTML = "";
+      pagination.hidden = true;
+      return;
+    }
+    pagination.hidden = false;
+    const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
+    pagination.innerHTML = `
+      <button class="pagination-arrow" type="button" data-page="${Math.max(1, productPage - 1)}" aria-label="Previous page" ${productPage === 1 ? "disabled" : ""}>&lt;</button>
+      <div class="pagination-numbers" aria-label="Product pages">
+        ${pages.map((page) => `<button class="pagination-number ${page === productPage ? "is-active" : ""}" type="button" data-page="${page}" aria-label="Page ${page}" aria-current="${page === productPage ? "page" : "false"}">${page}</button>`).join("")}
+      </div>
+      <button class="pagination-arrow" type="button" data-page="${Math.min(totalPages, productPage + 1)}" aria-label="Next page" ${productPage === totalPages ? "disabled" : ""}>&gt;</button>
+    `;
+  }
+
   function renderProducts() {
     const featuredGrid = $("featuredProductGrid");
     const sections = $("productSections");
@@ -281,47 +302,53 @@
       return matchesCategory && searchableText.includes(query);
     });
 
-    if (!visibleProducts.length) {
-      const empty = products.length
-        ? '<p class="empty-state">No pieces match your search.</p>'
-        : '<div class="empty-state"><p>THE COLLECTION IS BEING UPDATED.</p><p>Check back soon for the latest MONOWEAR pieces.</p></div>';
-      featuredGrid.innerHTML = "";
-      sections.innerHTML = empty;
-      const featuredSection = $("featuredProductsSection");
-      if (featuredSection) featuredSection.hidden = true;
-      return;
-    }
-
     const featured = visibleProducts.filter((product) => Boolean(Number(product.featured)));
     const otherProducts = visibleProducts.filter((product) => !Boolean(Number(product.featured)));
     const featuredSection = $("featuredProductsSection");
     if (featuredSection) featuredSection.hidden = featured.length === 0;
-    featuredGrid.innerHTML = featured.length
-      ? renderProductCards(featured)
-      : "";
+    featuredGrid.innerHTML = featured.length ? renderProductCards(featured) : "";
 
-    if (!otherProducts.length) {
-      sections.innerHTML = "";
+    if (!visibleProducts.length) {
+      const empty = products.length
+        ? '<p class="empty-state">No pieces match your search.</p>'
+        : '<div class="empty-state"><p>THE COLLECTION IS BEING UPDATED.</p><p>Check back soon for the latest MONOWEAR pieces.</p></div>';
+      sections.innerHTML = empty;
+      renderPagination(0);
       return;
     }
 
-    const groups = new Map();
-    otherProducts.forEach((product) => {
-      const label = String(product.category || "").trim() || "More pieces";
-      if (!groups.has(label)) groups.set(label, []);
-      groups.get(label).push(product);
-    });
+    if (!otherProducts.length) {
+      sections.innerHTML = "";
+      renderPagination(0);
+      return;
+    }
 
-    sections.innerHTML = Array.from(groups.entries()).map(([label, items], index) => `
-      <section class="product-category-section" aria-labelledby="product-section-title-${index + 1}">
+    const totalPages = Math.ceil(otherProducts.length / PRODUCTS_PER_PAGE);
+    productPage = Math.min(Math.max(1, productPage), totalPages);
+    const start = (productPage - 1) * PRODUCTS_PER_PAGE;
+    const pageProducts = otherProducts.slice(start, start + PRODUCTS_PER_PAGE);
+
+    sections.innerHTML = `
+      <section class="product-category-section" aria-labelledby="all-pieces-heading">
         <div class="product-subheading product-category-heading">
-          <p class="eyebrow">${String(index + 1).padStart(2, "0")} / MONOWEAR SELECTION</p>
-          <h3 id="product-section-title-${index + 1}">${escapeHTML(label)} <i>pieces.</i></h3>
+          <p class="eyebrow">THE FULL SELECTION</p>
+          <h3 id="all-pieces-heading">More <i>pieces.</i></h3>
         </div>
-        <div class="product-grid">${renderProductCards(items)}</div>
+        <div class="product-grid">${renderProductCards(pageProducts)}</div>
       </section>
-    `).join("");
+    `;
+    renderPagination(totalPages);
   }
+
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest("#productPagination [data-page]");
+    if (!button || button.disabled) return;
+    const nextPage = Number(button.dataset.page);
+    if (!Number.isFinite(nextPage) || nextPage < 1 || nextPage === productPage) return;
+    productPage = nextPage;
+    renderProducts();
+    $("productSections")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
   /* =========================================================
      PRODUCT DETAIL NAVIGATION
      Product details are standalone pages, never an overlay.
