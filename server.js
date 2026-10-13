@@ -2189,6 +2189,125 @@ function markOrderFailed(reference, message = "Payment was not completed.") {
 }
 
 // ============================================================
+// LIVE SHIPPING QUOTES — TERMINAL AFRICA
+// ============================================================
+
+const TERMINAL_AFRICA_SECRET_KEY = process.env.TERMINAL_AFRICA_SECRET_KEY || "";
+const MONOWEAR_ITEM_WEIGHT_KG = Number(process.env.MONOWEAR_ITEM_WEIGHT_KG || 0.5);
+
+function parseDispatchLocation(value) {
+  const normalized = String(value || "Ikorodu, Lagos").trim().toLowerCase();
+  if (normalized.includes("ijebu") || normalized.includes("ogun")) {
+    return { city: "Ijebu-Ode", state: "Ogun" };
+  }
+  return { city: "Ikorodu", state: "Lagos" };
+}
+
+async function getTerminalAfricaShippingQuote({ dispatchLocation, city, state, items, subtotal }) {
+  if (!TERMINAL_AFRICA_SECRET_KEY) {
+    const error = new Error("Live delivery pricing is not configured yet. Add TERMINAL_AFRICA_SECRET_KEY to the Render environment before accepting checkout.");
+    error.statusCode = 503;
+    throw error;
+  }
+
+  const origin = parseDispatchLocation(dispatchLocation);
+  const safeWeight = Number.isFinite(MONOWEAR_ITEM_WEIGHT_KG) && MONOWEAR_ITEM_WEIGHT_KG > 0
+    ? MONOWEAR_ITEM_WEIGHT_KG
+    : 0.5;
+  const parcelItems = items.map((item) => ({
+    name: String(item.name || item.title || "MONOWEAR clothing").slice(0, 120),
+    description: String(item.name || item.title || "MONOWEAR clothing").slice(0, 240),
+    currency: "NGN",
+    value: Math.max(0, Number(item.price || 0) * Number(item.quantity || 1)),
+    weight: safeWeight,
+    quantity: Number(item.quantity || 1)
+  }));
+  const totalWeight = Math.max(0.5, items.reduce(
+    (sum, item) => sum + safeWeight * Number(item.quantity || 1),
+    0
+  ));
+
+  const response = await fetch("https://api.terminal.africa/v1/rates/shipment/quotes", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${TERMINAL_AFRICA_SECRET_KEY}`,
+      "Content-Type": "application/json",
+      Accept: "application/json"
+    },
+    body: JSON.stringify({
+      pickup_address: { city: origin.city, state: origin.state, country: "NG" },
+      delivery_address: { city: String(city).trim(), state: String(state).trim(), country: "NG" },
+      parcel: {
+        description: "MONOWEAR clothing order",
+        weight: totalWeight,
+        weight_unit: "kg",
+        items: parcelItems
+      },
+      currency: "NGN",
+      persist_data: false
+    }),
+    signal: AbortSignal.timeout(12000)
+  });
+
+  let result = {};
+  try { result = await response.json(); } catch (_) {}
+  if (!response.ok || result.status === false) {
+    console.error("Terminal Africa quote failed:", response.status, result.message || result.error || "provider error");
+    const error = new Error("The courier could not return a live rate for this route. Please check the destination or try again.");
+    error.statusCode = 502;
+    throw error;
+  }
+
+  const rates = Array.isArray(result.data) ? result.data : [];
+  const validRates = rates.map((rate) => ({
+    carrier: String(rate.carrier_name || rate.carrier_slug || "Courier").slice(0, 100),
+    amount: Number(rate.amount ?? rate.default_amount),
+    delivery_time: String(rate.delivery_time || "").slice(0, 100),
+    rate_id: String(rate.rate_id || rate.id || "")
+  })).filter((rate) => Number.isFinite(rate.amount) && rate.amount >= 0);
+
+  if (!validRates.length) {
+    const error = new Error("No courier rates are available for this route right now.");
+    error.statusCode = 422;
+    throw error;
+  }
+
+  validRates.sort((a, b) => a.amount - b.amount);
+  return {
+    amount: Math.round(validRates[0].amount),
+    carrier: validRates[0].carrier,
+    delivery_time: validRates[0].delivery_time,
+    rates: validRates.slice(0, 5).map(({ carrier, amount, delivery_time }) => ({ carrier, amount, delivery_time })),
+    origin,
+    destination: { city: String(city).trim(), state: String(state).trim() },
+    currency: "NGN"
+  };
+}
+
+app.post("/api/shipping/quote", checkoutLimiter, async (req, res) => {
+  try {
+    const body = req.body || {};
+    const city = String(body.city || "").trim();
+    const state = String(body.state || "").trim();
+    if (!city || !state) {
+      return res.status(400).json({ error: "Enter the delivery city/LGA and state to calculate shipping." });
+    }
+
+    const dispatchLocation = String(getSetting("active_dispatch_location", "Ikorodu, Lagos")).trim() || "Ikorodu, Lagos";
+    const items = normalizeCheckoutItems(body.items || []);
+    const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const quote = await getTerminalAfricaShippingQuote({ dispatchLocation, city, state, items, subtotal });
+    return res.json({ success: true, quote });
+  } catch (error) {
+    return res.status(error.statusCode || 502).json({
+      error: error.statusCode === 503
+        ? error.message
+        : (error.message || "Could not calculate a live shipping quote.")
+    });
+  }
+});
+
+// ============================================================
 // CHECKOUT
 // ============================================================
 
@@ -2231,13 +2350,16 @@ app.post(
         0
       );
 
-      const shippingFee = moneySetting("shipping_fee", 0);
-      const freeThreshold = moneySetting("free_shipping_threshold", 0);
-
-      const actualShipping =
-        freeThreshold > 0 && subtotal >= freeThreshold
-          ? 0
-          : shippingFee;
+      // Always request a fresh provider quote server-side before payment.
+      // Never trust a shipping amount supplied by the browser.
+      const shippingQuote = await getTerminalAfricaShippingQuote({
+        dispatchLocation,
+        city: shippingCity,
+        state: shippingState,
+        items,
+        subtotal
+      });
+      const actualShipping = shippingQuote.amount;
 
       // Discounts must never come from the browser. Re-enable only when
       // server-side discount codes exist.
