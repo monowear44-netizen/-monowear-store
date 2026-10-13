@@ -631,6 +631,7 @@ if (checkoutForm) {
     const paymentLoading = $("paymentLoading");
     const showPaymentLoading = () => {
       if (!paymentLoading) return;
+      if (checkoutDialog && checkoutDialog.open) checkoutDialog.close();
       paymentLoading.hidden = false;
       paymentLoading.setAttribute("aria-hidden", "false");
       document.body.classList.add("payment-is-loading");
@@ -684,6 +685,7 @@ if (checkoutForm) {
 
     } catch (error) {
       hidePaymentLoading();
+      if (checkoutDialog && !checkoutDialog.open) checkoutDialog.showModal();
       console.error("MONOWEAR checkout error:", error);
 
       if (message) {
