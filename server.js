@@ -12,6 +12,7 @@ const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
 const { Resend } = require("resend");
+const archiver = require("archiver");
 
 // ============================================================
 // MONOWEAR STORE SERVER
@@ -883,6 +884,81 @@ function escapeHTML(value) {
 }
 
 // ============================================================
+ // ADMIN MONITORING & BACKUP
+ // ============================================================
+
+ app.get("/api/admin/monitoring", requireAdmin, (req, res) => {
+   try {
+     const summary = db.prepare(`
+       SELECT
+         COUNT(*) AS total_orders,
+         SUM(CASE WHEN payment_status = 'paid' THEN 1 ELSE 0 END) AS paid_orders,
+         SUM(CASE WHEN payment_status = 'pending' THEN 1 ELSE 0 END) AS pending_payments,
+         SUM(CASE WHEN email_status = 'failed' THEN 1 ELSE 0 END) AS failed_emails,
+         SUM(CASE WHEN payment_status = 'paid' AND email_status = 'failed' THEN 1 ELSE 0 END) AS paid_orders_missing_email,
+         MAX(updated_at) AS latest_order_update
+       FROM orders
+       WHERE COALESCE(record_type, 'real_order') = 'real_order'
+     `).get();
+     const attention = db.prepare(`
+       SELECT reference, payment_status, order_status, email_status, updated_at
+       FROM orders
+       WHERE COALESCE(record_type, 'real_order') = 'real_order'
+         AND (payment_status = 'pending' OR email_status = 'failed')
+       ORDER BY updated_at DESC
+       LIMIT 20
+     `).all();
+     res.json({
+       ok: true,
+       checked_at: new Date().toISOString(),
+       database: db.open ? "connected" : "unavailable",
+       email_configured: Boolean(resend),
+       paystack_configured: Boolean(PAYSTACK_SECRET_KEY),
+       summary: Object.fromEntries(Object.entries(summary).map(([key, value]) => [key, value ?? 0])),
+       attention
+     });
+   } catch (error) {
+     console.error("Monitoring check failed:", error);
+     res.status(500).json({ ok: false, error: "Store monitoring is temporarily unavailable." });
+   }
+ });
+
+ app.get("/api/admin/backup", requireAdmin, async (req, res, next) => {
+   const backupPath = path.join(STORAGE_DIR, `monowear-backup-${Date.now()}.sqlite`);
+   try {
+     await db.backup(backupPath);
+     const filename = `monowear-backup-${new Date().toISOString().replace(/[:.]/g, "-")}.zip`;
+     res.setHeader("Content-Type", "application/zip");
+     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+     const archive = archiver("zip", { zlib: { level: 6 } });
+     let cleaned = false;
+     const cleanup = () => {
+       if (cleaned) return;
+       cleaned = true;
+       fs.promises.rm(backupPath, { force: true }).catch(() => {});
+     };
+     archive.on("error", (error) => {
+       cleanup();
+       if (!res.headersSent) next(error);
+       else res.destroy(error);
+     });
+     res.on("close", cleanup);
+     archive.pipe(res);
+     archive.file(backupPath, { name: "database/monowear.sqlite" });
+     archive.directory(UPLOAD_DIR, "uploads");
+     archive.append(
+       "MONOWEAR backup\nContains the SQLite database and uploaded product/media files.\nKeep this archive private because it contains customer and order data.\n",
+       { name: "README.txt" }
+     );
+     await archive.finalize();
+   } catch (error) {
+     await fs.promises.rm(backupPath, { force: true }).catch(() => {});
+     console.error("Store backup failed:", error);
+     if (!res.headersSent) res.status(500).json({ error: "Backup could not be created. Please try again." });
+   }
+ });
+
+ // ============================================================
 // HEALTH CHECK
 // ============================================================
 

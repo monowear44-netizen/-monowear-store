@@ -1610,3 +1610,52 @@ checkAuth();
   observer.observe(form, { subtree: true, childList: true });
   window.addEventListener("pageshow", refreshDesignPreview);
 })();
+
+
+// ============================================================
+// STORE HEALTH & BACKUP CONTROLS
+// ============================================================
+(() => {
+  const button = document.getElementById("refreshMonitoring");
+  const output = document.getElementById("monitoringSummary");
+  const backupLink = document.getElementById("downloadStoreBackup");
+  if (!button || !output) return;
+
+  const label = (value) => String(value ?? "").replace(/[_-]+/g, " ");
+  async function refreshMonitoring() {
+    button.disabled = true;
+    button.textContent = "CHECKING…";
+    output.innerHTML = '<p class="muted">Checking orders, payment and email status…</p>';
+    try {
+      const response = await api("/api/admin/monitoring");
+      const s = response.summary || {};
+      const metrics = [
+        ["Total orders", s.total_orders],
+        ["Paid orders", s.paid_orders],
+        ["Payments pending", s.pending_payments],
+        ["Failed emails", s.failed_emails],
+        ["Paid orders needing email", s.paid_orders_missing_email]
+      ];
+      output.innerHTML = '<div class="monitoring-grid">' + metrics.map(([name, value]) =>
+        '<div class="monitoring-metric"><span>' + esc(name) + '</span><strong>' + Number(value || 0) + '</strong></div>'
+      ).join("") + '</div><p class="muted">Database: ' + esc(response.database) +
+        ' · Paystack: ' + (response.paystack_configured ? 'configured' : 'not configured') +
+        ' · Email: ' + (response.email_configured ? 'configured' : 'not configured') +
+        '<br>Checked: ' + esc(new Date(response.checked_at).toLocaleString()) + '</p>' +
+        ((response.attention || []).length ? '<h3>Orders needing attention</h3><div class="monitoring-attention">' +
+          response.attention.map(order => '<p><strong>' + esc(order.reference) + '</strong> — payment: ' +
+            esc(label(order.payment_status)) + '; email: ' + esc(label(order.email_status || 'not sent')) +
+            '</p>').join("") + '</div>' : '<p class="monitoring-ok">No pending-payment or failed-email orders found in the recent check.</p>');
+    } catch (error) {
+      output.innerHTML = '<p class="error">' + esc(error.message || "Store health check failed.") + '</p>';
+    } finally {
+      button.disabled = false;
+      button.textContent = "CHECK STORE HEALTH ↻";
+    }
+  }
+  button.addEventListener("click", refreshMonitoring);
+  backupLink?.addEventListener("click", () => {
+    const message = document.getElementById("backupMessage");
+    if (message) message.textContent = "Preparing a private backup of the database and uploaded media… Keep this page open until the download starts.";
+  });
+})();

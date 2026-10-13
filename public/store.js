@@ -428,7 +428,10 @@
           .map(
             (item, index) => `
               <div class="cart-item">
-                <div>
+                <div class="cart-item-image">
+                  ${item.image ? `<img src="${escapeHTML(item.image)}" alt="${escapeHTML(item.name)}" loading="lazy">` : '<span>MONO</span>'}
+                </div>
+                <div class="cart-item-details">
                   <strong>${escapeHTML(item.name)}</strong>
                   <p>${escapeHTML(item.size || "One size")}</p>
                   <p>${money(item.price)} × ${Number(item.quantity) || 1}</p>
