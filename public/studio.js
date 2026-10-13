@@ -481,6 +481,7 @@ function newProduct() {
 
   form.elements.id.value = "";
   form.elements.sizes.value = "S,M,L,XL";
+  form.elements.colors.value = "";
   form.elements.stock.value = 0;
   form.elements.published.checked = true;
   form.elements.sort_order.value = 0;
@@ -520,6 +521,7 @@ window.editProduct = (id) => {
     "price",
     "compare_price",
     "sizes",
+    "colors",
     "stock",
     "image",
     "description",
@@ -531,10 +533,10 @@ window.editProduct = (id) => {
 
     if (key === "id") value = product.id;
 
-    if (key === "sizes") {
-      value = Array.isArray(product.sizes)
-        ? product.sizes.join(",")
-        : product.sizes || "";
+    if (key === "sizes" || key === "colors") {
+      value = Array.isArray(product[key])
+        ? product[key].join(", ")
+        : product[key] || "";
     }
 
     form.elements[key].value = value;
@@ -605,6 +607,12 @@ $("productForm").addEventListener("submit", async (event) => {
     .split(",")
     .map((size) => size.trim())
     .filter(Boolean);
+
+  body.colors = body.colors
+    .split(",")
+    .map((color) => color.trim())
+    .filter(Boolean)
+    .filter((color, index, all) => all.findIndex((item) => item.toLowerCase() === color.toLowerCase()) === index);
 
   body.featured = form.elements.featured.checked;
   body.published = form.elements.published.checked;
