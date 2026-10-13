@@ -456,6 +456,26 @@
   /* =========================================================
      ADD TO CART
   ========================================================= */
+  function productImageForColor(product, color) {
+    const map = product && product.color_images && typeof product.color_images === "object" ? product.color_images : {};
+    const key = Object.keys(map).find((item) => item.toLowerCase() === String(color || "").toLowerCase());
+    const value = key ? map[key] : "";
+    if (!value) return "";
+    return /^(data:|blob:|https?:\/\/|\/)/i.test(value) ? value : "/" + String(value).replace(/^\/+/, "");
+  }
+
+  document.addEventListener("change", (event) => {
+    const select = event.target.closest(".color-select");
+    if (!select) return;
+    const card = select.closest(".product-card");
+    const productId = Number(card && card.dataset.productId);
+    const product = products.find((item) => Number(item.id) === productId);
+    const src = productImageForColor(product, select.value);
+    if (!card || !src) return;
+    const img = card.querySelector(".product-image img");
+    if (img) img.src = src;
+  });
+
   window.addToCart = function (productId) {
     const product = products.find(
       (item) => Number(item.id) === Number(productId)
@@ -490,7 +510,7 @@
         id: Number(product.id),
         name: product.name || "MONOWEAR Piece",
         price: Number(product.price) || 0,
-        image: product.image || "",
+        image: productImageForColor(product, selectedColor) || product.image || "",
         size: selectedSize,
         color: selectedColor,
         quantity: 1
