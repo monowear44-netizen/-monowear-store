@@ -460,3 +460,66 @@ html[data-theme="white"] .product-badge { color: #111 !important; }
     margin-top: 36px;
   }
 }
+
+
+/* MONOWEAR — CLEAN NUMBERED PRODUCT PAGINATION */
+.product-pagination[hidden] { display:none !important; }
+.product-pagination {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:18px;
+  margin:56px auto 18px;
+  padding:0 12px;
+}
+.product-pagination button {
+  appearance:none;
+  border:0;
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+  width:78px;
+  height:78px;
+  border-radius:22px;
+  background:var(--surface-soft, #f7f7f7);
+  color:var(--muted, #a3a3a3);
+  font:700 28px/1 Manrope, Arial, sans-serif;
+  transition:background .2s ease,color .2s ease,transform .2s ease,box-shadow .2s ease;
+}
+.product-pagination .pagination-numbers {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.product-pagination .pagination-number {
+  width:78px;
+  height:78px;
+  border-radius:22px;
+  font-size:30px;
+}
+.product-pagination .pagination-number.is-active {
+  background:#050505;
+  color:#fff;
+  box-shadow:0 10px 20px rgba(0,0,0,.12);
+}
+.product-pagination button:hover:not(:disabled) { transform:translateY(-2px); }
+.product-pagination button:disabled { cursor:not-allowed; opacity:.45; }
+.product-pagination button:focus-visible { outline:2px solid var(--accent); outline-offset:4px; }
+html[data-theme="dark"] .product-pagination .pagination-arrow,
+html[data-theme="dark"] .product-pagination .pagination-number:not(.is-active),
+html[data-theme="emerald"] .product-pagination .pagination-arrow,
+html[data-theme="emerald"] .product-pagination .pagination-number:not(.is-active),
+html[data-theme="gold"] .product-pagination .pagination-arrow,
+html[data-theme="gold"] .product-pagination .pagination-number:not(.is-active) {
+  background:var(--surface-soft);
+  color:var(--muted);
+}
+@media(max-width:600px) {
+  .product-pagination { gap:10px; margin-top:38px; }
+  .product-pagination button { width:48px; height:52px; border-radius:15px; font-size:20px; }
+  .product-pagination .pagination-numbers { gap:7px; }
+  .product-pagination .pagination-number { width:48px; height:52px; font-size:20px; border-radius:15px; }
+}
