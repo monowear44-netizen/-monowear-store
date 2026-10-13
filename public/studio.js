@@ -278,7 +278,7 @@ async function uploadImage(file) {
   if (!file) throw Error("Please select an image.");
 
   if (file.size > 5 * 1024 * 1024) {
-    throw Error("Image must be 5 MB or smaller.");
+    throw Error(`"${file.name}" is larger than 5 MB. Choose a smaller image.`);
   }
 
   const allowedTypes = [
@@ -289,22 +289,54 @@ async function uploadImage(file) {
   ];
 
   if (!allowedTypes.includes(file.type)) {
-    throw Error("Choose a JPG, PNG, WEBP or GIF image.");
+    throw Error(`"${file.name}" is not a supported image. Choose JPG, PNG, WEBP or GIF.`);
   }
 
   const formData = new FormData();
-  formData.append("image", file);
+  // The multi-image endpoint expects the field name "images".
+  formData.append("images", file);
 
-  const result = await api("/api/admin/uploads", {
+  const result = await api("/api/admin/upload", {
     method: "POST",
     body: formData
   });
 
-  if (!result.url) {
-    throw Error("The server did not return an image URL.");
+  const url = result.urls?.[0] || result.files?.[0]?.url;
+  if (!url) {
+    throw Error(`The server did not return a URL for "${file.name}".`);
   }
 
-  return result.url;
+  return url;
+}
+
+async function uploadImages(files) {
+  if (!files.length) return [];
+
+  const formData = new FormData();
+  for (const file of files) {
+    if (file.size > 5 * 1024 * 1024) {
+      throw Error(`"${file.name}" is larger than 5 MB. Choose a smaller image.`);
+    }
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
+      throw Error(`"${file.name}" is not a supported image. Choose JPG, PNG, WEBP or GIF.`);
+    }
+    formData.append("images", file);
+  }
+
+  const result = await api("/api/admin/upload", {
+    method: "POST",
+    body: formData
+  });
+
+  const urls = Array.isArray(result.urls)
+    ? result.urls
+    : (result.files || []).map((file) => file.url).filter(Boolean);
+
+  if (urls.length !== files.length) {
+    throw Error("Not all product images uploaded successfully. Please try again.");
+  }
+
+  return urls;
 }
 
 // ============================================================
@@ -628,20 +660,25 @@ $("productForm").addEventListener("submit", async (event) => {
 
   showError("productError", "");
 
+  const saveButton = form.querySelector('button[type="submit"]');
+  if (saveButton) saveButton.disabled = true;
+  if (saveButton) saveButton.textContent = "SAVING PRODUCT…";
+
   try {
-    const selectedFiles = [...(form.elements.imageFile.files || [])];
-    const existingImages = String(form.elements.images.value || "")
+    const selectedFiles = [...(form.elements.imageFile?.files || [])];
+    const existingImages = String(form.elements.images?.value || "")
       .split(/\n|,/)
       .map((url) => url.trim())
       .filter(Boolean);
+
     if (existingImages.length + selectedFiles.length > 10) {
-      throw Error("A product can have up to 10 images. Remove some images before adding more.");
+      throw Error("A product can have up to 10 images in total. Remove some images before adding more.");
     }
-    const uploadedImages = [];
-    for (const file of selectedFiles) {
-      uploadedImages.push(await uploadImage(file));
-    }
-    body.images = [...existingImages, ...uploadedImages].filter((url, index, all) => all.indexOf(url) === index);
+
+    // Upload all selected files together using the server's multi-image route.
+    const uploadedImages = await uploadImages(selectedFiles);
+    body.images = [...existingImages, ...uploadedImages]
+      .filter((url, index, all) => all.indexOf(url) === index);
     body.image = body.images[0] || body.image || "";
 
     await api(
@@ -663,6 +700,11 @@ $("productForm").addEventListener("submit", async (event) => {
     toast("Product saved successfully.");
   } catch (error) {
     showError("productError", error.message);
+  } finally {
+    if (saveButton) {
+      saveButton.disabled = false;
+      saveButton.textContent = id ? "SAVE CHANGES" : "SAVE PRODUCT";
+    }
   }
 });
 
