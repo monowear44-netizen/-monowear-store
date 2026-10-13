@@ -275,7 +275,6 @@ const defaults = {
   shipping_fee: "0",
   free_shipping_threshold: "0",
   announcement: "HELP IS ON THE WAY — COMING SOON",
-  instagram: "https://www.instagram.com/",
   x: "https://x.com/monowear44",
   contact_email: process.env.CONTACT_EMAIL || "",
   maintenance_mode: "false",
@@ -289,7 +288,10 @@ const defaults = {
   design_accent: "#c6ff4b",
   design_font: "Manrope",
   design_hero_alignment: "left",
-  design_radius: "square"
+  design_radius: "square",
+  design_product_columns: "3",
+  design_product_ratio: "portrait",
+  design_hero_height: "standard"
 };
 // ============================================================
 // INITIAL ADMIN
