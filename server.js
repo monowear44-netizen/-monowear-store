@@ -2626,9 +2626,11 @@ function normalizeShippingState(value) {
   return aliases[state] || state.replace(/ state$/, "");
 }
 
-function getFixedShippingQuote(stateValue) {
+function getFixedShippingQuote(stateValue, items = []) {
   const state = normalizeShippingState(stateValue);
-  const amount = MONOWEAR_FIXED_SHIPPING_FEES[state];
+  const perItemAmount = MONOWEAR_FIXED_SHIPPING_FEES[state];
+  const itemCount = Math.max(1, items.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0));
+  const amount = perItemAmount * itemCount;
   if (!Number.isFinite(amount)) {
     const error = new Error("We cannot calculate a fixed delivery fee for that state yet. Please contact MONOWEAR before paying.");
     error.statusCode = 400;
@@ -2640,11 +2642,15 @@ function getFixedShippingQuote(stateValue) {
     courier_name: "MONOWEAR fixed delivery",
     service_type: "standard delivery",
     amount,
+    per_item_amount: perItemAmount,
+    item_count: itemCount,
     delivery_time: "Delivery estimate confirmed after dispatch",
     request_token: "fixed-" + state.replace(/[^a-z0-9]+/g, "-")
   };
   return {
     amount,
+    per_item_amount: perItemAmount,
+    item_count: itemCount,
     carrier: "MONOWEAR fixed delivery",
     delivery_time: rate.delivery_time,
     rates: [rate],
@@ -2828,7 +2834,9 @@ app.post("/api/shipping/quote", checkoutLimiter, (req, res) => {
     if (!String(body.city || "").trim() || !String(body.state || "").trim()) {
       return res.status(400).json({ error: "Enter the delivery city/LGA and state to calculate shipping." });
     }
-    const quote = getFixedShippingQuote(body.state);
+    const items = normalizeCheckoutItems(body.items || []);
+    if (!items.length) return res.status(400).json({ error: "Your cart is empty." });
+    const quote = getFixedShippingQuote(body.state, items);
     return res.json({ success: true, quote });
   } catch (error) {
     return res.status(error.statusCode || 400).json({ error: error.message || "Could not calculate the fixed delivery fee." });
@@ -2880,7 +2888,7 @@ app.post(
 
       // Recalculate the fixed state fee on the server so the browser cannot
       // change the delivery charge. One fixed fee applies per order.
-      const shippingQuote = getFixedShippingQuote(shippingState);
+      const shippingQuote = getFixedShippingQuote(shippingState, items);
       const selectedCourierId = String(body.shipping_courier_id || "");
       const selectedServiceCode = String(body.shipping_service_code || "");
       const selectedRate = shippingQuote.rates.find((rate) =>
