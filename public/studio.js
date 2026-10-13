@@ -1638,6 +1638,37 @@ checkAuth();
 
 
 // ============================================================
+
+ // MONOWEAR_THEME_PRESETS: keep Studio controls and preview in sync with theme.
+ (function setupThemePresets() {
+   const form = document.getElementById("settingsForm");
+   if (!form || !form.elements.design_theme) return;
+   const presets = {
+     dark:    { background: "#111210", text: "#f4f2ea", accent: "#c6ff4b" },
+     white:   { background: "#ffffff", text: "#171815", accent: "#c6ff4b" },
+     emerald: { background: "#073f32", text: "#f2f5ef", accent: "#57d6a0" },
+     gold:    { background: "#171510", text: "#f6f0df", accent: "#d5b15a" }
+   };
+   function applyPreset() {
+     const preset = presets[form.elements.design_theme.value] || presets.dark;
+     form.elements.design_background.value = preset.background;
+     form.elements.design_text.value = preset.text;
+     form.elements.design_accent.value = preset.accent;
+     if (window.refreshDesignPreview) window.refreshDesignPreview();
+   }
+   form.elements.design_theme.addEventListener("change", applyPreset);
+   // Theme is the source of truth when the Studio settings are loaded.
+   const originalRefresh = window.refreshDesignPreview;
+   const observer = new MutationObserver(() => {
+     if (form.elements.design_theme.value && !form.dataset.themePresetLoaded) {
+       form.dataset.themePresetLoaded = "true";
+       applyPreset();
+     }
+   });
+   observer.observe(form, { childList: true, subtree: true });
+   form.addEventListener("settingsloaded", applyPreset);
+ })();
+
 // STORE HEALTH & BACKUP CONTROLS
 // ============================================================
 (() => {
