@@ -1,0 +1,47 @@
+/* MONOWEAR Studio additions. Loaded after studio.css; nothing in studio.css is changed. */
+
+.filter-bar{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 16px}
+.filter-bar input,.filter-bar select{background:var(--panel);border:1px solid var(--line);padding:11px 12px;font:12px Manrope,Arial,sans-serif;color:var(--ink);min-width:0}
+.filter-bar input{flex:1 1 240px}
+
+.toolbar-actions{display:flex;gap:10px;flex-wrap:wrap}
+.section-label{margin:30px 0 12px}
+
+.badge{display:inline-block;margin:0 6px 4px 0;padding:3px 7px;border:1px solid var(--line);font:9px 'DM Mono',monospace;letter-spacing:.08em;color:var(--muted);background:transparent;vertical-align:middle}
+.badge.good{background:#e6f5d0;border-color:#9ac45a;color:#2f5b0b}
+.badge.warn{background:#fff3d6;border-color:#d9a93a;color:#7a5600}
+.badge.bad{background:#fff0ee;border-color:#b84d3e;color:#9a2e21}
+.badge.muted{background:#ecebe3;color:#6d6d63}
+
+.picker{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.picker label{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);background:var(--panel);cursor:pointer;font:11px Manrope,Arial,sans-serif}
+.picker input{accent-color:#171815}
+.inline-new{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.inline-new input{flex:1 1 200px;border:1px solid var(--line);padding:10px 12px;background:var(--panel)}
+
+.collection-cover{display:block;max-width:260px;max-height:180px;object-fit:cover;margin:8px 0}
+
+.order-items{margin:8px 0;padding-left:18px;font-size:12px;line-height:1.7;color:var(--ink)}
+.resend-button{display:block;margin-top:10px}
+
+.stats-row-2{margin-top:12px;grid-template-columns:repeat(2,1fr)}
+.stat small{display:block;margin-top:6px;font-size:10px;color:var(--muted)}
+.payout-stats{margin-bottom:16px}
+
+.table-wrap{overflow-x:auto}
+.payout-table{width:100%;border-collapse:collapse;font-size:12px}
+.payout-table th{text-align:left;font:9px 'DM Mono',monospace;letter-spacing:.1em;color:var(--muted);padding:8px 10px 8px 0;border-bottom:1px solid var(--line)}
+.payout-table td{padding:10px 10px 10px 0;border-bottom:1px solid var(--line)}
+
+.tools-panel{margin-top:20px}
+.check-list{margin:12px 0}
+.check-row{margin:6px 0;font-size:12px;line-height:1.6}
+.check-row strong{display:inline-block;width:18px}
+.check-row.ok strong{color:#2f5b0b}
+.check-row.no strong{color:#9a2e21}
+.check-row .muted{display:block;margin-left:18px}
+code{background:#ecebe3;padding:2px 5px;font-size:11px;word-break:break-all}
+
+@media (max-width:900px){
+  .stats-row-2{grid-template-columns:1fr 1fr}
+}
