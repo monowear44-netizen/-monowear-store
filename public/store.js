@@ -262,8 +262,8 @@
               .join("")
           : '<option value="One size">One size</option>';
         return `
-          <article class="product-card product-card-clickable" data-product-id="${id}" tabindex="0" role="button" aria-label="View details for ${escapeHTML(product.name || "MONOWEAR Piece")}">
-            <div class="product-image" onclick="openProductDetail(${id})" role="button" tabindex="0" aria-label="View product details">
+          <article class="product-card" data-product-id="${id}">
+            <a class="product-image product-page-link" href="/product.html?slug=${encodeURIComponent(product.slug || "")}&id=${id}" aria-label="View product details">
               ${productImage(product)}
               ${
                 product.featured
@@ -275,9 +275,9 @@
                   ? '<span class="sold-badge">SOLD OUT</span>'
                   : ""
               }
-            </div>
+            </a>
             <div class="product-meta">
-              <h3><button type="button" class="product-name-link" onclick="openProductDetail(${id})">${escapeHTML(product.name || "MONOWEAR Piece")}</button></h3>
+              <h3><a class="product-name-link" href="/product.html?slug=${encodeURIComponent(product.slug || "")}&id=${id}">${escapeHTML(product.name || "MONOWEAR Piece")}</a></h3>
               <span class="price">${money(product.price)}</span>
             </div>
             <div class="product-category">
@@ -308,89 +308,17 @@
       .join("");
   }
   /* =========================================================
-     PRODUCT DETAIL + MORE FROM MONOWEAR
+     PRODUCT DETAIL NAVIGATION
+     Product details are standalone pages, never an overlay.
   ========================================================= */
-  function ensureProductDetail() {
-    let modal = $("productDetail");
-    if (modal) return modal;
-    modal = document.createElement("dialog");
-    modal.id = "productDetail";
-    modal.className = "product-detail-dialog";
-    modal.setAttribute("aria-label", "Product details");
-    modal.innerHTML = '<button type="button" class="product-detail-close" aria-label="Close product details">×</button><div id="productDetailContent"></div>';
-    document.body.appendChild(modal);
-    modal.querySelector(".product-detail-close").addEventListener("click", () => modal.close());
-    modal.addEventListener("click", (event) => {
-      if (event.target === modal) modal.close();
-    });
-    modal.addEventListener("click", (event) => {
-      const card = event.target.closest("[data-detail-product-id]");
-      if (card) {
-        event.preventDefault();
-        event.stopPropagation();
-        openProductDetail(Number(card.dataset.detailProductId));
-      }
-    });
-    return modal;
-  }
-
-  function openProductDetail(productId) {
+  window.openProductDetail = function(productId) {
     const product = products.find((item) => Number(item.id) === Number(productId));
     if (!product) return;
-    const modal = ensureProductDetail();
-    // Keep this view focused on the one product the customer selected.
-    const sizes = Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ["One size"];
-    const stock = Number(product.stock ?? 0);
-    const moreProducts = products
-      .filter((item) => Number(item.id) !== Number(product.id))
-      .slice(0, 4);
-    const moreProductsMarkup = moreProducts.length ? `
-      <section class="product-detail-more" aria-label="More from MONOWEAR">
-        <p class="eyebrow">KEEP EXPLORING</p>
-        <h3>More from MONOWEAR</h3>
-        <div class="product-detail-more-grid">
-          ${moreProducts.map((item) => `
-            <button type="button" class="product-detail-more-card" data-detail-product-id="${Number(item.id)}">
-              <span class="product-detail-more-image">${productImage(item)}</span>
-              <span class="product-detail-more-name">${escapeHTML(item.name || "MONOWEAR Piece")}</span>
-              <span class="product-detail-more-category">${escapeHTML(item.category || "MONOWEAR")}</span>
-              <span class="product-detail-more-price">${money(item.price)}</span>
-            </button>
-          `).join("")}
-        </div>
-      </section>` : "";
-    $("productDetailContent").innerHTML = `
-      <div class="product-detail-layout">
-        <div class="product-detail-image">${productImage(product)}</div>
-        <div class="product-detail-copy">
-          <p class="eyebrow">MONOWEAR / PRODUCT DETAIL</p>
-          <p class="product-detail-collection">COLLECTION · ${escapeHTML(product.category || "MONOWEAR")}</p>
-          <h2>${escapeHTML(product.name || "MONOWEAR Piece")}</h2>
-          <p class="product-detail-price">${money(product.price)}</p>
-          <div class="product-detail-description">${escapeHTML(product.description || "A MONOWEAR piece. More details coming soon.")}</div>
-          <p class="product-detail-stock">${stock > 0 ? "IN STOCK · " + stock + " AVAILABLE" : "SOLD OUT"}</p>
-          <label class="product-detail-size-label" for="detail-size-${Number(product.id)}">SELECT SIZE</label>
-          <select id="detail-size-${Number(product.id)}" class="size-select" ${stock <= 0 ? "disabled" : ""}>
-            ${sizes.map((size) => `<option value="${escapeHTML(size)}">${escapeHTML(size)}</option>`).join("")}
-          </select>
-          <button type="button" class="add-button product-detail-add" ${stock <= 0 ? "disabled" : ""} onclick="addToCartFromDetail(${Number(product.id)})">${stock <= 0 ? "SOLD OUT" : "ADD TO BAG +"}</button>
-        </div>
-      </div>
-      ${moreProductsMarkup}
-`;
-    const sizeSelect = $("detail-size-" + Number(product.id));
-    if (sizeSelect) sizeSelect.value = sizes[0];
-    if (!modal.open) modal.showModal();
-  }
-
-  window.openProductDetail = openProductDetail;
-  window.addToCartFromDetail = function(productId) {
-    const size = $("detail-size-" + Number(productId));
-    const cardSelect = $("size-" + Number(productId));
-    if (cardSelect && size) cardSelect.value = size.value;
-    window.addToCart(productId);
+    const query = new URLSearchParams();
+    if (product.slug) query.set("slug", product.slug);
+    query.set("id", String(product.id));
+    window.location.href = "/product.html?" + query.toString();
   };
-
   /* =========================================================
      CART STORAGE
   ========================================================= */
