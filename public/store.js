@@ -644,6 +644,8 @@ if (checkoutForm) {
       address: String(
         formData.get("address") || ""
       ).trim(),
+      city: String(formData.get("city") || "").trim(),
+      state: String(formData.get("state") || "").trim(),
 
       items: cart.map((item) => ({
         product_id: Number(item.id),
