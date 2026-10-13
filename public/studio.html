@@ -757,9 +757,17 @@
             <h2>Shipping settings</h2>
           </div>
         </div>
+        <p class="muted">Choose the dispatch point you are operating from today. New orders will save this location. Live courier prices are not connected yet; the delivery fee below remains the fallback until a courier rate integration is configured.</p>
         <div class="form-grid">
+          <label class="span2">
+            Active dispatch location
+            <select name="active_dispatch_location">
+              <option value="Ikorodu, Lagos">Ikorodu, Lagos State</option>
+              <option value="Ijebu, Ogun">Ijebu, Ogun State</option>
+            </select>
+          </label>
           <label>
-            Flat delivery fee (₦)
+            Fallback delivery fee (₦)
             <input
               name="shipping_fee"
               type="number"
