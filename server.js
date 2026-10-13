@@ -220,6 +220,16 @@ ensureColumn("orders", "payment_method", "TEXT DEFAULT 'paystack'");
 ensureColumn("orders", "payment_reference", "TEXT DEFAULT ''");
 ensureColumn("orders", "notes", "TEXT DEFAULT ''");
 ensureColumn("orders", "updated_at", "TEXT DEFAULT CURRENT_TIMESTAMP");
+const orderRecordTypeAdded = ensureColumn("orders", "record_type", "TEXT DEFAULT 'real_order'");
+if (orderRecordTypeAdded) {
+  db.prepare(`
+    UPDATE orders SET record_type = CASE
+      WHEN payment_status = 'paid' THEN 'real_order'
+      ELSE 'abandoned_cart'
+    END
+  `).run();
+}
+
 
 // ------------------------------------------------------------
 // UPDATE: collection archive state, payment details, email tracking.
@@ -2119,6 +2129,7 @@ function finalizePaidOrder(reference, paymentReference = "", details = {}) {
     db.prepare(`
       UPDATE orders
       SET payment_status = 'paid',
+          record_type = 'real_order',
           order_status = 'processing',
           payment_reference = ?,
           paid_at = CURRENT_TIMESTAMP,
@@ -2712,6 +2723,25 @@ app.put("/api/admin/orders/:id/status", requireAdmin, (req, res) => {
   });
 });
 
+app.put("/api/admin/orders/:id/record-type", requireAdmin, (req, res) => {
+  const id = Number(req.params.id);
+  const recordType = String(req.body.record_type || "").trim().toLowerCase();
+  if (!["real_order", "abandoned_cart"].includes(recordType)) {
+    return res.status(400).json({ error: "Invalid order classification." });
+  }
+  const order = getOrderById(id);
+  if (!order) return res.status(404).json({ error: "Order not found." });
+  if (order.payment_status === "paid" && recordType !== "real_order") {
+    return res.status(400).json({ error: "A verified paid order must stay in Real orders." });
+  }
+  db.prepare(`UPDATE orders SET record_type = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+    .run(recordType, id);
+  recordOrderEvent(id, recordType, recordType === "abandoned_cart"
+    ? "Classified as abandoned cart by store admin."
+    : "Classified as a real order by store admin.");
+  res.json({ success: true, order: safeOrder(getOrderById(id)) });
+});
+
 // ============================================================
 // ADMIN DASHBOARD SUMMARY
 // ============================================================
@@ -2743,8 +2773,9 @@ app.get("/api/admin/dashboard", requireAdmin, (req, res) => {
     WHERE payment_status = 'paid'
   `).get().total;
 
+  // Product revenue excludes delivery fees and discounts, and only includes verified payments.
   const revenue = db.prepare(`
-    SELECT COALESCE(SUM(total), 0) AS total
+    SELECT COALESCE(SUM(MAX(subtotal - discount, 0)), 0) AS total
     FROM orders
     WHERE payment_status = 'paid'
   `).get().total;
