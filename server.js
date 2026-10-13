@@ -2189,123 +2189,19 @@ function markOrderFailed(reference, message = "Payment was not completed.") {
 }
 
 // ============================================================
-// LIVE SHIPPING QUOTES — TERMINAL AFRICA
+// LIVE SHIPPING QUOTES — SHIPBUBBLE
 // ============================================================
-
-const TERMINAL_AFRICA_SECRET_KEY = process.env.TERMINAL_AFRICA_SECRET_KEY || "";
+const SHIPBUBBLE_API_KEY = process.env.SHIPBUBBLE_API_KEY || "";
 const MONOWEAR_ITEM_WEIGHT_KG = Number(process.env.MONOWEAR_ITEM_WEIGHT_KG || 0.5);
-
-function parseDispatchLocation(value) {
-  const normalized = String(value || "Ikorodu, Lagos").trim().toLowerCase();
-  if (normalized.includes("ijebu") || normalized.includes("ogun")) {
-    return { city: "Ijebu-Ode", state: "Ogun" };
-  }
-  return { city: "Ikorodu", state: "Lagos" };
-}
-
-async function getTerminalAfricaShippingQuote({ dispatchLocation, city, state, items, subtotal }) {
-  if (!TERMINAL_AFRICA_SECRET_KEY) {
-    const error = new Error("Live delivery pricing is not configured yet. Add TERMINAL_AFRICA_SECRET_KEY to the Render environment before accepting checkout.");
-    error.statusCode = 503;
-    throw error;
-  }
-
-  const origin = parseDispatchLocation(dispatchLocation);
-  const safeWeight = Number.isFinite(MONOWEAR_ITEM_WEIGHT_KG) && MONOWEAR_ITEM_WEIGHT_KG > 0
-    ? MONOWEAR_ITEM_WEIGHT_KG
-    : 0.5;
-  const parcelItems = items.map((item) => ({
-    name: String(item.name || item.title || "MONOWEAR clothing").slice(0, 120),
-    description: String(item.name || item.title || "MONOWEAR clothing").slice(0, 240),
-    currency: "NGN",
-    value: Math.max(0, Number(item.price || 0)),
-    weight: safeWeight,
-    quantity: Number(item.quantity || 1)
-  }));
-  const totalWeight = Math.max(0.5, items.reduce(
-    (sum, item) => sum + safeWeight * Number(item.quantity || 1),
-    0
-  ));
-
-  const response = await fetch("https://api.terminal.africa/v1/rates/shipment/quotes", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${TERMINAL_AFRICA_SECRET_KEY}`,
-      "Content-Type": "application/json",
-      Accept: "application/json"
-    },
-    body: JSON.stringify({
-      pickup_address: { city: origin.city, state: origin.state, country: "NG" },
-      delivery_address: { city: String(city).trim(), state: String(state).trim(), country: "NG" },
-      parcel: {
-        description: "MONOWEAR clothing order",
-        weight: totalWeight,
-        weight_unit: "kg",
-        items: parcelItems
-      },
-      currency: "NGN",
-      persist_data: false
-    }),
-    signal: AbortSignal.timeout(12000)
-  });
-
-  let result = {};
-  try { result = await response.json(); } catch (_) {}
-  if (!response.ok || result.status === false) {
-    console.error("Terminal Africa quote failed:", response.status, result.message || result.error || "provider error");
-    const error = new Error("The courier could not return a live rate for this route. Please check the destination or try again.");
-    error.statusCode = 502;
-    throw error;
-  }
-
-  const rates = Array.isArray(result.data) ? result.data : [];
-  const validRates = rates.map((rate) => ({
-    carrier: String(rate.carrier_name || rate.carrier_slug || "Courier").slice(0, 100),
-    amount: Number(rate.amount ?? rate.default_amount),
-    delivery_time: String(rate.delivery_time || "").slice(0, 100),
-    rate_id: String(rate.rate_id || rate.id || "")
-  })).filter((rate) => Number.isFinite(rate.amount) && rate.amount >= 0);
-
-  if (!validRates.length) {
-    const error = new Error("No courier rates are available for this route right now.");
-    error.statusCode = 422;
-    throw error;
-  }
-
-  validRates.sort((a, b) => a.amount - b.amount);
-  return {
-    amount: Math.round(validRates[0].amount),
-    carrier: validRates[0].carrier,
-    delivery_time: validRates[0].delivery_time,
-    rates: validRates.slice(0, 5).map(({ carrier, amount, delivery_time }) => ({ carrier, amount, delivery_time })),
-    origin,
-    destination: { city: String(city).trim(), state: String(state).trim() },
-    currency: "NGN"
-  };
-}
-
-app.post("/api/shipping/quote", checkoutLimiter, async (req, res) => {
-  try {
-    const body = req.body || {};
-    const city = String(body.city || "").trim();
-    const state = String(body.state || "").trim();
-    if (!city || !state) {
-      return res.status(400).json({ error: "Enter the delivery city/LGA and state to calculate shipping." });
-    }
-
-    const dispatchLocation = String(getSetting("active_dispatch_location", "Ikorodu, Lagos")).trim() || "Ikorodu, Lagos";
-    const items = normalizeCheckoutItems(body.items || []);
-    const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const quote = await getTerminalAfricaShippingQuote({ dispatchLocation, city, state, items, subtotal });
-    return res.json({ success: true, quote });
-  } catch (error) {
-    return res.status(error.statusCode || 502).json({
-      error: error.statusCode === 503
-        ? error.message
-        : (error.message || "Could not calculate a live shipping quote.")
-    });
-  }
-});
+const SHIPBUBBLE_PACKAGE_LENGTH_CM = Number(process.env.SHIPBUBBLE_PACKAGE_LENGTH_CM || 30);
+const SHIPBUBBLE_PACKAGE_WIDTH_CM = Number(process.env.SHIPBUBBLE_PACKAGE_WIDTH_CM || 25);
+const SHIPBUBBLE_PACKAGE_HEIGHT_CM = Number(process.env.SHIPBUBBLE_PACKAGE_HEIGHT_CM || 5);
+function parseDispatchLocation(value) { const n = String(value || "Ikorodu, Lagos").trim().toLowerCase(); return n.includes("ijebu") || n.includes("ogun") ? { city: "Ijebu-Ode", state: "Ogun" } : { city: "Ikorodu", state: "Lagos" }; }
+async function shipbubbleRequest(endpoint, options = {}) { if (!SHIPBUBBLE_API_KEY) { const e = new Error("Live delivery pricing is not configured. Check SHIPBUBBLE_API_KEY in Render."); e.statusCode = 503; throw e; } const response = await fetch("https://api.shipbubble.com/v1" + endpoint, { ...options, headers: { Authorization: "Bearer " + SHIPBUBBLE_API_KEY, Accept: "application/json", "Content-Type": "application/json", ...(options.headers || {}) }, signal: AbortSignal.timeout(15000) }); let result = {}; try { result = await response.json(); } catch (_) {} if (!response.ok || result.status === "failed" || result.status === false) { const details = Array.isArray(result.errors) ? result.errors.join("; ") : ""; console.error("Shipbubble request failed:", response.status, String(result.message || "provider error").slice(0, 180)); const e = new Error("Shipbubble could not calculate delivery for these addresses. Check the address details and try again." + (details ? " " + details.slice(0, 200) : "")); e.statusCode = response.status === 401 || response.status === 403 ? 503 : 422; throw e; } return result; }
+async function getShipbubbleSavedAddresses() { const result = await shipbubbleRequest("/shipping/address?Page=1&PerPage=50"); const data = result.data || {}; return Array.isArray(data.results) ? data.results : []; }
+function findShipbubbleSenderAddress(addresses, origin) { return addresses.find((entry) => { const a = entry.address_data || entry; const text = [a.city, a.city_code, a.state, a.state_code, a.street, a.formatted_address, a.postal_code].join(" ").toLowerCase(); const stateMatch = text.includes(origin.state.toLowerCase()) || (origin.state === "Lagos" && /\bla\b/.test(text)) || (origin.state === "Ogun" && /\bog\b/.test(text)); const cityMatch = text.includes(origin.city.toLowerCase()) || (origin.city === "Ijebu-Ode" && /ijebu[ -]?ode/.test(text)); return stateMatch && cityMatch && entry.address_code; }) || null; }
+async function getShipbubbleShippingQuote({ dispatchLocation, city, state, items, customer }) { const origin = parseDispatchLocation(dispatchLocation); const c = customer || {}; const name = String(c.name || "").trim(), email = String(c.email || "").trim().toLowerCase(), phone = String(c.phone || "").trim(), address = String(c.address || "").trim(); if (!name || !validEmail(email) || !phone || !address) { const e = new Error("Enter your full name, email, phone number and full street address to calculate delivery."); e.statusCode = 400; throw e; } const saved = await getShipbubbleSavedAddresses(); const sender = findShipbubbleSenderAddress(saved, origin); if (!sender) { const e = new Error("Shipbubble has no saved validated pickup address matching " + origin.city + ", " + origin.state + ". Add and validate this dispatch address in Shipbubble, then try again."); e.statusCode = 503; throw e; } const recipientResult = await shipbubbleRequest("/shipping/address/validate", { method: "POST", body: JSON.stringify({ name, email, phone, address: address + ", " + String(city).trim() + ", " + String(state).trim() + ", Nigeria" }) }); const recipientCode = recipientResult.data && recipientResult.data.address_code; if (!recipientCode) { const e = new Error("Shipbubble could not validate the delivery address. Check the full street address."); e.statusCode = 422; throw e; } const catResult = await shipbubbleRequest("/shipping/labels/categories"); const cats = Array.isArray(catResult.data) ? catResult.data : []; const category = cats.find((x) => String(x.category || "").toLowerCase() === "fashion wears"); if (!category || !category.category_id) { const e = new Error("Shipbubble did not return a Fashion wears parcel category."); e.statusCode = 503; throw e; } const weight = Number.isFinite(MONOWEAR_ITEM_WEIGHT_KG) && MONOWEAR_ITEM_WEIGHT_KG > 0 ? MONOWEAR_ITEM_WEIGHT_KG : 0.5; const packageItems = items.map((item) => ({ name: String(item.name || "MONOWEAR clothing").slice(0, 100), description: String(item.name || "MONOWEAR clothing").slice(0, 180), unit_weight: String(weight), unit_amount: String(Math.max(0, Number(item.price || 0))), quantity: String(Math.max(1, Number(item.quantity || 1))) })); const date = new Date(); if (date.getHours() >= 18) date.setDate(date.getDate() + 1); const pickupDate = date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0"); const rateResult = await shipbubbleRequest("/shipping/fetch_rates", { method: "POST", body: JSON.stringify({ sender_address_code: Number(sender.address_code), reciever_address_code: Number(recipientCode), pickup_date: pickupDate, category_id: Number(category.category_id), package_items: packageItems, service_type: "pickup", package_dimension: { length: SHIPBUBBLE_PACKAGE_LENGTH_CM, width: SHIPBUBBLE_PACKAGE_WIDTH_CM, height: SHIPBUBBLE_PACKAGE_HEIGHT_CM } }) }); const rates = rateResult.data && Array.isArray(rateResult.data.couriers) ? rateResult.data.couriers : []; const pickupRates = rates.filter((r) => !r.service_type || r.service_type === "pickup"); const candidates = pickupRates.length ? pickupRates : rates; const validRates = candidates.map((r) => ({ carrier: String(r.courier_name || r.service_code || "Courier").slice(0, 100), amount: Number(r.rate_card_amount ?? r.total), delivery_time: String(r.delivery_eta || r.delivery_eta_time || "").slice(0, 100) })).filter((r) => Number.isFinite(r.amount) && r.amount > 0); if (!validRates.length) { const e = new Error("Shipbubble returned no usable delivery rates for this route."); e.statusCode = 422; throw e; } validRates.sort((a, b) => a.amount - b.amount); return { amount: Math.round(validRates[0].amount), carrier: validRates[0].carrier, delivery_time: validRates[0].delivery_time, rates: validRates.slice(0, 5), origin, destination: { city: String(city).trim(), state: String(state).trim() }, currency: "NGN", provider: "Shipbubble" }; }
+app.post("/api/shipping/quote", checkoutLimiter, async (req, res) => { try { const body = req.body || {}; const city = String(body.city || "").trim(); const state = String(body.state || "").trim(); if (!city || !state) return res.status(400).json({ error: "Enter the delivery city/LGA and state to calculate shipping." }); const dispatchLocation = String(getSetting("active_dispatch_location", "Ikorodu, Lagos")).trim() || "Ikorodu, Lagos"; const items = normalizeCheckoutItems(body.items || []); const quote = await getShipbubbleShippingQuote({ dispatchLocation, city, state, items, customer: { name: body.customer_name, email: body.email, phone: body.phone, address: body.address } }); return res.json({ success: true, quote }); } catch (error) { return res.status(error.statusCode || 502).json({ error: error.message || "Could not calculate a live shipping quote." }); } });
 
 // ============================================================
 // CHECKOUT
@@ -2352,12 +2248,12 @@ app.post(
 
       // Always request a fresh provider quote server-side before payment.
       // Never trust a shipping amount supplied by the browser.
-      const shippingQuote = await getTerminalAfricaShippingQuote({
+      const shippingQuote = await getShipbubbleShippingQuote({
         dispatchLocation,
         city: shippingCity,
         state: shippingState,
         items,
-        subtotal
+        customer: { name: customerName, email: customerEmail, phone: customerPhone, address: shippingAddress }
       });
       const submittedQuoteAmount = Number(body.shipping_quote_amount);
       if (!Number.isFinite(submittedQuoteAmount) || submittedQuoteAmount !== shippingQuote.amount) {
