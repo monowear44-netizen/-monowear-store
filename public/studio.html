@@ -284,19 +284,21 @@
             required
           >
         </label>
+        <textarea name="images" hidden aria-hidden="true"></textarea>
         <!-- PRODUCT IMAGE UPLOAD -->
         <div class="image-upload-field">
           <label for="productImageFile">
-            Product image
+            Product images (select multiple)
             <input
               id="productImageFile"
               name="imageFile"
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif"
+              multiple
             >
           </label>
           <p class="muted">
-            JPG, PNG, WEBP or GIF. Maximum 5 MB.
+            Select multiple JPG, PNG, WEBP or GIF images (up to 10 images total, 5 MB each). Use different views to showcase each available colour. The first image is the main storefront image.
           </p>
           <div id="imagePreviewWrap" hidden>
             <img
