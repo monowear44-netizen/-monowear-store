@@ -378,6 +378,196 @@ for (const collection of initialCollections) {
   );
 }
 
+ 
+// ============================================================
+// MONOWEAR PRODUCT CATALOGUE DRAFTS
+// Idempotent: creates missing catalogue items without duplicating
+// them. Existing core products keep their price, stock, image and
+// publication state. New concepts remain unpublished until reviewed.
+// ============================================================
+
+const catalogueDrafts = [
+  {
+    name: "MONO HELP IS ON THE WAY HOODIE",
+    slug: "mono-help-is-on-the-way-hoodie",
+    aliases: ["Hoodie", "MONO HELP IS ON THE WAY HOODIE"],
+    description: "A statement piece from MONOWEAR’s HELP IS ON THE WAY drop. Inspired by pressure, persistence, and the determination to find a way through, this hoodie represents the strength it takes to keep moving when life gets heavy. Help can arrive as an opportunity, a person, a second chance—or the strength you discover within yourself. Designed for those who keep going, even when the way forward isn’t clear.",
+    category: "Hoodies",
+    collection: "help-is-on-the-way"
+  },
+  {
+    name: "MONO HELP IS ON THE WAY LONGSLEEVE",
+    slug: "mono-help-is-on-the-way-longsleeve",
+    aliases: ["Longsleeve", "MONO HELP IS ON THE WAY LONGSLEEVE"],
+    description: "A streetwear essential from MONOWEAR’s HELP IS ON THE WAY drop. Built around pressure, persistence, and finding your way forward, this piece represents the journey of becoming stronger through what you face. Sometimes help arrives through an unexpected opportunity. Sometimes it comes from someone who believes in you. And sometimes, you become the help you have been waiting for. Keep moving. Your way through will come.",
+    category: "Longsleeves",
+    collection: "help-is-on-the-way"
+  },
+  {
+    name: "MONO ARCHIVE CAP",
+    slug: "mono-archive-cap",
+    aliases: ["Mono Archive Cap", "MONO ARCHIVE CAP"],
+    description: "An everyday essential from MONOWEAR. The MONO ARCHIVE CAP brings understated streetwear into your daily rotation, built around the meaning behind the name: independence, self-reliance, and freedom. Simple enough to wear every day. Distinct enough to represent something. LIVE THE NAME. WEAR THE MEANING.",
+    category: "Accessories",
+    collection: "mono-originals"
+  },
+  {
+    name: "THE MONO ORIGINALS — MOSS",
+    slug: "the-mono-originals-moss",
+    description: "Part of THE MONO ORIGINALS, a line built around the foundations of MONOWEAR. Rooted in independence and everyday expression, this piece represents the core of the brand: clothing with meaning, made for those who choose their own direction. Confirm the garment type and colour details before publishing.",
+    category: "Unspecified garment",
+    collection: "mono-originals"
+  },
+  {
+    name: "Y2K RETRO TEE",
+    slug: "y2k-retro-tee",
+    description: "Inspired by vintage cars, nostalgia, and the freedom of the open road. The Y2K RETRO TEE captures a retro-inspired aesthetic built around movement, independence, and going your own way. Its vintage-car concept represents the freedom to choose your direction rather than wait for someone else to take you there. The plot twist? You were never waiting for a passenger. You were always meant to drive alone. MONO — move on your own.",
+    category: "Tees",
+    collection: "mono-archives"
+  },
+  {
+    name: "MONOWEAR MOTION TEE",
+    slug: "monowear-motion-tee",
+    description: "Movement is more than going somewhere. It is the decision to keep progressing, even when the destination is still uncertain. The MONOWEAR MOTION TEE represents consistency, independence, and the mindset of someone who refuses to remain where they started. Every step counts. Every day is another opportunity to move forward.",
+    category: "Tees",
+    collection: "mono-originals"
+  },
+  {
+    name: "MONO CROPPED TEE — INDEPENDENCE",
+    slug: "mono-cropped-tee-independence",
+    description: "A statement piece from MONOWEAR’s Independence campaign. Created around the idea of standing on your own, this cropped tee represents freedom, self-reliance, and the confidence to exist without depending on outside approval. Independence is not just a look. It is a way of moving through life.",
+    category: "Cropped Tees",
+    collection: "mono-archives"
+  },
+  {
+    name: "MONO MULTICOLOR LETTER-BOX GRAPHIC TEE",
+    slug: "mono-multicolor-letter-box-graphic-tee",
+    description: "A graphic-led MONOWEAR streetwear piece featuring a multicolour letter-box chest design. Created for a distinctive visual identity while staying connected to the brand’s independent spirit, this piece brings expressive graphics into everyday streetwear. Confirm the final graphic and colourway before publishing.",
+    category: "Graphic Tees",
+    collection: "mono-archives"
+  },
+  {
+    name: "MONO WHITE GRAPHIC TEE",
+    slug: "mono-white-graphic-tee",
+    description: "A clean canvas for MONOWEAR’s independent identity. Designed around the brand’s streetwear aesthetic, the MONO WHITE GRAPHIC TEE offers a versatile everyday piece with room for distinctive graphic expression. Minimal in colour. Meaningful in identity.",
+    category: "Graphic Tees",
+    collection: "mono-originals"
+  },
+  {
+    name: "MONO BLACK GRAPHIC TEE",
+    slug: "mono-black-graphic-tee",
+    description: "A black streetwear essential from MONOWEAR. Built around the brand’s dark aesthetic and independent identity, this graphic tee brings a strong visual presence to everyday dressing. Made for those who define themselves rather than follow the crowd. LIVE THE NAME. WEAR THE MEANING.",
+    category: "Graphic Tees",
+    collection: "mono-originals"
+  },
+  {
+    name: "MONO LEOPARD DENIM ARCHIVE JEANS — 02",
+    slug: "mono-leopard-denim-archive-jeans-02",
+    description: "An expressive denim concept from the MONOWEAR archive. The MONO LEOPARD DENIM ARCHIVE JEANS — 02 brings a distinctive leopard-inspired design into the brand’s streetwear identity. Created for those who treat personal style as an extension of individuality, this piece stands apart from ordinary denim. A statement from the archive. A look of your own.",
+    category: "Denim",
+    collection: "mono-archives"
+  },
+  {
+    name: "NEXUS RAGLAN",
+    slug: "nexus-raglan",
+    description: "A streetwear piece from MONOWEAR built around individuality and expression. The NEXUS RAGLAN brings a distinctive silhouette into the MONOWEAR wardrobe, offering a foundation for everyday styling while staying true to the brand’s independent spirit. Wear your own direction. Define your own identity.",
+    category: "Raglan",
+    collection: "mono-archives"
+  },
+  {
+    name: "PARDON MY SWAG — NEWSPAPER BEANIE",
+    slug: "pardon-my-swag-newspaper-beanie",
+    description: "A graphic-inspired accessory concept from MONOWEAR. The PARDON MY SWAG NEWSPAPER BEANIE brings a newspaper-inspired aesthetic into streetwear, combining expressive design with an unapologetic sense of personal style. For those who wear their individuality without asking permission.",
+    category: "Accessories",
+    collection: "mono-archives"
+  },
+  {
+    name: "MONO LEGACY TRACK PANTS",
+    slug: "mono-legacy-track-pants",
+    description: "Built around the idea of leaving something behind that carries your name. The MONO LEGACY TRACK PANTS represent the journey of building your own path, staying consistent, and creating a legacy through your actions. A streetwear essential connected to a bigger purpose: independence that outlives the moment.",
+    category: "Track Pants",
+    collection: "mono-archives"
+  },
+  {
+    name: "STORY OF A BOY WHO NEVER SETTLES",
+    slug: "story-of-a-boy-who-never-settles",
+    description: "A MONOWEAR concept built around ambition, movement, and refusing to settle for a life that does not feel like your own. For the ones building quietly, choosing their own direction, and turning pressure into progress. Confirm the garment type and artwork before publishing.",
+    category: "Unspecified garment",
+    collection: "mono-archives"
+  },
+  {
+    name: "MONO PLAIN WHITE TEE",
+    slug: "mono-plain-white-tee",
+    description: "A clean everyday staple for the MONOWEAR wardrobe. Simple, versatile, and designed to work across everyday streetwear looks. Confirm the fit, fabric, and exact colour before publishing.",
+    category: "Tees",
+    collection: "mono-originals"
+  },
+  {
+    name: "HELP IS ON THE WAY CAP",
+    slug: "help-is-on-the-way-cap",
+    description: "A cap concept for MONOWEAR’s HELP IS ON THE WAY drop. Inspired by pressure, persistence, and finding a way through, this accessory carries the drop’s message into an everyday streetwear essential. Confirm the final artwork and colourway before publishing.",
+    category: "Accessories",
+    collection: "help-is-on-the-way"
+  },
+  {
+    name: "MONO BLACK LONGSLEEVE",
+    slug: "mono-black-longsleeve",
+    description: "A black longsleeve streetwear concept from MONOWEAR. Designed around the brand’s dark visual identity and independent spirit, this piece is intended as a versatile everyday layer. Confirm whether this is a separate design from the HELP IS ON THE WAY longsleeve before publishing.",
+    category: "Longsleeves",
+    collection: "mono-originals"
+  }
+];
+
+const findProductBySlug = db.prepare("SELECT * FROM products WHERE slug = ?");
+const findProductByName = db.prepare("SELECT * FROM products WHERE lower(name) = lower(?) LIMIT 1");
+const insertCatalogueDraft = db.prepare(`
+  INSERT INTO products
+    (name, slug, description, price, compare_price, image, images, category,
+     sizes, colors, stock, published, featured, sort_order)
+  VALUES
+    (@name, @slug, @description, 0, 0, '', '[]', @category,
+     '[]', '[]', 0, 0, 0, @sort_order)
+`);
+const updateExistingCatalogueProduct = db.prepare(`
+  UPDATE products
+  SET name = ?, description = ?, category = ?, updated_at = CURRENT_TIMESTAMP
+  WHERE id = ?
+`);
+const findCollectionBySlug = db.prepare("SELECT id FROM collections WHERE slug = ?");
+const linkCatalogueProduct = db.prepare(`
+  INSERT OR IGNORE INTO product_collections (product_id, collection_id, sort_order)
+  VALUES (?, ?, 0)
+`);
+
+for (let index = 0; index < catalogueDrafts.length; index += 1) {
+  const item = catalogueDrafts[index];
+  let product = findProductBySlug.get(item.slug);
+
+  if (!product && Array.isArray(item.aliases)) {
+    for (const alias of item.aliases) {
+      product = findProductByName.get(alias);
+      if (product) break;
+    }
+  }
+
+  if (product) {
+    // Preserve the existing product's price, stock, image and publication state.
+    updateExistingCatalogueProduct.run(item.name, item.description, item.category, product.id);
+  } else {
+    const result = insertCatalogueDraft.run({
+      name: item.name,
+      slug: item.slug,
+      description: item.description,
+      category: item.category,
+      sort_order: 100 + index
+    });
+    product = db.prepare("SELECT * FROM products WHERE id = ?").get(Number(result.lastInsertRowid));
+  }
+
+  const collection = findCollectionBySlug.get(item.collection);
+  if (collection) linkCatalogueProduct.run(product.id, collection.id);
+}
+
 // ============================================================
 // MIDDLEWARE
 // ============================================================
