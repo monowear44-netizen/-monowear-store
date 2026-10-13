@@ -99,6 +99,8 @@
     root.style.setProperty("--accent", validColor(settings.design_accent, "#c6ff4b"));
     const fonts = { Manrope: "'Manrope', Arial, sans-serif", Arial: "Arial, sans-serif", Georgia: "Georgia, serif", system: "system-ui, sans-serif" };
     document.body.style.fontFamily = fonts[settings.design_font] || fonts.Manrope;
+    const radius = { square: "0px", soft: "8px", round: "999px" };
+    root.style.setProperty("--control-radius", radius[settings.design_radius] || radius.square);
     const hero = document.querySelector(".hero");
     if (hero) {
       const alignment = ["left", "center", "right"].includes(settings.design_hero_alignment) ? settings.design_hero_alignment : "left";
@@ -136,8 +138,8 @@
       "footerTagline",
       settings.tagline || "LIVE THE NAME. WEAR THE MEANING."
     );
-    setLink("instagramLink", settings.instagram || "");
-    setLink("newsletterLink", settings.instagram || "");
+    setLink("xLink", settings.x || "https://x.com/monowear44");
+    setLink("newsletterLink", settings.x || "https://x.com/monowear44");
     if (settings.contact_email) {
       setLink("emailLink", `mailto:${settings.contact_email}`);
     } else {
