@@ -238,10 +238,14 @@
       const id = Number(product.id);
       const stock = Number(product.stock ?? 0);
       const sizes = Array.isArray(product.sizes) ? product.sizes : [];
+      const colors = Array.isArray(product.colors) ? product.colors : [];
       const soldOut = stock <= 0;
       const sizeOptions = sizes.length
         ? sizes.map((size) => `<option value="${escapeHTML(size)}">${escapeHTML(size)}</option>`).join("")
         : '<option value="One size">One size</option>';
+      const colorOptions = colors.length
+        ? `<select class="size-select color-select" id="color-${id}" aria-label="Choose colour for ${escapeHTML(product.name)}" ${soldOut ? "disabled" : ""}>${colors.map((color) => `<option value="${escapeHTML(color)}">${escapeHTML(color)}</option>`).join("")}</select>`
+        : "";
       return `
         <article class="product-card" data-product-id="${id}">
           <a class="product-image product-page-link" href="/product.html?slug=${encodeURIComponent(product.slug || "")}&id=${id}" aria-label="View product details">
@@ -261,6 +265,7 @@
             <select class="size-select" id="size-${id}" aria-label="Choose size for ${escapeHTML(product.name)}" ${soldOut ? "disabled" : ""}>
               ${sizeOptions}
             </select>
+            ${colorOptions}
             <button class="add-button" type="button" ${soldOut ? "disabled" : ""} onclick="addToCart(${id})">
               ${soldOut ? "SOLD OUT" : "ADD TO BAG +"}
             </button>
@@ -414,7 +419,8 @@
                 </div>
                 <div class="cart-item-details">
                   <strong>${escapeHTML(item.name)}</strong>
-                  <p>${escapeHTML(item.size || "One size")}</p>
+                  <p>Size: ${escapeHTML(item.size || "One size")}</p>
+                  ${item.color ? `<p>Colour: ${escapeHTML(item.color)}</p>` : ""}
                   <p>${money(item.price)} × ${Number(item.quantity) || 1}</p>
                 </div>
                 <button
@@ -463,13 +469,14 @@
       return;
     }
     const sizeSelect = $(`size-${productId}`);
-    const selectedSize = sizeSelect
-      ? sizeSelect.value
-      : "One size";
+    const selectedSize = sizeSelect ? sizeSelect.value : "One size";
+    const colorSelect = $(`color-${productId}`);
+    const selectedColor = colorSelect ? colorSelect.value : "";
     const existingItem = cart.find(
       (item) =>
         Number(item.id) === Number(productId) &&
-        item.size === selectedSize
+        item.size === selectedSize &&
+        String(item.color || "") === selectedColor
     );
     if (existingItem) {
       if (Number(existingItem.quantity) >= Number(product.stock)) {
@@ -485,6 +492,7 @@
         price: Number(product.price) || 0,
         image: product.image || "",
         size: selectedSize,
+        color: selectedColor,
         quantity: 1
       });
     }
