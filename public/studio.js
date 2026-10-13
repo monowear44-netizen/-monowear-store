@@ -692,6 +692,7 @@ $("productForm").addEventListener("submit", async (event) => {
     "price",
     "compare_price",
     "sizes",
+    "colors",
     "stock",
     "image",
     "description",
