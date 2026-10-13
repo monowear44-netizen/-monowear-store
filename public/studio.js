@@ -191,12 +191,14 @@ document.querySelectorAll(".nav").forEach((button) => {
 });
 
 function switchTab(tab) {
+  window.monowearActiveTab = tab;
+  const panelTab = tab === "abandoned" ? "orders" : tab;
   document.querySelectorAll(".nav").forEach((button) => {
     button.classList.toggle("active", button.dataset.tab === tab);
   });
 
   document.querySelectorAll(".tab-panel").forEach((panel) => {
-    panel.hidden = panel.id !== `tab-${tab}`;
+    panel.hidden = panel.id !== `tab-${panelTab}`;
   });
 
   const titles = {
@@ -204,6 +206,7 @@ function switchTab(tab) {
     products: "Products",
     appearance: "Store editor",
     orders: "Orders",
+    abandoned: "Abandoned carts",
     collections: "Collections",
     payments: "Payments"
   };
@@ -211,7 +214,7 @@ function switchTab(tab) {
   $("pageTitle").textContent = titles[tab] || "Studio";
 
   if (tab === "overview") loadSummary();
-  if (tab === "orders") loadOrders();
+  if (tab === "orders" || tab === "abandoned") loadOrders();
   if (tab === "collections") loadCollections();
   if (tab === "payments") loadPayments();
   if (tab === "appearance") loadEmailStatus();
@@ -800,7 +803,7 @@ $("settingsForm").addEventListener("submit", async (event) => {
 
 async function loadOrders() {
   try {
-    currentOrders = await api("/api/admin/orders");
+    currentOrders = await api(window.monowearActiveTab === "abandoned" ? "/api/admin/abandoned-carts" : "/api/admin/orders");
 
     if ($("orderCount")) {
       $("orderCount").textContent = currentOrders.length;
