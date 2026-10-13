@@ -578,9 +578,11 @@
       if (checkoutTotal) checkoutTotal.textContent = "—";
       if (checkoutShipping) checkoutShipping.textContent = "Enter destination";
       if (shippingQuoteMessage) shippingQuoteMessage.textContent = "Enter your city/LGA and state to fetch a live courier rate.";
+      currentShippingQuoteAmount = null;
       if (checkoutDialog && !checkoutDialog.open) {
         checkoutDialog.showModal();
       }
+      refreshShippingQuote();
     });
   }
   if (closeCheckout && checkoutDialog) {
