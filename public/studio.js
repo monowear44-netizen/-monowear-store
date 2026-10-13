@@ -1541,3 +1541,43 @@ if ($("sendTestEmail")) {
 // ============================================================
 
 checkAuth();
+
+
+// ============================================================
+// STOREFRONT DESIGNER LIVE PREVIEW
+// ============================================================
+(function setupStoreDesignerPreview() {
+  const form = document.getElementById("settingsForm");
+  const preview = document.getElementById("designPreview");
+  if (!form || !preview) return;
+
+  function refreshDesignPreview() {
+    const value = (name, fallback) => form.elements[name]?.value || fallback;
+    const background = value("design_background", "#f0efe9");
+    const ink = value("design_text", "#141414");
+    const accent = value("design_accent", "#c6ff4b");
+    const fonts = {
+      Manrope: "'Manrope', Arial, sans-serif",
+      Arial: "Arial, sans-serif",
+      Georgia: "Georgia, serif",
+      system: "system-ui, sans-serif"
+    };
+    const alignment = value("design_hero_alignment", "left");
+    preview.style.setProperty("--preview-bg", background);
+    preview.style.setProperty("--preview-ink", ink);
+    preview.style.setProperty("--preview-accent", accent);
+    preview.style.fontFamily = fonts[value("design_font", "Manrope")] || fonts.Manrope;
+    preview.style.alignItems = alignment === "left" ? "flex-start" : alignment === "right" ? "flex-end" : "center";
+    preview.style.textAlign = alignment;
+  }
+
+  form.addEventListener("input", refreshDesignPreview);
+  form.addEventListener("change", refreshDesignPreview);
+  refreshDesignPreview();
+
+  const originalLoadSettings = window.loadSettings;
+  // Studio settings load asynchronously; refresh after the form is populated.
+  const observer = new MutationObserver(refreshDesignPreview);
+  observer.observe(form, { subtree: true, childList: true });
+  window.addEventListener("pageshow", refreshDesignPreview);
+})();
