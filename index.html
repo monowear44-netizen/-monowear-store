@@ -255,6 +255,12 @@
   <dialog id="checkoutDialog" class="checkout-dialog">
     <form id="checkoutForm">
 
+      <div class="checkout-brand-panel">
+        <p class="eyebrow">MONOWEAR / CHECKOUT</p>
+        <div class="checkout-brand-wordmark">MONOWEAR<span>®</span></div>
+        <p>THE NEXT CHAPTER STARTS HERE.</p>
+        <div class="checkout-brand-index"><span>01 — DELIVERY</span><span>02 — PAYMENT</span></div>
+      </div>
       <div class="drawer-head">
         <h2>Delivery details</h2>
 
@@ -325,6 +331,18 @@
     </form>
   </dialog>
 
+  <!-- MONOWEAR BRANDED PAYMENT TRANSITION -->
+  <div class="payment-loading" id="paymentLoading" role="status" aria-live="polite" aria-hidden="true" hidden>
+    <div class="payment-loading-card">
+      <div class="payment-loading-mark">MONOWEAR<span>®</span></div>
+      <div class="payment-loading-rule"><span></span></div>
+      <p class="payment-loading-kicker">SECURE CHECKOUT / 01</p>
+      <h2>Good things<br><i>are on the way.</i></h2>
+      <div class="payment-spinner" aria-hidden="true"></div>
+      <p class="payment-loading-message">Connecting you to Paystack</p>
+      <p class="payment-loading-note">Keep this tab open while we prepare your secure payment.</p>
+    </div>
+  </div>
   <!-- LOAD STORE LOGIC -->
   <script src="/store.js"></script>
 
