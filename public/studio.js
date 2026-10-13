@@ -1154,7 +1154,11 @@ function renderCollections() {
     return true;
   });
 
-  container.innerHTML = list.map((collection) => `
+  container.innerHTML = list.map((collection) => {
+    const releaseLabel = collection.release_date
+      ? ` · Release ${esc(collection.release_date)}`
+      : "";
+    return `
     <article class="product-row">
       <div class="thumb">
         ${
@@ -1168,7 +1172,7 @@ function renderCollections() {
         <h3>${esc(collection.name)} ${collectionState(collection)}</h3>
         <p>
           ${collection.products.length} product${collection.products.length === 1 ? "" : "s"}
-          · /${esc(collection.slug)}
+          · /${esc(collection.slug)}${releaseLabel}
         </p>
       </div>
 
@@ -1182,8 +1186,8 @@ function renderCollections() {
           ${collection.archived ? "RESTORE" : "ARCHIVE"}
         </button>
       </div>
-    </article>
-  `).join("") || `
+    </article>`;
+  }).join("") || `
     <p class="muted">
       ${filter === "archived" ? "No archived collections." : "No collections here yet."}
     </p>
@@ -1241,6 +1245,7 @@ function newCollection() {
   form.elements.published.checked = true;
   form.elements.published.disabled = false;
   form.elements.sort_order.value = 0;
+  form.elements.release_date.value = "";
 
   setCollectionCover("");
   renderCollectionProductPicker([]);
@@ -1271,6 +1276,7 @@ window.editCollection = (id) => {
   form.elements.slug.value = collection.slug || "";
   form.elements.description.value = collection.description || "";
   form.elements.sort_order.value = collection.sort_order || 0;
+  form.elements.release_date.value = collection.release_date || "";
   form.elements.published.checked = !!collection.published;
   form.elements.published.disabled = !!collection.archived;
 
@@ -1381,6 +1387,7 @@ if ($("collectionForm")) {
         description: form.elements.description.value,
         cover_image: cover,
         sort_order: Number(form.elements.sort_order.value || 0),
+        release_date: form.elements.release_date.value || "",
         published: form.elements.published.checked,
         archived: existing ? !!existing.archived : false
       };
