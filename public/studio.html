@@ -121,6 +121,17 @@
         <strong id="statLowStock">—</strong>
       </div>
     </div>
+    <div class="panel" id="monitoringPanel">
+      <p class="eyebrow">STORE OPERATIONS</p>
+      <h2>Store health &amp; recovery</h2>
+      <p class="muted">Check payment and email issues, then download a private backup of your database and uploaded media.</p>
+      <div id="monitoringSummary" class="monitoring-summary"><p class="muted">Load the latest store checks.</p></div>
+      <div class="toolbar">
+        <button class="secondary" type="button" id="refreshMonitoring">CHECK STORE HEALTH ↻</button>
+        <a class="primary" id="downloadStoreBackup" href="/api/admin/backup">DOWNLOAD FULL BACKUP ↓</a>
+      </div>
+      <p class="muted" id="backupMessage">Backups contain customer/order data. Keep the file private.</p>
+    </div>
     <div class="panel welcome">
       <p class="eyebrow">YOUR BRAND. YOUR CONTROL.</p>
       <h2>Keep the store moving.</h2>
