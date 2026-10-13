@@ -28,6 +28,9 @@
 <button class="nav" data-tab="appearance" type="button">
   Store editor
 </button>
+<button class="nav" data-tab="audience" type="button">
+  Waitlist &amp; Subscribers
+</button>
 <button class="nav" data-tab="orders" type="button">
   Orders <span id="orderCount">—</span>
 </button>
@@ -507,6 +510,21 @@
           Hero subtitle
           <textarea name="hero_subtitle" rows="3"></textarea>
         </label>
+        <div class="span2 editor-head">
+          <div>
+            <p class="eyebrow">BRAND IDENTITY</p>
+            <h2>The Story</h2>
+            <p class="muted">Change the story displayed in the storefront’s “THE STORY” section.</p>
+          </div>
+        </div>
+        <label class="span2">
+          Story headline
+          <input name="story_title" maxlength="180" placeholder="Built for the ones who keep going.">
+        </label>
+        <label class="span2">
+          Brand story
+          <textarea name="brand_story" rows="5" maxlength="3000" placeholder="Tell customers what MONO stands for…"></textarea>
+        </label>
         <label>
           Hero button text
           <input name="hero_cta">
@@ -908,6 +926,36 @@
       </select>
     </div>
     <div id="ordersList" class="orders-list"></div>
+  </section>
+
+  <!-- WAITLIST & SUBSCRIBERS -->
+  <section class="tab-panel" id="tab-audience" hidden>
+    <div class="toolbar">
+      <div>
+        <p class="eyebrow">CUSTOMER INTEREST</p>
+        <h2>Waitlist &amp; Subscribers</h2>
+        <p class="muted">View product waitlist sign-ups and newsletter subscribers. Keep customer email addresses private.</p>
+      </div>
+      <div class="toolbar-actions">
+        <button class="secondary" type="button" id="refreshAudience">REFRESH ↻</button>
+        <button class="primary" type="button" id="exportAudience">EXPORT CSV ↓</button>
+      </div>
+    </div>
+    <p id="audienceMessage" class="message" role="status" aria-live="polite"></p>
+    <div class="panel">
+      <div class="toolbar">
+        <div><p class="eyebrow">01 / PRODUCT INTEREST</p><h2>Product waitlist</h2><p class="muted">Customers who asked to be notified about a product or drop.</p></div>
+        <strong id="waitlistCount">0 sign-ups</strong>
+      </div>
+      <div id="waitlistList" class="products-list"><p class="muted">Loading waitlist…</p></div>
+    </div>
+    <div class="panel">
+      <div class="toolbar">
+        <div><p class="eyebrow">02 / NEWSLETTER</p><h2>Newsletter subscribers</h2><p class="muted">Customers who joined the general email list.</p></div>
+        <strong id="newsletterCount">0 subscribers</strong>
+      </div>
+      <div id="newsletterList" class="products-list"><p class="muted">Loading subscribers…</p></div>
+    </div>
   </section>
 
   <!-- PAYMENTS -->
