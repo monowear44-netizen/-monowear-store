@@ -267,7 +267,7 @@ ensureColumn("orders", "shipping_provider", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipping_request_token", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipping_courier_id", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipping_service_code", "TEXT DEFAULT ''");
-ensureColumn("orders", "shipping_courier_name", "TEXT DEFAULT '');
+ensureColumn("orders", "shipping_courier_name", "TEXT DEFAULT ''");
 
 if (ensureColumn("orders", "email_status", "TEXT DEFAULT ''")) {
   // Orders already paid before this update are marked "legacy" so the
