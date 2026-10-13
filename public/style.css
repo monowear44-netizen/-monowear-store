@@ -216,3 +216,20 @@ body.payment-is-loading{overflow:hidden}
 @media (max-width: 600px) {
   .product-detail-more-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+
+/* CHECKOUT SCROLL FIX: keep scrolling inside the checkout dialog, not the storefront */
+.checkout-dialog {
+  max-height: calc(100dvh - 24px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+.checkout-dialog form {
+  min-height: 0;
+}
+body:has(#checkoutDialog[open]) {
+  overflow: hidden;
+}
