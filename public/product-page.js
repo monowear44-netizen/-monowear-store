@@ -60,9 +60,25 @@
       document.title=product.name+" — MONOWEAR"; $("productBreadcrumbName").textContent=product.name||"PRODUCT"; $("productPageStatus").hidden=true;
       const sizes=Array.isArray(product.sizes)&&product.sizes.length ? product.sizes : ["One size"], colors=Array.isArray(product.colors)?product.colors:[], stock=Number(product.stock)||0;
       const colorField=colors.length ? '<label class="standalone-size-label" for="standaloneProductColor">SELECT COLOUR</label><select id="standaloneProductColor" class="standalone-size-select" '+(stock<=0?"disabled":"")+'>'+colors.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join("")+'</select>' : '';
+      const gallerySources=imageSources(product);
+      const galleryMarkup=gallerySources.length>1 ? '<div class="product-image-thumbnails" aria-label="More product images">'+gallerySources.map((src,index)=>'<button type="button" class="product-image-thumbnail'+(index===0?' is-active':'')+'" data-image-index="'+index+'" aria-label="View product image '+(index+1)+'"><img src="'+esc(src)+'" alt="'+esc((product.name||"Product")+" view "+(index+1))+'"></button>').join("")+'</div>' : '';
       $("productPageContent").hidden=false;
-      $("productPageContent").innerHTML='<div class="standalone-product-layout"><div class="standalone-product-visual">'+imageMarkup(product)+'</div><div class="standalone-product-info"><p class="eyebrow">MONOWEAR / PRODUCT DETAIL</p><p class="standalone-product-category">'+esc(product.category||"MONOWEAR")+'</p><h1>'+esc(product.name||"MONOWEAR Piece")+'</h1><p class="standalone-product-price">'+money(product.price)+'</p><div class="standalone-product-description">'+esc(product.description||"A MONOWEAR piece. More details coming soon.")+'</div><p class="standalone-stock">'+(stock>0?"IN STOCK · "+stock+" AVAILABLE":"SOLD OUT")+'</p><label class="standalone-size-label" for="standaloneProductSize">SELECT SIZE</label><select id="standaloneProductSize" class="standalone-size-select" '+(stock<=0?"disabled":"")+'>'+sizes.map(s=>'<option value="'+esc(s)+'">'+esc(s)+'</option>').join("")+'</select>'+colorField+'<button type="button" id="standaloneAddToBag" class="add-button standalone-add-button" '+(stock<=0?"disabled":"")+'>'+(stock<=0?"SOLD OUT":"ADD TO BAG +")+'</button><p id="productAddedNote" class="product-added-note" role="status" aria-live="polite"></p><a class="standalone-back-link" href="/#shop">← BACK TO ALL PIECES</a></div></div>';
+      $("productPageContent").innerHTML='<div class="standalone-product-layout"><div class="standalone-product-visual">'+imageMarkup(product)+galleryMarkup+'</div><div class="standalone-product-info"><p class="eyebrow">MONOWEAR / PRODUCT DETAIL</p><p class="standalone-product-category">'+esc(product.category||"MONOWEAR")+'</p><h1>'+esc(product.name||"MONOWEAR Piece")+'</h1><p class="standalone-product-price">'+money(product.price)+'</p><div class="standalone-product-description">'+esc(product.description||"A MONOWEAR piece. More details coming soon.")+'</div><p class="standalone-stock">'+(stock>0?"IN STOCK · "+stock+" AVAILABLE":"SOLD OUT")+'</p><label class="standalone-size-label" for="standaloneProductSize">SELECT SIZE</label><select id="standaloneProductSize" class="standalone-size-select" '+(stock<=0?"disabled":"")+'>'+sizes.map(s=>'<option value="'+esc(s)+'">'+esc(s)+'</option>').join("")+'</select>'+colorField+'<button type="button" id="standaloneAddToBag" class="add-button standalone-add-button" '+(stock<=0?"disabled":"")+'>'+(stock<=0?"SOLD OUT":"ADD TO BAG +")+'</button><p id="productAddedNote" class="product-added-note" role="status" aria-live="polite"></p><a class="standalone-back-link" href="/#shop">← BACK TO ALL PIECES</a></div></div>';
       $("standaloneAddToBag").addEventListener("click",addToBag);
+      document.querySelectorAll(".product-image-thumbnail").forEach((button) => {
+        button.addEventListener("click", () => {
+          const index=Number(button.dataset.imageIndex);
+          const visual=document.querySelector(".standalone-product-visual");
+          const mainImage=visual && visual.querySelector("img[data-sources]");
+          if(!mainImage || !gallerySources[index]) return;
+          mainImage.dataset.index=String(index);
+          mainImage.src=gallerySources[index];
+          mainImage.style.display="";
+          const placeholder=mainImage.nextElementSibling;
+          if(placeholder && placeholder.classList.contains("image-placeholder")) placeholder.hidden=true;
+          document.querySelectorAll(".product-image-thumbnail").forEach((item)=>item.classList.toggle("is-active",item===button));
+        });
+      });
       const related=products.filter(p=>Number(p.id)!==Number(product.id));
       const sameCategory=product.category ? related.filter(p=>String(p.category||"").toLowerCase()===String(product.category).toLowerCase()) : [];
       $("productRelatedGrid").innerHTML=(sameCategory.length?sameCategory:related).slice(0,4).map(relatedCard).join("");
