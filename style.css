@@ -108,3 +108,39 @@
     width: 100%;
   }
 }
+
+
+
+/* MONOWEAR CHECKOUT — EDITORIAL, HIGH-CONTRAST FINISH */
+.checkout-dialog{width:min(540px,calc(100% - 24px));max-width:540px;padding:0;border:1px solid #24251f;background:#f3f1e9;box-shadow:0 28px 100px #0005;overflow:hidden}
+.checkout-dialog::backdrop{background:rgba(9,10,8,.78);backdrop-filter:blur(7px)}
+.checkout-dialog form{padding:0 28px 26px}
+.checkout-brand-panel{position:relative;overflow:hidden;margin:0 -28px 24px;padding:25px 28px 19px;background:#151613;color:#f4f2e9}
+.checkout-brand-panel:after{content:"MW";position:absolute;right:-8px;bottom:-44px;font-size:clamp(100px,22vw,150px);line-height:1;font-weight:800;letter-spacing:-.13em;color:#ffffff08;pointer-events:none}
+.checkout-brand-panel .eyebrow{color:#c6ff4b;font-size:9px;letter-spacing:.2em;margin:0 0 13px}
+.checkout-brand-wordmark{position:relative;z-index:1;font-size:clamp(32px,7vw,46px);font-weight:800;letter-spacing:-.095em;line-height:1}
+.checkout-brand-wordmark span{font:10px 'DM Mono',monospace;vertical-align:top;margin-left:4px;letter-spacing:0}
+.checkout-brand-panel>p:not(.eyebrow){position:relative;z-index:1;font:9px 'DM Mono',monospace;letter-spacing:.16em;color:#c6c6bd;margin:12px 0 25px}
+.checkout-brand-index{position:relative;z-index:1;display:flex;justify-content:space-between;gap:12px;border-top:1px solid #ffffff30;padding-top:12px;font:9px 'DM Mono',monospace;letter-spacing:.1em;color:#c6ff4b}
+.checkout-dialog .drawer-head{align-items:center;margin-bottom:8px}
+.checkout-dialog .drawer-head h2{font-size:27px;letter-spacing:-.065em;margin:0}
+.checkout-dialog label{margin:16px 0;color:#5d5d54;font-size:10px;letter-spacing:.09em;text-transform:uppercase}
+.checkout-dialog input,.checkout-dialog textarea{min-height:46px;border:1px solid #cfcdc3;background:#fffdf7;padding:13px;font-family:Manrope,Arial,sans-serif;font-size:13px;transition:border-color .2s,box-shadow .2s}
+.checkout-dialog input:focus,.checkout-dialog textarea:focus{border-color:#171814;box-shadow:0 0 0 3px #c6ff4b55;outline:0}
+.checkout-dialog .cart-total{padding-top:18px;border-top:1px solid #d4d2c9;margin:20px 0 12px}
+.checkout-dialog .button-light{background:#c6ff4b;color:#141414;font-weight:800;min-height:52px;transition:transform .2s,background .2s}
+.checkout-dialog .button-light:hover{background:#b5ef37;transform:translateY(-1px)}
+.checkout-dialog .button-light:disabled{opacity:.65;cursor:wait;transform:none}
+.checkout-dialog .form-message{min-height:16px;color:#9b2e23}
+.payment-loading[hidden]{display:none!important}.payment-loading{position:fixed;z-index:99999;inset:0;display:grid;place-items:center;padding:20px;background:rgba(13,14,12,.96);color:#f5f3eb;backdrop-filter:blur(12px);animation:paymentFadeIn .22s ease-out}
+.payment-loading-card{position:relative;width:min(440px,100%);padding:clamp(28px,7vw,54px);border:1px solid #ffffff28;background:radial-gradient(ellipse at 100% 0%,#c6ff4b19,transparent 45%),#171815;text-align:left;overflow:hidden}
+.payment-loading-mark{font-size:clamp(34px,9vw,52px);font-weight:800;letter-spacing:-.095em;line-height:1}
+.payment-loading-mark span{font:10px 'DM Mono',monospace;vertical-align:top;margin-left:4px;letter-spacing:0}
+.payment-loading-rule{height:2px;background:#ffffff20;margin:28px 0 22px;overflow:hidden}.payment-loading-rule span{display:block;width:42%;height:100%;background:#c6ff4b;animation:paymentProgress 1.5s ease-in-out infinite alternate}
+.payment-loading-kicker{font:9px 'DM Mono',monospace;letter-spacing:.18em;color:#c6ff4b;margin:0 0 15px}
+.payment-loading-card h2{font-size:clamp(35px,8vw,49px);line-height:.96;letter-spacing:-.075em;margin:0 0 28px}.payment-loading-card h2 i{font-family:Georgia,serif;font-weight:400;color:#c6ff4b}
+.payment-spinner{width:24px;height:24px;border:2px solid #ffffff30;border-top-color:#c6ff4b;border-radius:50%;animation:paymentSpin .75s linear infinite}
+.payment-loading-message{font:11px 'DM Mono',monospace;letter-spacing:.07em;margin:17px 0 8px}.payment-loading-note{font-size:11px;line-height:1.7;color:#aaa99f;margin:0;max-width:290px}
+body.payment-is-loading{overflow:hidden}
+@keyframes paymentSpin{to{transform:rotate(360deg)}}@keyframes paymentProgress{to{transform:translateX(140%)}}@keyframes paymentFadeIn{from{opacity:0}to{opacity:1}}
+@media(max-width:520px){.checkout-dialog form{padding:0 18px 20px}.checkout-brand-panel{margin:0 -18px 20px;padding:22px 18px 16px}.checkout-brand-index{font-size:8px}.checkout-dialog .drawer-head h2{font-size:24px}}
