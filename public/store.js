@@ -612,6 +612,7 @@
      // MONOWEAR CHECKOUT FORM
 const checkoutForm = $("checkoutForm");
 let shippingQuoteRequestId = 0;
+let currentShippingQuoteAmount = null;
 
 async function refreshShippingQuote() {
   if (!checkoutForm) return;
@@ -629,6 +630,7 @@ async function refreshShippingQuote() {
   const requestId = ++shippingQuoteRequestId;
 
   if (!city || !state || !cart.length) {
+    currentShippingQuoteAmount = null;
     if (shippingNode) shippingNode.textContent = "Enter destination";
     if (totalNode) totalNode.textContent = "—";
     if (messageNode) messageNode.textContent = "Enter your city/LGA and state to fetch a live courier rate.";
@@ -660,6 +662,7 @@ async function refreshShippingQuote() {
       throw new Error(result.error || "Live delivery rates are unavailable.");
     }
     const quote = result.quote;
+    currentShippingQuoteAmount = Number(quote.amount);
     if (shippingNode) shippingNode.textContent = money(quote.amount);
     if (totalNode) totalNode.textContent = money(subtotal + Number(quote.amount || 0));
     if (messageNode) {
@@ -668,6 +671,7 @@ async function refreshShippingQuote() {
     }
   } catch (error) {
     if (requestId !== shippingQuoteRequestId) return;
+    currentShippingQuoteAmount = null;
     if (shippingNode) shippingNode.textContent = "Unavailable";
     if (totalNode) totalNode.textContent = "—";
     if (messageNode) messageNode.textContent = error.message || "Could not calculate delivery. Please try again.";
@@ -679,7 +683,6 @@ if (checkoutForm) {
   const stateField = checkoutForm.querySelector('[name="state"]');
   if (cityField) {
     cityField.addEventListener("change", refreshShippingQuote);
-    cityField.addEventListener("blur", refreshShippingQuote);
   }
   if (stateField) stateField.addEventListener("change", refreshShippingQuote);
 
@@ -716,6 +719,7 @@ if (checkoutForm) {
       ).trim(),
       city: String(formData.get("city") || "").trim(),
       state: String(formData.get("state") || "").trim(),
+      shipping_quote_amount: currentShippingQuoteAmount,
 
       items: cart.map((item) => ({
         product_id: Number(item.id),
@@ -790,6 +794,9 @@ if (checkoutForm) {
           error.message || "Checkout failed. Please try again.";
       } else {
         alert(error.message || "Checkout failed.");
+      }
+      if (String(error.message || "").toLowerCase().includes("delivery price has changed")) {
+        refreshShippingQuote();
       }
 
     } finally {
