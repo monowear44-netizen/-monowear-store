@@ -938,7 +938,6 @@ function renderOrders() {
           ` : ""}
         `}
       </div>
-/div>
     </article>`;
   }).join("") || `
     <p class="muted">${currentOrders.length ? "No orders match these filters." : "No orders yet."}</p>
