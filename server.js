@@ -2218,7 +2218,7 @@ async function getTerminalAfricaShippingQuote({ dispatchLocation, city, state, i
     name: String(item.name || item.title || "MONOWEAR clothing").slice(0, 120),
     description: String(item.name || item.title || "MONOWEAR clothing").slice(0, 240),
     currency: "NGN",
-    value: Math.max(0, Number(item.price || 0) * Number(item.quantity || 1)),
+    value: Math.max(0, Number(item.price || 0)),
     weight: safeWeight,
     quantity: Number(item.quantity || 1)
   }));
@@ -2359,6 +2359,17 @@ app.post(
         items,
         subtotal
       });
+      const submittedQuoteAmount = Number(body.shipping_quote_amount);
+      if (!Number.isFinite(submittedQuoteAmount) || submittedQuoteAmount !== shippingQuote.amount) {
+        return res.status(409).json({
+          error: "The live delivery price has changed. Your quote has been refreshed; please review the new total and continue again.",
+          shipping_quote: {
+            amount: shippingQuote.amount,
+            carrier: shippingQuote.carrier,
+            delivery_time: shippingQuote.delivery_time
+          }
+        });
+      }
       const actualShipping = shippingQuote.amount;
 
       // Discounts must never come from the browser. Re-enable only when
