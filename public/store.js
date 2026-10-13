@@ -578,11 +578,9 @@
       if (checkoutTotal) checkoutTotal.textContent = "—";
       if (checkoutShipping) checkoutShipping.textContent = "Enter destination";
       if (shippingQuoteMessage) shippingQuoteMessage.textContent = "Enter your city/LGA and state to fetch a live courier rate.";
-      currentShippingQuoteAmount = null;
       if (checkoutDialog && !checkoutDialog.open) {
         checkoutDialog.showModal();
       }
-      refreshShippingQuote();
     });
   }
   if (closeCheckout && checkoutDialog) {
@@ -687,6 +685,15 @@ if (checkoutForm) {
     cityField.addEventListener("change", refreshShippingQuote);
   }
   if (stateField) stateField.addEventListener("change", refreshShippingQuote);
+  const checkoutDialogForQuote = $("checkoutDialog");
+  if (checkoutDialogForQuote) {
+    checkoutDialogForQuote.addEventListener("toggle", () => {
+      if (checkoutDialogForQuote.open) {
+        currentShippingQuoteAmount = null;
+        refreshShippingQuote();
+      }
+    });
+  }
 
   checkoutForm.addEventListener("submit", async (event) => {
     event.preventDefault();
