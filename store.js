@@ -119,8 +119,8 @@
       "footerTagline",
       settings.tagline || "LIVE THE NAME. WEAR THE MEANING."
     );
-    setLink("instagramLink", settings.instagram || "");
-    setLink("newsletterLink", settings.instagram || "");
+    setLink("xLink", settings.x || "https://x.com/monowear44");
+    setLink("newsletterLink", settings.x || "https://x.com/monowear44");
     if (settings.contact_email) {
       setLink("emailLink", `mailto:${settings.contact_email}`);
     } else {
