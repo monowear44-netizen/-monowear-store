@@ -579,3 +579,29 @@ body:has(.checkout-dialog[open]){overflow:hidden;overscroll-behavior:none}
 @media(max-width:600px){
   .product-image-thumbnail{width:58px;height:70px}
 }
+
+
+/* Admin Studio: assign a product image to each available colour */
+.color-image-assignments {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin: 12px 0 20px;
+}
+.color-image-assignment {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--border, rgba(255,255,255,.16));
+  border-radius: 10px;
+  min-width: 0;
+}
+.color-image-assignment input[type="file"] {
+  width: 100%;
+  max-width: 100%;
+}
+.color-image-assignment img {
+  border-radius: 6px;
+  background: rgba(128,128,128,.08);
+}
