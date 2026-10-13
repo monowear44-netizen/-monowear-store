@@ -304,6 +304,7 @@ const defaults = {
   policy_returns: "",
   policy_shipping: "",
   logo_image: "",
+  design_theme: "dark",
   design_background: "#f0efe9",
   design_text: "#141414",
   design_accent: "#c6ff4b",
