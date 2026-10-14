@@ -4,6 +4,7 @@ const $ = (id) => document.getElementById(id);
 
 let currentProducts = [];
 let currentOrders = [];
+let currentHistoricalRecords = [];
 let currentSettings = {};
 
 const imageSettings = [
@@ -210,6 +211,7 @@ function switchTab(tab) {
     completed: "Completed & shipped",
     collections: "Collections",
     payments: "Payments",
+    history: "LabelD History",
     audience: "Waitlist & Subscribers"
   };
 
@@ -219,6 +221,7 @@ function switchTab(tab) {
   if (tab === "orders" || tab === "abandoned") loadOrders();
   if (tab === "collections") loadCollections();
   if (tab === "payments") loadPayments();
+  if (tab === "history") loadHistoricalRecords();
   if (tab === "appearance") loadEmailStatus();
   if (tab === "audience") loadAudience();
 }
@@ -1125,7 +1128,7 @@ function renderOrders() {
         </h3>
 
         <p>
-          ${badge((order.record_type || "real_order") === "abandoned_cart" ? "ABANDONED CART" : "REAL ORDER", (order.record_type || "real_order") === "abandoned_cart" ? "warn" : "good")}
+          ${badge((order.record_type || "real_order") === "abandoned_cart" ? "ABANDONED CART" : (order.record_type || "") === "historical_order" ? "LABELD HISTORICAL ORDER" : "REAL ORDER", (order.record_type || "real_order") === "abandoned_cart" ? "warn" : "good")}
           ${paymentBadge(order.payment_status)}
           ${badge(String(order.order_status || "").toUpperCase())}
           ${emailBadge(order.email_status)}
@@ -1152,7 +1155,7 @@ function renderOrders() {
         </p>
 
         <p>
-          Ordered ${esc(fmtDate(order.created_at))}
+          Ordered ${order.created_at ? esc(fmtDate(order.created_at)) : "Date not supplied"}
           ${order.paid_at ? ` · Paid ${esc(fmtDate(order.paid_at))}` : ""}
         </p>
       </div>
@@ -1617,6 +1620,66 @@ if ($("addCollectionInline")) {
     }
   });
 }
+
+
+// ============================================================
+// LABELD HISTORICAL RECORDS
+// ============================================================
+async function loadHistoricalRecords() {
+  const list = $("historyList");
+  if (!list) return;
+  list.innerHTML = '<div class="panel"><p class="muted">Loading LabelD history…</p></div>';
+  try {
+    const data = await api("/api/admin/historical-records");
+    currentHistoricalRecords = Array.isArray(data.records) ? data.records : [];
+    const summary = data.summary || {};
+    setText("historyCombinedSales", money(summary.combinedSales || 0));
+    setText("historyWebsiteRevenue", money(summary.websitePaidRevenue || 0));
+    setText("historyWebsiteOrders", (summary.websitePaidOrders || 0) + " verified paid order(s) on this website");
+    setText("historyLabelDSales", money(summary.labeldSales || 0));
+    setText("historyCombinedBreakdown", money(summary.labeldSales || 0) + " LabelD + " + money(summary.websitePaidRevenue || 0) + " website paid revenue");
+    setText("historyExpenses", money(summary.expenses || 0));
+    setText("historyExpenseBreakdown", "8 supplied expense entries");
+    setText("historyShippingExpenses", money(summary.shippingExpenses || 0));
+    setText("historyCustomers", String(summary.customerCount || 0));
+    renderHistoricalRecords();
+    setText("historyMessage", "Loaded " + currentHistoricalRecords.length + " historical records. Historical sales are combined for reporting only and are not added to Paystack's verified-payment records.");
+  } catch (error) {
+    list.innerHTML = '<div class="panel"><p class="muted">Could not load LabelD history: ' + esc(error.message) + '</p></div>';
+    setText("historyMessage", "LabelD history could not be loaded.");
+  }
+}
+function renderHistoricalRecords() {
+  const list = $("historyList");
+  if (!list) return;
+  const type = $("historyType") ? $("historyType").value : "all";
+  const query = ($("historySearch") ? $("historySearch").value : "").trim().toLowerCase();
+  const filtered = currentHistoricalRecords.filter((record) => {
+    if (type !== "all" && record.record_type !== type) return false;
+    const haystack = [record.record_type, record.record_date, record.category, record.description, record.customer_name, record.customer_phone, record.reference, record.status, record.details].join(" ").toLowerCase();
+    return !query || haystack.includes(query);
+  });
+  if (!filtered.length) {
+    list.innerHTML = '<div class="panel"><p class="muted">No matching historical records.</p></div>';
+    return;
+  }
+  list.innerHTML = filtered.map((record) => {
+    const labels = {expense:"EXPENSE",transaction:"INCOMING",withdrawal:"WITHDRAWAL",customer:"CUSTOMER",summary:"REPORTED TOTAL",completed_order:"COMPLETED LABELD ORDER"};
+    const amount = Number(record.amount || 0);
+    const signed = record.direction === "out" ? "−" : record.direction === "in" ? "+" : "";
+    const name = record.customer_name ? '<strong>' + esc(record.customer_name) + '</strong>' : "";
+    const phone = record.customer_phone ? '<span class="muted">' + esc(record.customer_phone) + '</span>' : "";
+    const date = record.record_date ? esc(record.record_date) : "Date not supplied";
+    const details = record.record_type === "completed_order"
+      ? '<p class="muted">Imported to Completed &amp; shipped as a historical paid order. Not a current Paystack transaction.</p>'
+      : (record.details ? '<p class="muted">' + esc(record.details) + '</p>' : "");
+    const amountLine = record.record_type === "customer" && !amount ? "" : '<strong>' + signed + money(amount) + '</strong>';
+    return '<article class="order-card"><div><p class="eyebrow">' + esc(labels[record.record_type] || record.record_type) + ' · ' + date + '</p><h3>' + esc(record.description) + '</h3><p>' + name + ' ' + phone + '</p>' + details + (record.reference ? '<p class="muted">Reference: ' + esc(record.reference) + '</p>' : '') + '</div><div>' + amountLine + (record.status ? '<p>' + badge(String(record.status).toUpperCase(), record.status === "needs_review" ? "warn" : "") + '</p>' : '') + '</div></article>';
+  }).join("");
+}
+$("refreshHistory")?.addEventListener("click", loadHistoricalRecords);
+$("historySearch")?.addEventListener("input", renderHistoricalRecords);
+$("historyType")?.addEventListener("change", renderHistoricalRecords);
 
 // ============================================================
 // PAYMENTS (added)
