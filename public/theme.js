@@ -10,18 +10,22 @@
   function apply(settings) {
     const theme = String(settings.design_theme || "dark").toLowerCase();
     const p = palettes[theme] || palettes.dark;
+    const validColor = (value, fallback) => /^#[0-9a-f]{6}$/i.test(String(value || "")) ? value : fallback;
+    const bg = validColor(settings.design_background, p.bg);
+    const ink = validColor(settings.design_text, p.ink);
+    const accent = validColor(settings.design_accent, p.accent);
     const root = document.documentElement;
     root.dataset.theme = palettes[theme] ? theme : "dark";
     const vars = {
-      "--bg":p.bg, "--ink":p.ink, "--text":p.ink, "--muted":p.muted,
-      "--line":p.line, "--accent":p.accent, "--lime":p.accent,
+      "--bg":bg, "--ink":ink, "--text":ink, "--muted":p.muted,
+      "--line":p.line, "--accent":accent, "--lime":accent,
       "--panel":p.panel, "--panel2":p.soft, "--surface-soft":p.soft,
-      "--preview-bg":p.bg, "--preview-ink":p.ink, "--preview-accent":p.accent,
+      "--preview-bg":bg, "--preview-ink":ink, "--preview-accent":accent,
       "--theme-sidebar":p.sidebar
     };
     Object.entries(vars).forEach(([name,value]) => root.style.setProperty(name,value));
     root.style.colorScheme = theme === "white" ? "light" : "dark";
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content",p.bg);
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content",bg);
   }
   async function load() {
     try {
