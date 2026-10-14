@@ -5,6 +5,7 @@ const $ = (id) => document.getElementById(id);
 let currentProducts = [];
 let currentOrders = [];
 let currentSettings = {};
+let currentHistoricalRecords = {};
 
 const imageSettings = [
   {
@@ -209,7 +210,8 @@ function switchTab(tab) {
     abandoned: "Abandoned carts",
     completed: "Completed & shipped",
     collections: "Collections",
-    payments: "Payments"
+    payments: "Payments",
+    history: "LabelD History"
   };
 
   $("pageTitle").textContent = titles[tab] || "Studio";
@@ -218,6 +220,7 @@ function switchTab(tab) {
   if (tab === "orders" || tab === "abandoned") loadOrders();
   if (tab === "collections") loadCollections();
   if (tab === "payments") loadPayments();
+  if (tab === "history") loadHistoricalRecords();
   if (tab === "appearance") loadEmailStatus();
 }
 
@@ -1558,6 +1561,54 @@ if ($("sendTestEmail")) {
     }
   });
 }
+
+// ============================================================
+// HISTORICAL LABELD RECORDS
+// ============================================================
+async function loadHistoricalRecords() {
+  const list = $("historyList");
+  if (!list) return;
+  list.innerHTML = '<div class="panel"><p class="muted">Loading historical records…</p></div>';
+  try {
+    const data = await api("/api/admin/historical-records");
+    currentHistoricalRecords = Array.isArray(data.records) ? data.records : [];
+    if ($("historyExpenses")) $("historyExpenses").textContent = money(data.summary && data.summary.expenses || 0);
+    if ($("historyShippingExpenses")) $("historyShippingExpenses").textContent = money(data.summary && data.summary.shippingExpenses || 0);
+    if ($("historyCustomers")) $("historyCustomers").textContent = String(data.summary && data.summary.customerCount || 0);
+    renderHistoricalRecords();
+    if ($("historyMessage")) $("historyMessage").textContent = "Loaded " + currentHistoricalRecords.length + " archived records. They do not affect live store revenue or orders.";
+  } catch (error) {
+    list.innerHTML = '<div class="panel"><p class="muted">Could not load historical records: ' + esc(error.message) + '</p></div>';
+    if ($("historyMessage")) $("historyMessage").textContent = "Historical records could not be loaded.";
+  }
+}
+function renderHistoricalRecords() {
+  const list = $("historyList");
+  if (!list) return;
+  const type = $("historyType") ? $("historyType").value : "all";
+  const query = ($("historySearch") ? $("historySearch").value : "").trim().toLowerCase();
+  const filtered = currentHistoricalRecords.filter((record) => {
+    if (type !== "all" && record.record_type !== type) return false;
+    const haystack = [record.record_type, record.record_date, record.category, record.description, record.customer_name, record.customer_phone, record.reference, record.status, record.details].join(" ").toLowerCase();
+    return !query || haystack.includes(query);
+  });
+  if (!filtered.length) { list.innerHTML = '<div class="panel"><p class="muted">No matching historical records.</p></div>'; return; }
+  list.innerHTML = filtered.map((record) => {
+    const labels = {expense:"EXPENSE",transaction:"INCOMING",withdrawal:"WITHDRAWAL",customer:"CUSTOMER",summary:"REPORTED TOTAL"};
+    const amount = Number(record.amount || 0);
+    const signed = record.direction === "out" ? "−" : record.direction === "in" ? "+" : "";
+    const name = record.customer_name ? '<strong>' + esc(record.customer_name) + '</strong>' : "";
+    const phone = record.customer_phone ? '<span class="muted">' + esc(record.customer_phone) + '</span>' : "";
+    const date = record.record_date ? esc(record.record_date) : "Date not supplied";
+    const details = record.details ? '<p class="muted">' + esc(record.details) + '</p>' : "";
+    const reference = record.reference ? '<p class="muted">Reference: ' + esc(record.reference) + '</p>' : "";
+    const status = record.status ? '<span class="muted">' + esc(record.status.replace(/_/g, " ")) + '</span>' : "";
+    return '<article class="panel" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap"><div style="min-width:0;flex:1"><p class="eyebrow">' + esc(labels[record.record_type] || record.record_type) + ' · ' + esc(record.category || "Uncategorised") + '</p><h3 style="margin:6px 0">' + esc(record.description) + '</h3><p class="muted">' + date + ' · ' + status + '</p>' + name + ' ' + phone + details + reference + '</div><strong style="white-space:nowrap">' + signed + (amount ? money(amount) : "—") + '</strong></div></article>';
+  }).join("");
+}
+if ($("refreshHistory")) $("refreshHistory").addEventListener("click", loadHistoricalRecords);
+if ($("historySearch")) $("historySearch").addEventListener("input", renderHistoricalRecords);
+if ($("historyType")) $("historyType").addEventListener("change", renderHistoricalRecords);
 
 // ============================================================
 // START
