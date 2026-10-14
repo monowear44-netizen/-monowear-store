@@ -102,3 +102,59 @@ html[data-theme] button:not(.cart-toggle) { border-color:var(--accent); }
 html[data-theme] .event:before { border-color:var(--ink); }
 html[data-theme] .designer-preview { background:var(--bg)!important; color:var(--ink)!important; }
 html[data-theme] .designer-preview .primary, html[data-theme] .designer-preview button { background:var(--accent)!important; color:#111!important; }
+
+
+
+/* MONOWEAR waitlist: strong contrast, clear action hierarchy, and reliable mobile layout. */
+.waitlist-section {
+  position: relative; isolation: isolate; display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, .9fr);
+  align-items: center; gap: clamp(24px, 5vw, 72px);
+  padding: clamp(42px, 7vw, 92px) clamp(20px, 7vw, 110px);
+  min-height: 300px; background-color: var(--panel, #171815);
+  background-size: cover; background-position: center;
+  color: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+}
+.waitlist-section::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(100deg, rgba(0,0,0,.82), rgba(0,0,0,.58));
+  pointer-events: none;
+}
+.waitlist-section .newsletter-copy,.waitlist-section form,.waitlist-section #newsletterLink { position: relative; z-index: 1; }
+.waitlist-section .eyebrow,.waitlist-section label { color: #e8e8e2; }
+.waitlist-section h2 { max-width: 640px; line-height: .98; }
+.waitlist-section .newsletter-copy > p:last-child { max-width: 440px; color: rgba(255,255,255,.78); }
+.waitlist-section form { width: 100%; max-width: 560px; }
+.waitlist-section label { display: block; margin-bottom: 10px; font: 10px 'DM Mono',monospace; letter-spacing: .15em; }
+.waitlist-section .newsletter-form-row { display: flex; align-items: stretch; gap: 10px; }
+.waitlist-section input[type="email"] {
+  flex: 1 1 220px; width: 100%; min-width: 0; min-height: 52px; padding: 14px 16px;
+  border: 1px solid rgba(255,255,255,.48); border-radius: var(--control-radius,0);
+  background: rgba(0,0,0,.34); color: #fff; font: inherit;
+}
+.waitlist-section input[type="email"]::placeholder { color: rgba(255,255,255,.68); }
+.waitlist-section input[type="email"]:focus-visible,.waitlist-section .button:focus-visible { outline: 2px solid var(--accent,#c6ff4b); outline-offset: 3px; }
+.waitlist-section .button {
+  display: inline-flex; justify-content: center; align-items: center; min-height: 52px;
+  padding: 14px 20px; border: 1px solid #fff; border-radius: var(--control-radius,0);
+  background: #fff; color: #111; font-weight: 800; white-space: nowrap; cursor: pointer;
+  transition: opacity .2s ease,transform .2s ease,background .2s ease;
+}
+.waitlist-section .button:hover { background: var(--accent,#c6ff4b); border-color: var(--accent,#c6ff4b); color: #111; transform: translateY(-1px); }
+.waitlist-section .button:disabled { opacity: .65; cursor: wait; transform: none; }
+.waitlist-section #newsletterMessage { min-height: 1.4em; margin: 12px 0 0; color: #fff; font-size: 13px; line-height: 1.5; }
+.waitlist-section #newsletterMessage[data-state="success"] { color: #bdf58b; }
+.waitlist-section #newsletterMessage[data-state="error"] { color: #ffb8b8; }
+.waitlist-section #newsletterLink {
+  justify-self: start; grid-column: 2; margin-top: -8px;
+  background: transparent; border-color: rgba(255,255,255,.7); color: #fff;
+}
+.waitlist-section #newsletterLink:hover { background: var(--accent,#c6ff4b); border-color: var(--accent,#c6ff4b); color: #111; }
+@media (max-width: 760px) {
+  .waitlist-section { grid-template-columns: minmax(0,1fr); gap: 24px; padding: 48px 6%; }
+  .waitlist-section form { max-width: none; }
+  .waitlist-section .newsletter-form-row { flex-direction: column; }
+  .waitlist-section .newsletter-form-row .button { width: 100%; }
+  .waitlist-section #newsletterLink { grid-column: 1; width: 100%; margin-top: 0; }
+}
+
