@@ -876,6 +876,65 @@ if (checkoutForm) {
     setupCartControls();
   }
   /* =========================================================
+     NEWSLETTER / GENERAL WAITLIST SIGN-UP
+  ========================================================= */
+  function setupNewsletterForm() {
+    const form = $("newsletterForm");
+    if (!form || form.dataset.bound === "true") return;
+    form.dataset.bound = "true";
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const emailInput = $("newsletterEmail");
+      const message = $("newsletterMessage");
+      const button = form.querySelector('button[type="submit"]');
+      const email = emailInput ? emailInput.value.trim() : "";
+      if (!email) {
+        if (message) message.textContent = "Enter your email address to join the list.";
+        if (emailInput) emailInput.focus();
+        return;
+      }
+      const originalLabel = button ? button.textContent : "";
+      if (button) {
+        button.disabled = true;
+        button.textContent = "ADDING YOU…";
+        button.setAttribute("aria-busy", "true");
+      }
+      if (message) {
+        message.textContent = "Joining the MONOWEAR list…";
+        message.dataset.state = "loading";
+      }
+      try {
+        const response = await fetch("/api/newsletter", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          credentials: "same-origin",
+          cache: "no-store",
+          body: JSON.stringify({ email })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || "We couldn't add you right now. Please try again.");
+        if (message) {
+          message.textContent = result.message || "You're on the list. Watch this space.";
+          message.dataset.state = "success";
+        }
+        form.classList.add("is-subscribed");
+        if (emailInput) emailInput.value = "";
+      } catch (error) {
+        if (message) {
+          message.textContent = error.message || "Something went wrong. Please try again.";
+          message.dataset.state = "error";
+        }
+      } finally {
+        if (button) {
+          button.disabled = false;
+          button.textContent = originalLabel || "JOIN THE LIST ↗";
+          button.removeAttribute("aria-busy");
+        }
+      }
+    });
+  }
+
+  /* =========================================================
      LOAD STORE FROM API
   ========================================================= */
   async function loadStore() {
@@ -931,6 +990,7 @@ if (checkoutForm) {
   ========================================================= */
   function init() {
     setupEvents();
+    setupNewsletterForm();
     loadStore();
   }
   if (document.readyState === "loading") {
