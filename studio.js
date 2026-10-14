@@ -5,7 +5,7 @@ const $ = (id) => document.getElementById(id);
 let currentProducts = [];
 let currentOrders = [];
 let currentSettings = {};
-let currentHistoricalRecords = {};
+let currentHistoricalRecords = [];
 
 const imageSettings = [
   {
