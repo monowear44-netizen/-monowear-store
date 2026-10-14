@@ -181,6 +181,65 @@ db.exec(`
 `);
 
 // ============================================================
+// HISTORICAL LABELD RECORDS — idempotent seed, separate from live orders.
+// ============================================================
+db.exec(`
+CREATE TABLE IF NOT EXISTS historical_records (
+ id INTEGER PRIMARY KEY AUTOINCREMENT, source_key TEXT NOT NULL UNIQUE,
+ record_type TEXT NOT NULL, record_date TEXT DEFAULT '', category TEXT DEFAULT '',
+ description TEXT NOT NULL, amount REAL DEFAULT 0, direction TEXT DEFAULT '',
+ status TEXT DEFAULT '', customer_name TEXT DEFAULT '', customer_phone TEXT DEFAULT '',
+ reference TEXT DEFAULT '', details TEXT DEFAULT '', created_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_historical_records_type ON historical_records(record_type);
+`);
+const historicalSeed = [
+["expense-labeld-pro-2026-10-09","expense","2026-10-09","Software & Subscriptions","LabelD Pro Plan Subscription (monthly)",5000,"out","recorded","","","","Recurring monthly expense; included in historical total."],
+["expense-shipping-2026-10-05-a","expense","2026-10-05","Logistics & Shipping","Shipping expense",6000,"out","recorded"],
+["expense-shipping-2026-10-05-b","expense","2026-10-05","Logistics & Shipping","Shipping expense",6000,"out","recorded"],
+["expense-shipping-2026-10-05-c","expense","2026-10-05","Logistics & Shipping","Shipping expense",5000,"out","recorded"],
+["expense-shipping-2026-10-05-d","expense","2026-10-05","Logistics & Shipping","Shipping expense",5000,"out","recorded"],
+["expense-email-credits-2026-09-18","expense","2026-09-18","Software & Subscriptions","Email credits purchase (1,000 credits)",1000,"out","recorded"],
+["expense-shipping-2026-09-13","expense","2026-09-13","Logistics & Shipping","Shipping expense",5000,"out","recorded"],
+["expense-labeld-pro-2026-09-09","expense","2026-09-09","Software & Subscriptions","LabelD Pro Plan Subscription (monthly)",5000,"out","recorded"],
+["ledger-shipping-2026-09-11","transaction","2026-09-11","Shipping Fee","Shipping Fee collected",5000,"in","recorded"],
+["ledger-withdrawal-aRqTRZrwyIJCcqJVYkIA","withdrawal","2026-09-11","Withdrawal","Withdrawal request",36500,"out","paid","","","aRqTRZrwyIJCcqJVYkIA","Matching manual hold request merged with paid request; counted once."],
+["ledger-shipping-2026-09-25","transaction","2026-09-25","Shipping Fee","Shipping Fee collected",5000,"in","recorded"],
+["ledger-order-2026-09-25-28000","transaction","2026-09-25","Store order","Store order — fee absorbed by brand",28000,"in","recorded"],
+["ledger-withdrawal-uoAgDZUYWyOzWNhq870X","withdrawal","2026-09-27","Withdrawal","Withdrawal request",33000,"out","paid","","","uoAgDZUYWyOzWNhq870X","Matching manual hold request merged with paid request; counted once."],
+["ledger-shipping-2026-09-28","transaction","2026-09-28","Shipping Fee","Shipping Fee collected",6000,"in","recorded"],
+["ledger-order-2026-09-28-30000","transaction","2026-09-28","Store order","Store order — fee absorbed by brand",30000,"in","recorded"],
+["ledger-order-2026-09-28-28000","transaction","2026-09-28","Store order","Store order — fee absorbed by brand",28000,"in","recorded"],
+["ledger-shipping-2026-09-29","transaction","2026-09-29","Shipping Fee","Shipping Fee collected",6000,"in","recorded","","","","Repeated copy of same timestamp/amount deduplicated."],
+["ledger-order-2026-09-29-28000","transaction","2026-09-29","Store order","Store order — fee absorbed by brand",28000,"in","recorded"],
+["ledger-order-2026-09-29-30000","transaction","2026-09-29","Store order","Store order — fee absorbed by brand",30000,"in","recorded"],
+["ledger-withdrawal-rN607zvG85DDNOK34CBX","withdrawal","2026-09-29","Withdrawal","Withdrawal request",100000,"out","paid","","","rN607zvG85DDN0K34CBX","Matching manual hold request merged with paid request; counted once."],
+["ledger-withdrawal-Rc7EUjhkuKgZRDwfxOPZ","withdrawal","2026-09-30","Withdrawal","Withdrawal request",28000,"out","paid","","","Rc7EUjhkuKgZRDwfxOPZ","Matching manual hold request merged with paid request; counted once."],
+["ledger-order-undated-31500","transaction","","Store order","Store order amount shown at end of pasted ledger (date/reference not visible)",31500,"in","needs_review","","","","Date and reference were not visible in copied text."],
+["customer-dolapo","customer","","Customer profile","Historical customer profile",0,"","partial","Dolapo","08160362391","","","8 orders; last order 2026-09-27; seven purchase rows visible, one not shown."],
+["customer-malik","customer","","Customer profile","Historical customer profile",131500,"","partial","Malik","09164979413","","","1 order; last order 2026-09-28; lifetime spend ₦131,500; manual."],
+["customer-riwo-me","customer","","Customer profile","Historical customer profile",64000,"","partial","Riwo Me","07068138065","","","1 order; last order 2026-09-29; lifetime spend ₦64,000; online."],
+["customer-precious-banigo","customer","","Customer profile","Historical customer profile",64000,"","partial","Precious Banigo","07037213835","","","1 order; last order 2026-09-28; lifetime spend ₦64,000; online."],
+["customer-mubarak","customer","","Customer profile","Historical customer profile",63000,"","partial","Mubarak","08167861865","","","2 orders; last order 2026-09-23; lifetime spend ₦63,000; manual."],
+["customer-ekungs","customer","","Customer profile","Historical customer profile",58000,"","partial","Ekungs","08072482930","","","1 order; last order 2026-10-03; lifetime spend ₦58,000; manual."],
+["customer-ovakachi-habeebullah","customer","","Customer profile","Historical customer profile",33000,"","partial","Ovakachi Habeebullah","07048336076","","","1 order; last order 2026-09-25; lifetime spend ₦33,000; online."],
+["customer-still-danny","customer","","Customer profile","Historical customer profile",30000,"","partial","Still Danny","08106948637","","","1 order; last order 2026-09-29; lifetime spend ₦30,000; manual."],
+["customer-timi","customer","","Customer profile","Historical customer profile",0,"","partial","Timi","08160128566","","","1 order; spend and date not visible."],
+["summary-labeld-sales","summary","","Reported dashboard totals","LabelD all-time sales",1051599,"in","reported","","","","18 orders across 14 customers."],
+["summary-labeld-ltv","summary","","Reported dashboard totals","LabelD customer lifetime value total",950099,"","reported","","","","Preserved exactly as reported; not recalculated."],
+["summary-labeld-expenses","summary","","Reported dashboard totals","LabelD all-time expenses",38000,"out","reported","","","","Eight expenses, including ₦27,000 shipping and ₦10,000 subscriptions."],
+["summary-labeld-shipping-fees","summary","","Reported dashboard totals","Distinct incoming shipping fees from supplied ledger",22000,"in","reported","","","","Four distinct fees: ₦5k Sep 11, ₦5k Sep 25, ₦6k Sep 28, ₦6k Sep 29."]
+];
+const insertHistorical = db.prepare(`INSERT OR IGNORE INTO historical_records
+(source_key,record_type,record_date,category,description,amount,direction,status,customer_name,customer_phone,reference,details)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`);
+db.transaction(() => {
+ for (const r of historicalSeed) {
+  const [key,type,date,category,description,amount,direction,status,name="",phone="",reference="",details=""] = r;
+  insertHistorical.run(key,type,date,category,description,amount,direction,status,name,phone,reference,details);
+ }
+})();
+// ============================================================
 // DATABASE MIGRATIONS
 // ============================================================
 
@@ -3180,6 +3239,18 @@ app.get("/api/customer/orders", requireCustomer, (req, res) => {
 // ============================================================
 // ADMIN ORDER MANAGEMENT
 // ============================================================
+
+app.get("/api/admin/historical-records", requireAdmin, (req, res) => {
+ try {
+  const records = db.prepare(`SELECT id,source_key,record_type,record_date,category,description,amount,direction,status,customer_name,customer_phone,reference,details FROM historical_records ORDER BY CASE WHEN record_date='' THEN 1 ELSE 0 END, record_date DESC, id DESC`).all();
+  res.json({records,summary:{
+   records:records.length,
+   expenses:db.prepare("SELECT COALESCE(SUM(amount),0) total FROM historical_records WHERE record_type='expense'").get().total,
+   shippingExpenses:db.prepare("SELECT COALESCE(SUM(amount),0) total FROM historical_records WHERE record_type='expense' AND category='Logistics & Shipping'").get().total,
+   customerCount:db.prepare("SELECT COUNT(*) total FROM historical_records WHERE record_type='customer'").get().total
+  }});
+ } catch(error) { console.error("Historical records error:",error); res.status(500).json({error:"Could not load historical records."}); }
+});
 
 app.get("/api/admin/orders", requireAdmin, (req, res) => {
   const orders = db.prepare(`
