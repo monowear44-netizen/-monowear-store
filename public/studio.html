@@ -43,6 +43,7 @@
 <button class="nav" data-tab="payments" type="button">
   Payments
 </button>
+<button class="nav" data-tab="history" type="button">LabelD History</button>
 <div class="side-bottom">
   <a href="/" target="_blank" rel="noopener">
     ↗ View storefront
@@ -981,6 +982,41 @@
     </div>
   </section>
 
+  <!-- HISTORICAL LABELD RECORDS -->
+  <section class="tab-panel" id="tab-history" hidden>
+    <div class="toolbar">
+      <div>
+        <p class="eyebrow">ARCHIVE / LABELD IMPORT</p>
+        <h2>LabelD history</h2>
+        <p class="muted">Historical LabelD records stay separate from current orders. Combined sales adds the LabelD dashboard total to verified paid orders on this website; it does not create fake Paystack payments.</p>
+      </div>
+      <button class="secondary" id="refreshHistory" type="button">REFRESH ↻</button>
+    </div>
+    <div class="stats-grid">
+      <div class="stat"><span>COMBINED LIFETIME SALES</span><strong id="historyCombinedSales">—</strong><small id="historyCombinedBreakdown">LabelD sales + paid revenue on this website</small></div>
+      <div class="stat"><span>THIS WEBSITE · PAID REVENUE</span><strong id="historyWebsiteRevenue">—</strong><small id="historyWebsiteOrders">Verified paid orders</small></div>
+      <div class="stat"><span>LABELD REPORTED SALES</span><strong id="historyLabelDSales">—</strong><small>18 historical orders · 14 customers reported by LabelD</small></div>
+      <div class="stat"><span>HISTORICAL EXPENSES</span><strong id="historyExpenses">—</strong><small id="historyExpenseBreakdown">Includes shipping and subscriptions</small></div>
+      <div class="stat"><span>SHIPPING EXPENSES</span><strong id="historyShippingExpenses">—</strong><small>Included in historical expenses</small></div>
+      <div class="stat"><span>VISIBLE CUSTOMER PROFILES</span><strong id="historyCustomers">—</strong><small>9 profiles were visible in the supplied LabelD dashboard</small></div>
+    </div>
+    <p id="historyMessage" class="message" role="status" aria-live="polite"></p>
+    <div class="filter-bar">
+      <input id="historySearch" type="search" placeholder="Search customer, phone, reference or record" aria-label="Search LabelD history">
+      <select id="historyType" aria-label="Filter LabelD history">
+        <option value="all">All historical records</option>
+        <option value="expense">Expenses</option>
+        <option value="transaction">Incoming transactions</option>
+        <option value="withdrawal">Withdrawals</option>
+        <option value="customer">Customer profiles</option>
+        <option value="completed_order">Orders added to Completed &amp; shipped</option>
+        <option value="summary">Reported totals</option>
+      </select>
+    </div>
+    <div id="historyList" class="orders-list"></div>
+    <p class="muted">LabelD reported 18 orders, but only seven individual purchase rows were visible in the details supplied. The remaining orders are not fabricated; add their full records when they become available.</p>
+  </section>
+
   <!-- PAYMENTS -->
   <section class="tab-panel" id="tab-payments" hidden>
     <div class="toolbar">
@@ -1061,7 +1097,7 @@
 ></div>
   </main>
   <!-- EXISTING STUDIO FUNCTIONALITY -->
-  <script src="/studio.js"></script>
+  <script src="/studio.js?v=labeld-history-combined-theme-20261015"></script>
   <!-- IMAGE PREVIEWS AND VALIDATION -->
   <script>
     (() => {
