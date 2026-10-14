@@ -103,11 +103,11 @@
     };
     const palette = palettes[theme] || palettes.dark;
     root.dataset.theme = palettes[theme] ? theme : "dark";
-    root.style.setProperty("--bg", palette.bg);
-    root.style.setProperty("--ink", palette.ink);
+    root.style.setProperty("--bg", validColor(settings.design_background, palette.bg));
+    root.style.setProperty("--ink", validColor(settings.design_text, palette.ink));
     root.style.setProperty("--muted", palette.muted);
     root.style.setProperty("--line", palette.line);
-    root.style.setProperty("--accent", palette.accent);
+    root.style.setProperty("--accent", validColor(settings.design_accent, palette.accent));
     root.style.setProperty("--panel", palette.panel);
     root.style.setProperty("--surface-soft", palette.soft);
     const fonts = { Manrope: "'Manrope', Arial, sans-serif", Arial: "Arial, sans-serif", Georgia: "Georgia, serif", system: "system-ui, sans-serif" };
