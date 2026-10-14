@@ -39,6 +39,9 @@
 <button class="nav" data-tab="payments" type="button">
   Payments
 </button>
+<button class="nav" data-tab="history" type="button">
+  LabelD History
+</button>
 <div class="side-bottom">
   <a href="/" target="_blank" rel="noopener">
     ↗ View storefront
@@ -815,6 +818,39 @@
       </select>
     </div>
     <div id="ordersList" class="orders-list"></div>
+  </section>
+
+  <!-- HISTORICAL LABELD RECORDS -->
+  <section class="tab-panel" id="tab-history" hidden>
+    <div class="toolbar">
+      <div>
+        <p class="eyebrow">ARCHIVE / LABELD IMPORT</p>
+        <h2>Historical records</h2>
+        <p class="muted">Imported LabelD history is kept separate from current MONOWEAR orders and Paystack revenue. Duplicate ledger entries are not counted twice.</p>
+      </div>
+      <div class="toolbar-actions">
+        <button class="secondary" id="refreshHistory" type="button">REFRESH ↻</button>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat"><span>HISTORICAL EXPENSES</span><strong id="historyExpenses">—</strong><small>8 imported entries</small></div>
+      <div class="stat"><span>SHIPPING EXPENSES</span><strong id="historyShippingExpenses">—</strong><small>Included in expenses</small></div>
+      <div class="stat"><span>VISIBLE CUSTOMER PROFILES</span><strong id="historyCustomers">—</strong><small>9 visible profiles; LabelD reported 14 total</small></div>
+      <div class="stat"><span>REPORTED LABELD SALES</span><strong id="historyReportedSales">₦1,051,599</strong><small>18 orders / 14 customers — not added to live revenue</small></div>
+    </div>
+    <p id="historyMessage" class="message" role="status" aria-live="polite"></p>
+    <div class="filter-bar">
+      <input id="historySearch" type="search" placeholder="Search history, customer, phone or reference" aria-label="Search historical records">
+      <select id="historyType" aria-label="Filter historical records">
+        <option value="all">All historical records</option>
+        <option value="expense">Expenses</option>
+        <option value="transaction">Incoming transactions</option>
+        <option value="withdrawal">Withdrawals</option>
+        <option value="customer">Customer profiles</option>
+        <option value="summary">Reported totals</option>
+      </select>
+    </div>
+    <div id="historyList" class="orders-list"></div>
   </section>
 
   <!-- PAYMENTS -->
