@@ -229,6 +229,13 @@ const historicalSeed = [
 ["summary-labeld-ltv","summary","","Reported dashboard totals","LabelD customer lifetime value total",950099,"","reported","","","","Preserved exactly as reported; not recalculated."],
 ["summary-labeld-expenses","summary","","Reported dashboard totals","LabelD all-time expenses",38000,"out","reported","","","","Eight expenses, including ₦27,000 shipping and ₦10,000 subscriptions."],
 ["summary-labeld-shipping-fees","summary","","Reported dashboard totals","Distinct incoming shipping fees from supplied ledger",22000,"in","reported","","","","Four distinct fees: ₦5k Sep 11, ₦5k Sep 25, ₦6k Sep 28, ₦6k Sep 29."]
+  ["completed-order-dolapo-2026-09-27-58000","completed_order","2026-09-27","Completed LabelD order","Dolapo — Mono nexus raglan - Merlot (x1); MONOWEAR LEGACY… (product name truncated in supplied record)",58000,"in","completed","Dolapo","08160362391","LABELD-DOLAPO-20260927-58000","{\"items\":[{\"name\":\"Mono nexus raglan - Merlot\",\"quantity\":1},{\"name\":\"MONOWEAR LEGACY… (name truncated)\",\"quantity\":1}]}"],
+  ["completed-order-dolapo-2026-09-20-86000","completed_order","2026-09-20","Completed LabelD order","Dolapo — Y2K retro tee - MIDNIGHT. (x1); MONOWEAR LEGACYT… (product name truncated in supplied record)",86000,"in","completed","Dolapo","08160362391","LABELD-DOLAPO-20260920-86000","{\"items\":[{\"name\":\"Y2K retro tee - MIDNIGHT.\",\"quantity\":1},{\"name\":\"MONOWEAR LEGACYT… (name truncated)\",\"quantity\":1}]}"],
+  ["completed-order-dolapo-2026-09-18-108500","completed_order","2026-09-18","Completed LabelD order","Dolapo — Y2K race raglan - long sleeve (x1); leopard archive den… (product name truncated in supplied record)",108500,"in","completed","Dolapo","08160362391","LABELD-DOLAPO-20260918-108500","{\"items\":[{\"name\":\"Y2K race raglan - long sleeve\",\"quantity\":1},{\"name\":\"leopard archive den… (name truncated)\",\"quantity\":1}]}"],
+  ["completed-order-dolapo-2026-09-18-129499","completed_order","2026-09-18","Completed LabelD order","Dolapo — Y2K race raglan - long sleeve (x1); mono script line tan… (product name truncated in supplied record)",129499,"in","completed","Dolapo","08160362391","LABELD-DOLAPO-20260918-129499","{\"items\":[{\"name\":\"Y2K race raglan - long sleeve\",\"quantity\":1},{\"name\":\"mono script line tan… (name truncated)\",\"quantity\":1}]}"],
+  ["completed-order-dolapo-2026-09-18-73500","completed_order","2026-09-18","Completed LabelD order","Dolapo — Y2K retro tee - BURGUNDY. (x1); leopard archive deni… (product name truncated in supplied record)",73500,"in","completed","Dolapo","08160362391","LABELD-DOLAPO-20260918-73500","{\"items\":[{\"name\":\"Y2K retro tee - BURGUNDY.\",\"quantity\":1},{\"name\":\"leopard archive deni… (name truncated)\",\"quantity\":1}]}"],
+  ["completed-order-dolapo-2026-09-13-40500","completed_order","2026-09-13","Completed LabelD order","Dolapo — MOTION TEE - black (x1)",40500,"in","completed","Dolapo","08160362391","LABELD-DOLAPO-20260913-40500","{\"items\":[{\"name\":\"MOTION TEE - black\",\"quantity\":1}]}"],
+  ["completed-order-dolapo-undated-37330","completed_order","","Completed LabelD order","Dolapo — The MONO originals - sunbeam (x1); date not shown in supplied record",37330,"in","completed","Dolapo","08160362391","LABELD-DOLAPO-UNDATED-37330","{\"items\":[{\"name\":\"The MONO originals - sunbeam\",\"quantity\":1}]}"]
 ];
 const insertHistorical = db.prepare(`INSERT OR IGNORE INTO historical_records
 (source_key,record_type,record_date,category,description,amount,direction,status,customer_name,customer_phone,reference,details)
@@ -3243,11 +3250,18 @@ app.get("/api/customer/orders", requireCustomer, (req, res) => {
 app.get("/api/admin/historical-records", requireAdmin, (req, res) => {
  try {
   const records = db.prepare(`SELECT id,source_key,record_type,record_date,category,description,amount,direction,status,customer_name,customer_phone,reference,details FROM historical_records ORDER BY CASE WHEN record_date='' THEN 1 ELSE 0 END, record_date DESC, id DESC`).all();
+  const reportedSales = Number(db.prepare("SELECT COALESCE(MAX(amount),0) amount FROM historical_records WHERE source_key='summary-labeld-sales'").get().amount || 0);
+  const paidSite = Number(db.prepare("SELECT COALESCE(SUM(total),0) amount FROM orders WHERE payment_status='paid' AND COALESCE(record_type,'real_order')='real_order'").get().amount || 0);
+  res.set("Cache-Control", "no-store");
   res.json({records,summary:{
    records:records.length,
    expenses:db.prepare("SELECT COALESCE(SUM(amount),0) total FROM historical_records WHERE record_type='expense'").get().total,
    shippingExpenses:db.prepare("SELECT COALESCE(SUM(amount),0) total FROM historical_records WHERE record_type='expense' AND category='Logistics & Shipping'").get().total,
-   customerCount:db.prepare("SELECT COUNT(*) total FROM historical_records WHERE record_type='customer'").get().total
+   customerCount:db.prepare("SELECT COUNT(*) total FROM historical_records WHERE record_type='customer'").get().total,
+   labeldSales:reportedSales,
+   websitePaidRevenue:paidSite,
+   combinedSales:reportedSales + paidSite,
+   websitePaidOrders:db.prepare("SELECT COUNT(*) total FROM orders WHERE payment_status='paid' AND COALESCE(record_type,'real_order')='real_order'").get().total
   }});
  } catch(error) { console.error("Historical records error:",error); res.status(500).json({error:"Could not load historical records."}); }
 });
@@ -3285,9 +3299,43 @@ app.get("/api/admin/completed-orders", requireAdmin, (req, res) => {
       AND LOWER(COALESCE(order_status, 'pending')) IN ('shipped', 'delivered')
     ORDER BY id DESC
     LIMIT 500
-  `).all();
-
-  res.json(orders.map(safeOrder));
+  `).all().map(safeOrder);
+  const historical = db.prepare(`
+    SELECT * FROM historical_records WHERE record_type='completed_order'
+    ORDER BY CASE WHEN record_date='' THEN 1 ELSE 0 END, record_date DESC, id DESC
+  `).all().map((r) => {
+    let parsed = {};
+    try { parsed = JSON.parse(r.details || "{}"); } catch (_) {}
+    return {
+      id: -Number(r.id),
+      reference: r.reference || r.source_key,
+      record_type: "historical_order",
+      customer_name: r.customer_name || "LabelD customer",
+      customer_email: "historical-order@labeld.local",
+      customer_phone: r.customer_phone || "",
+      shipping_address: "Imported from LabelD history",
+      shipping_city: "",
+      shipping_state: "",
+      shipping_postcode: "",
+      dispatch_location: "LabelD historical record",
+      items: Array.isArray(parsed.items) ? parsed.items : [{name:r.description,quantity:1}],
+      subtotal: Number(r.amount || 0),
+      shipping_fee: 0,
+      discount: 0,
+      total: Number(r.amount || 0),
+      payment_status: "paid",
+      order_status: "delivered",
+      payment_method: "LabelD historical",
+      payment_reference: r.reference || r.source_key,
+      notes: "Historical LabelD order. This record is not a current Paystack payment.",
+      created_at: r.record_date || "",
+      paid_at: r.record_date || "",
+      email_status: "legacy",
+      attention: 0
+    };
+  });
+  res.set("Cache-Control", "no-store");
+  res.json([...historical, ...orders]);
 });
 
 app.get("/api/admin/abandoned-carts", requireAdmin, (req, res) => {
