@@ -853,7 +853,6 @@ async function loadSettings() {
       if (input) input.value = "";
     }
 
-    if (window.applyMonowearThemePreset) window.applyMonowearThemePreset();
     if (window.refreshStudioImagePreviews) {
       window.refreshStudioImagePreviews();
     }
@@ -1971,16 +1970,7 @@ checkAuth();
    }
    window.applyMonowearThemePreset = applyPreset;
    form.elements.design_theme.addEventListener("change", applyPreset);
-   // Theme is the source of truth when the Studio settings are loaded.
-   const originalRefresh = window.refreshDesignPreview;
-   const observer = new MutationObserver(() => {
-     if (form.elements.design_theme.value && !form.dataset.themePresetLoaded) {
-       form.dataset.themePresetLoaded = "true";
-       applyPreset();
-     }
-   });
-   observer.observe(form, { childList: true, subtree: true });
-   form.addEventListener("settingsloaded", applyPreset);
+   // Keep saved custom colours when Studio loads; only an explicit theme change applies a preset.
  })();
 
 // STORE HEALTH & BACKUP CONTROLS
