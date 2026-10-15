@@ -568,9 +568,12 @@ function syncDiscountFields() {
   const form = $("productForm");
   if (!form || !form.elements.discount_enabled) return;
   const enabled = form.elements.discount_enabled.checked;
-  form.elements.compare_price.disabled = !enabled;
+  // Keep the original-price field editable so mobile browsers don't lose its
+  // value while toggling the discount. The save handler decides whether to use it.
+  form.elements.compare_price.disabled = false;
   form.elements.compare_price.required = enabled;
-  if (!enabled) form.elements.compare_price.value = "";
+  form.elements.compare_price.setAttribute("aria-disabled", enabled ? "false" : "true");
+  form.elements.compare_price.style.opacity = enabled ? "1" : ".65";
 }
 $("productForm")?.elements.discount_enabled?.addEventListener("change", syncDiscountFields);
 
