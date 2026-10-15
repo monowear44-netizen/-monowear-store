@@ -1994,7 +1994,9 @@ checkAuth();
      dark:    { background: "#111210", text: "#f4f2ea", accent: "#c6ff4b" },
      white:   { background: "#ffffff", text: "#171815", accent: "#c6ff4b" },
      emerald: { background: "#073f32", text: "#f2f5ef", accent: "#57d6a0" },
-     gold:    { background: "#171510", text: "#f6f0df", accent: "#d5b15a" }
+     gold:    { background: "#171510", text: "#f6f0df", accent: "#d5b15a" },
+     wine:    { background: "#2b0b16", text: "#f8edf0", accent: "#d87994" },
+     gothic:  { background: "#0b0b0f", text: "#e9e5ef", accent: "#b7a2d8" }
    };
    function applyPreset() {
      const preset = presets[form.elements.design_theme.value] || presets.dark;
