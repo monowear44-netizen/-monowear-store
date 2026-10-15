@@ -372,6 +372,8 @@ const defaults = {
   shipping_ijebu_ogun: "",
   shipping_ijebu_nationwide: "",
   announcement: "HELP IS ON THE WAY — COMING SOON",
+  drop_preorder_date: "2026-10-21",
+  drop_launch_date: "2026-11-10",
   x: "https://x.com/monowear44",
   contact_email: process.env.CONTACT_EMAIL || "",
   maintenance_mode: "false",
@@ -2403,6 +2405,14 @@ function normalizeCheckoutItems(items) {
 
     if (!product) {
       throw new Error("A product in your cart is no longer available.");
+    }
+
+    if (Number(product.featured) === 1) {
+      const preorderDate = String(getSetting("drop_preorder_date", "2026-10-21") || "2026-10-21");
+      const preorderOpens = new Date(preorderDate + "T00:00:00+01:00");
+      if (Number.isFinite(preorderOpens.getTime()) && Date.now() < preorderOpens.getTime()) {
+        throw new Error(product.name + " is part of the next drop. Pre-orders open on " + preorderDate + ".");
+      }
     }
 
     if (Number(product.stock) < totalQuantity) {
