@@ -210,7 +210,7 @@
   /* =========================================================
      PRODUCT IMAGE
   ========================================================= */
-  function productImage(product) {
+  function productImage(product, eager = false) {
     if (!product.image) {
       return `
         <div class="image-placeholder">
@@ -223,7 +223,9 @@
       <img
         src="${escapeHTML(product.image)}"
         alt="${escapeHTML(product.name || "MONOWEAR product")}"
-        loading="lazy"
+        loading="${eager ? "eager" : "lazy"}"
+        decoding="async"
+        ${eager ? 'fetchpriority="high"' : ""}
         onerror="this.style.display='none'; this.nextElementSibling.hidden=false;"
       >
       <div class="image-placeholder" hidden>
@@ -266,8 +268,8 @@
     });
   }
 
-  function renderProductCards(items) {
-    return items.map((product) => {
+  function renderProductCards(items, eagerCount = 0) {
+    return items.map((product, imageIndex) => {
       const id = Number(product.id);
       const stock = Number(product.stock ?? 0);
       const sizes = Array.isArray(product.sizes) ? product.sizes : [];
@@ -287,7 +289,7 @@
       return `
         <article class="product-card" data-product-id="${id}">
           <a class="product-image product-page-link" href="/product.html?slug=${encodeURIComponent(product.slug || "")}&id=${id}" aria-label="View product details">
-            ${productImage(product)}
+            ${productImage(product, imageIndex < eagerCount)}
             ${isFeatured ? '<span class="product-badge">PRE-ORDER / NEXT DROP</span>' : product.new_arrival ? '<span class="product-badge">NEW ARRIVAL</span>' : ""}
             ${soldOut && !preorderBlocked ? '<span class="sold-badge">SOLD OUT</span>' : ""}
           </a>
@@ -362,7 +364,9 @@
     const otherProducts = visibleProducts.filter((product) => !Boolean(Number(product.featured)) && !Boolean(product.new_arrival));
     const featuredSection = $("featuredProductsSection");
     if (featuredSection) featuredSection.hidden = featured.length === 0;
-    featuredGrid.innerHTML = featured.length ? renderProductCards(featured) : "";
+    // Fetch the first three featured images immediately so the first visible row
+    // does not wait for native lazy-loading heuristics. Images farther down remain lazy.
+    featuredGrid.innerHTML = featured.length ? renderProductCards(featured, 3) : "";
 
     if (!visibleProducts.length) {
       const empty = products.length
