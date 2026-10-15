@@ -167,3 +167,71 @@ html[data-theme="wine"] .button:not(.button-light), html[data-theme="wine"] .add
 html[data-theme="gothic"] .button:not(.button-light), html[data-theme="gothic"] .add-button { background:var(--accent); color:#0b0b0f; border-color:var(--accent); }
 html[data-theme="wine"] .waitlist-section { border-color:rgba(216,121,148,.28); }
 html[data-theme="gothic"] .waitlist-section { border-color:rgba(183,162,216,.24); }
+
+
+/* HELP IS ON THE WAY — dedicated dark luxury collection themes */
+html[data-theme="helpway"] body,
+html[data-theme="helpway"] .standalone-product-page,
+html[data-theme="helpway"] .standalone-product-main,
+html[data-theme="helpway"] .product-page-header,
+html[data-theme="helpway"] .standalone-product-page footer {
+  background:#111111!important;color:#F2F0EA!important;
+}
+html[data-theme="helpway"] .site-header,
+html[data-theme="helpway"] footer,
+html[data-theme="helpway"] .newsletter,
+html[data-theme="helpway"] .section-wrap,
+html[data-theme="helpway"] .account-main,
+html[data-theme="helpway"] .policy-page,
+html[data-theme="helpway"] .confirmation {background:#111111!important;color:#F2F0EA!important}
+html[data-theme="helpway"] .announcement,
+html[data-theme="helpway"] .ticker {background:#8F3038!important;color:#F2F0EA!important}
+html[data-theme="helpway"] .button:not(.button-light),
+html[data-theme="helpway"] .add-button,
+html[data-theme="helpway"] .standalone-add-button,
+html[data-theme="helpway"] .mw-button-primary {background:#164A36!important;border-color:#164A36!important;color:#F2F0EA!important}
+html[data-theme="helpway"] .product-image,
+html[data-theme="helpway"] .standalone-product-visual,
+html[data-theme="helpway"] .standalone-related-image,
+html[data-theme="helpway"] .manifesto {background:#1b2420!important;color:#F2F0EA!important}
+html[data-theme="helpway"] .standalone-product-price,
+html[data-theme="helpway"] .standalone-stock,
+html[data-theme="helpway"] .product-page-status,
+html[data-theme="helpway"] .standalone-related-meta strong {color:#8F3038!important}
+html[data-theme="helpway-gradient"] body,
+html[data-theme="helpway-gradient"] .standalone-product-page,
+html[data-theme="helpway-gradient"] .standalone-product-main,
+html[data-theme="helpway-gradient"] .product-page-header,
+html[data-theme="helpway-gradient"] .standalone-product-page footer {
+  background:linear-gradient(135deg,#0B0D0C 0%,#064E3B 62%,#54232E 100%)!important;color:#F5F2EA!important;
+}
+html[data-theme="helpway-gradient"] .site-header,
+html[data-theme="helpway-gradient"] footer,
+html[data-theme="helpway-gradient"] .newsletter,
+html[data-theme="helpway-gradient"] .section-wrap,
+html[data-theme="helpway-gradient"] .account-main,
+html[data-theme="helpway-gradient"] .policy-page,
+html[data-theme="helpway-gradient"] .confirmation {
+  background:linear-gradient(135deg,#0B0D0C 0%,#064E3B 68%,#54232E 125%)!important;color:#F5F2EA!important;
+}
+html[data-theme="helpway-gradient"] .announcement,
+html[data-theme="helpway-gradient"] .ticker {background:#54232E!important;color:#F5F2EA!important}
+html[data-theme="helpway-gradient"] .button:not(.button-light),
+html[data-theme="helpway-gradient"] .add-button,
+html[data-theme="helpway-gradient"] .standalone-add-button,
+html[data-theme="helpway-gradient"] .mw-button-primary {background:#064E3B!important;border-color:#064E3B!important;color:#F5F2EA!important}
+html[data-theme="helpway-gradient"] .product-image,
+html[data-theme="helpway-gradient"] .standalone-product-visual,
+html[data-theme="helpway-gradient"] .standalone-related-image,
+html[data-theme="helpway-gradient"] .manifesto,
+html[data-theme="helpway-gradient"] .cart-drawer,
+html[data-theme="helpway-gradient"] .checkout-dialog,
+html[data-theme="helpway-gradient"] .account-panel,
+html[data-theme="helpway-gradient"] .mw-panel,
+html[data-theme="helpway-gradient"] .panel,
+html[data-theme="helpway-gradient"] .settings-form {
+  background:linear-gradient(145deg,#101411 0%,#123a2d 65%,#29151a 120%)!important;color:#F5F2EA!important;
+}
+html[data-theme="helpway"] input,html[data-theme="helpway"] textarea,html[data-theme="helpway"] select,
+html[data-theme="helpway-gradient"] input,html[data-theme="helpway-gradient"] textarea,html[data-theme="helpway-gradient"] select {color:#F5F2EA!important;border-color:#315344}
+html[data-theme="helpway"] .button-outline,html[data-theme="helpway-gradient"] .button-outline {color:#F5F2EA!important;border-color:#8f978f}
