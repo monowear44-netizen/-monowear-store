@@ -564,6 +564,16 @@ function renderColorImageAssignments(savedMap = readColorImageMap()) {
   });
 }
 
+function syncDiscountFields() {
+  const form = $("productForm");
+  if (!form || !form.elements.discount_enabled) return;
+  const enabled = form.elements.discount_enabled.checked;
+  form.elements.compare_price.disabled = !enabled;
+  form.elements.compare_price.required = enabled;
+  if (!enabled) form.elements.compare_price.value = "";
+}
+$("productForm")?.elements.discount_enabled?.addEventListener("change", syncDiscountFields);
+
 function newProduct() {
   const form = $("productForm");
 
@@ -578,6 +588,9 @@ function newProduct() {
   renderColorImageAssignments({});
   form.elements.stock.value = 0;
   form.elements.published.checked = true;
+  form.elements.featured.checked = false;
+  form.elements.discount_enabled.checked = false;
+  syncDiscountFields();
   form.elements.sort_order.value = 0;
 
   renderProductCollectionPicker([]);
@@ -650,6 +663,8 @@ window.editProduct = (id) => {
 
   form.elements.featured.checked = !!product.featured;
   form.elements.published.checked = !!product.published;
+  form.elements.discount_enabled.checked = Number(product.compare_price || 0) > Number(product.price || 0);
+  syncDiscountFields();
   renderColorImageAssignments(product.color_images || {});
 
   renderProductCollectionPicker(
@@ -711,6 +726,13 @@ $("productForm").addEventListener("submit", async (event) => {
     body.compare_price === ""
       ? 0
       : Number(body.compare_price);
+
+  const discountEnabled = !!form.elements.discount_enabled.checked;
+  if (discountEnabled && !(body.compare_price > body.price)) {
+    showError("productError", "For a discount, the original price must be higher than the selling price.");
+    return;
+  }
+  if (!discountEnabled) body.compare_price = 0;
 
   body.sizes = body.sizes
     .split(",")
