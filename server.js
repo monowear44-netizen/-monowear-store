@@ -341,6 +341,8 @@ ensureColumn("orders", "shipping_courier_id", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipping_service_code", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipping_courier_name", "TEXT DEFAULT ''");
 
+ensureColumn("orders", "preorder_email_status", "TEXT DEFAULT ''");
+
 if (ensureColumn("orders", "email_status", "TEXT DEFAULT ''")) {
   // Orders already paid before this update are marked "legacy" so the
   // update never emails past customers again.
@@ -1127,6 +1129,63 @@ async function sendOrderConfirmation(order) {
   );
 }
 
+// Dedicated customer email for successfully paid HELP IS ON THE WAY preorders.
+function isHelpIsOnTheWayPreorder(order) {
+  if (!order) return false;
+  const items = parseJSON(order.items, []);
+  const ids = [...new Set(items.map(item => Number(item.product_id)).filter(id => Number.isInteger(id) && id > 0))];
+  if (!ids.length) return false;
+  const placeholders = ids.map(() => "?").join(",");
+  const found = db.prepare(
+    "SELECT 1 FROM product_collections pc JOIN collections c ON c.id = pc.collection_id " +
+    "WHERE pc.product_id IN (" + placeholders + ") AND (" +
+    "LOWER(COALESCE(c.slug, '')) LIKE '%help-is-on-the-way%' OR " +
+    "LOWER(COALESCE(c.name, '')) LIKE '%help is on the way%') LIMIT 1"
+  ).get(...ids);
+  return Boolean(found);
+}
+
+async function sendSuccessfulPreorderEmail(order) {
+  const items = parseJSON(order.items, []);
+  const naira = value => "₦" + Number(value || 0).toLocaleString("en-NG");
+  const rows = items.map(item => {
+    const qty = Number(item.quantity || 1);
+    return '<tr><td style="padding:12px 0;border-bottom:1px solid #eee"><strong>' + escapeHTML(item.name || "MONOWEAR product") +
+      (item.size ? '<br><span style="color:#777;font-size:12px">Size: ' + escapeHTML(item.size) + "</span>" : "") +
+      (item.color ? '<br><span style="color:#777;font-size:12px">Colour: ' + escapeHTML(item.color) + "</span>" : "") +
+      '<br><span style="color:#777;font-size:12px">Qty: ' + qty + '</span></td><td style="text-align:right;border-bottom:1px solid #eee">' + naira(Number(item.price || 0) * qty) + "</td></tr>";
+  }).join("");
+  const body = '<p style="font-size:11px;letter-spacing:3px">MONOWEAR — THE PRELUDE</p>' +
+    '<h2>Your preorder is confirmed.</h2>' +
+    '<p>Hi ' + escapeHTML(order.customer_name) + ', your payment was successful and your <strong>HELP IS ON THE WAY</strong> preorder is officially recorded.</p>' +
+    '<p><strong>Order reference:</strong> ' + escapeHTML(order.reference) + "</p>" +
+    '<table style="width:100%;border-collapse:collapse">' + rows + "</table>" +
+    '<p>Subtotal: ' + naira(order.subtotal) + '<br>Delivery: ' + naira(order.shipping_fee) +
+    '<br><strong>Total paid: ' + naira(order.total) + "</strong></p>" +
+    '<p><strong>OFFICIAL DROP — NOVEMBER 10, 2026</strong></p>' +
+    '<p>This is your preorder confirmation, separate from MONOWEAR regular order confirmations. Thank you for getting in before the official release.</p>' +
+    '<p><strong>HELP IS ON THE WAY.</strong><br>LIVE THE NAME. WEAR THE MEANING.</p>';
+  return sendEmail(order.customer_email, "MONOWEAR Prelude preorder confirmed — " + order.reference, emailShell(body));
+}
+
+async function sendPreorderConfirmationOnce(orderId, options = {}) {
+  const order = getOrderById(orderId);
+  if (!order || order.payment_status !== "paid") return { sent: false, reason: "not_paid" };
+  if (!options.force && ["sent", "sending", "legacy", "skipped"].includes(order.preorder_email_status)) return { sent: false, reason: order.preorder_email_status };
+  const claim = options.force
+    ? db.prepare("UPDATE orders SET preorder_email_status = 'sending' WHERE id = ?").run(order.id)
+    : db.prepare("UPDATE orders SET preorder_email_status = 'sending' WHERE id = ? AND (preorder_email_status IS NULL OR preorder_email_status IN ('', 'failed'))").run(order.id);
+  if (!claim.changes) return { sent: false, reason: "already_claimed" };
+  const result = await sendSuccessfulPreorderEmail(getOrderById(order.id));
+  db.prepare("UPDATE orders SET preorder_email_status = ? WHERE id = ?").run(result.ok ? "sent" : "failed", order.id);
+  if (!result.ok) {
+    recordOrderEvent(order.id, order.order_status || "processing", "Preorder confirmation email failed: " + (result.error || "unknown error"));
+    console.error("Preorder confirmation email failed:", result.error || "unknown error");
+    return { sent: false, reason: "failed", error: result.error };
+  }
+  return { sent: true };
+}
+
 // Sends the confirmation at most once per order.
 // - Only for orders already verified as paid.
 // - The "sending" claim is atomic, so the webhook and the browser
@@ -1139,6 +1198,10 @@ async function sendOrderConfirmationOnce(orderId, options = {}) {
 
   if (!order || order.payment_status !== "paid") {
     return { sent: false, reason: "not_paid" };
+  }
+
+  if (isHelpIsOnTheWayPreorder(order)) {
+    return sendPreorderConfirmationOnce(orderId, options);
   }
 
   if (
