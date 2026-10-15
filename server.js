@@ -291,6 +291,7 @@ ensureColumn("orders", "payment_method", "TEXT DEFAULT 'paystack'");
 ensureColumn("orders", "payment_reference", "TEXT DEFAULT ''");
 ensureColumn("orders", "notes", "TEXT DEFAULT ''");
 ensureColumn("orders", "updated_at", "TEXT DEFAULT CURRENT_TIMESTAMP");
+ensureColumn("orders", "admin_notification_status", "TEXT DEFAULT ''");
 const orderRecordTypeAdded = ensureColumn("orders", "record_type", "TEXT DEFAULT 'abandoned_cart'");
 if (orderRecordTypeAdded) {
   db.prepare(`
@@ -1028,6 +1029,39 @@ function emailShell(bodyHtml) {
   </div>`;
 }
 
+// Notify the store owner once when a customer's payment is confirmed.
+async function sendNewOrderNotificationOnce(orderId) {
+  const order = getOrderById(orderId);
+  if (!order || order.payment_status !== 'paid') return { sent: false, reason: 'not_paid' };
+  if (['sent', 'sending', 'skipped'].includes(order.admin_notification_status)) return { sent: false, reason: order.admin_notification_status };
+  if (!ADMIN_EMAIL) {
+    db.prepare("UPDATE orders SET admin_notification_status = 'skipped' WHERE id = ?").run(order.id);
+    console.warn('Order notification skipped: ADMIN_EMAIL is not configured.');
+    return { sent: false, reason: 'admin_email_missing' };
+  }
+  const claim = db.prepare("UPDATE orders SET admin_notification_status = 'sending' WHERE id = ? AND (admin_notification_status IS NULL OR admin_notification_status IN ('', 'failed'))").run(order.id);
+  if (!claim.changes) return { sent: false, reason: 'already_claimed' };
+  const items = parseJSON(order.items, []);
+  const naira = (value) => '₦' + Number(value || 0).toLocaleString('en-NG');
+  const rows = items.map((item) => {
+    const name = escapeHTML(item.name || 'MONOWEAR product');
+    const size = item.size ? '<br>Size: ' + escapeHTML(item.size) : '';
+    const color = item.color ? '<br>Color: ' + escapeHTML(item.color) : '';
+    const qty = Number(item.quantity || 1);
+    return '<tr><td style="padding:10px 0;border-bottom:1px solid #eee"><strong>' + name + '</strong>' + size + color + '<br>Qty: ' + qty + '</td><td style="text-align:right;border-bottom:1px solid #eee">' + naira(Number(item.price || 0) * qty) + '</td></tr>';
+  }).join('');
+  const address = [order.shipping_address, [order.shipping_city, order.shipping_state].filter(Boolean).join(', '), order.shipping_postcode].filter(Boolean).map(escapeHTML).join('<br>');
+  const body = '<h2>New MONOWEAR order received</h2><p>A customer has completed payment.</p>' +
+    '<p><strong>Reference:</strong> ' + escapeHTML(order.reference) + '<br><strong>Customer:</strong> ' + escapeHTML(order.customer_name) + '<br><strong>Email:</strong> ' + escapeHTML(order.customer_email || 'Not provided') + '<br><strong>Phone:</strong> ' + escapeHTML(order.customer_phone || 'Not provided') + '</p>' +
+    '<table style="width:100%;border-collapse:collapse">' + rows + '</table>' +
+    '<p><strong>Subtotal:</strong> ' + naira(order.subtotal) + '<br><strong>Delivery:</strong> ' + naira(order.shipping_fee) + '<br><strong>Total paid:</strong> ' + naira(order.total) + '</p>' +
+    (address ? '<p><strong>Delivery address</strong><br>' + address + '</p>' : '') + '<p>Open MONOWEAR Studio to manage this order.</p>';
+  const result = await sendEmail(ADMIN_EMAIL, 'New MONOWEAR order — ' + order.reference, emailShell(body));
+  db.prepare('UPDATE orders SET admin_notification_status = ? WHERE id = ?').run(result.ok ? 'sent' : 'failed', order.id);
+  if (!result.ok) console.error('Admin order notification failed:', result.error || 'unknown error');
+  return result.ok ? { sent: true } : { sent: false, reason: 'failed', error: result.error };
+}
+
 // Builds and sends the order confirmation. Returns { ok, error }.
 async function sendOrderConfirmation(order) {
   const items = parseJSON(order.items, []);
@@ -1100,6 +1134,7 @@ async function sendOrderConfirmation(order) {
 async function sendOrderConfirmationOnce(orderId, options = {}) {
   const force = Boolean(options.force);
   const order = getOrderById(orderId);
+  if (order && order.payment_status === 'paid') await sendNewOrderNotificationOnce(orderId);
 
   if (!order || order.payment_status !== "paid") {
     return { sent: false, reason: "not_paid" };
