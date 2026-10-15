@@ -787,9 +787,11 @@ $("productForm").addEventListener("submit", async (event) => {
     }
     body.color_images = normalizedColorImages;
 
-    body.images = [...existingImages, ...uploadedImages, ...Object.values(normalizedColorImages)]
+    // Newly uploaded product photos must take priority over the previously saved gallery.
+    // Otherwise the old first image remains the product.image and the storefront never changes.
+    body.images = [...uploadedImages, ...existingImages, ...Object.values(normalizedColorImages)]
       .filter((url, index, all) => all.indexOf(url) === index);
-    body.image = body.images[0] || body.image || "";
+    body.image = uploadedImages[0] || body.images[0] || body.image || "";
 
 
     await api(
