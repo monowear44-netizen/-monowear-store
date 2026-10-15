@@ -4123,7 +4123,7 @@ app.get("/", (req, res, next) => {
       for (const [property, value] of Object.entries(tags)) {
         const escaped = escapeAttr(value);
         const propertyAttr = property.startsWith("og:") ? "property" : "name";
-        const regex = new RegExp(\`<meta\\s+(?:property|name)=["']\${property}["'][^>]*>\`, "i");
+        const regex = new RegExp('<meta\\s+(?:property|name)=["\']' + property + '["\'][^>]*>', "i");
         const tag = '<meta ' + propertyAttr + '="' + property + '" content="' + escaped + '">';
         if (regex.test(html)) html = html.replace(regex, tag);
         else html = html.replace("</head>", "  " + tag + "\n</head>");
