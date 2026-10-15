@@ -4088,7 +4088,7 @@ app.get("/", (req, res, next) => {
       const product = featured || newestArrival || newestProduct;
       const settingRows = db.prepare("SELECT key, value FROM settings").all();
       const socialSettings = Object.fromEntries(settingRows.map((row) => [row.key, row.value]));
-      const baseUrl = BASE_URL || "https://monowears.com";
+      const baseUrl = "https://monowears.com";
       const preorderDate = String(socialSettings.drop_preorder_date || "2026-10-21");
       const launchDate = String(socialSettings.drop_launch_date || "2026-11-10");
       const preorderAt = new Date(preorderDate + "T00:00:00+01:00").getTime();
