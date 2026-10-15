@@ -7,7 +7,9 @@
     emerald: { bg:"#073f32", ink:"#f2f5ef", muted:"#b8d0c5", line:"#286b59", accent:"#57d6a0", panel:"#0c4d3d", soft:"#145a48", sidebar:"#052f26" },
     gold: { bg:"#171510", ink:"#f6f0df", muted:"#c1b58f", line:"#51452a", accent:"#d5b15a", panel:"#211d14", soft:"#302817", sidebar:"#100f0b" },
     wine: { bg:"#2b0b16", ink:"#f8edf0", muted:"#c6a6b0", line:"#603044", accent:"#d87994", panel:"#3a101f", soft:"#481629", sidebar:"#210710" },
-    gothic: { bg:"#0b0b0f", ink:"#e9e5ef", muted:"#aaa2b8", line:"#37313f", accent:"#b7a2d8", panel:"#15131a", soft:"#211d28", sidebar:"#08070b" }
+    gothic: { bg:"#0b0b0f", ink:"#e9e5ef", muted:"#aaa2b8", line:"#37313f", accent:"#b7a2d8", panel:"#15131a", soft:"#211d28", sidebar:"#08070b" },
+    helpway: { bg:"#111111", ink:"#F2F0EA", muted:"#bcb9b0", line:"#34302f", accent:"#164A36", panel:"#191918", soft:"#242321", sidebar:"#0d0e0d" },
+    "helpway-gradient": { bg:"#0B0D0C", ink:"#F5F2EA", muted:"#c0c6c0", line:"#254238", accent:"#064E3B", panel:"#111b17", soft:"#17251f", sidebar:"#080b09" }
   };
   function apply(settings) {
     const theme = String(settings.design_theme || "dark").toLowerCase();
