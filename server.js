@@ -4079,10 +4079,11 @@ app.get("/", (req, res, next) => {
       const featured = db.prepare(
         "SELECT * FROM products WHERE published = 1 AND featured = 1 ORDER BY sort_order ASC, id DESC LIMIT 1"
       ).get();
-      // Social previews are driven by featured products only.
-      // If there is no featured product, use the MONOWEAR logo rather than
-      // showing an unrelated/newest product in link previews.
-      const product = featured;
+      // Prefer a featured product. If none exists, promote the newest published
+      // product so shared links still show a current drop item and countdown.
+      const product = featured || db.prepare(
+        "SELECT * FROM products WHERE published = 1 ORDER BY COALESCE(updated_at, created_at) DESC, id DESC LIMIT 1"
+      ).get();
       const settingRows = db.prepare("SELECT key, value FROM settings").all();
       const socialSettings = Object.fromEntries(settingRows.map((row) => [row.key, row.value]));
       const baseUrl = "https://monowears.com";
@@ -4095,12 +4096,12 @@ app.get("/", (req, res, next) => {
       const daysLeft = targetAt ? Math.max(0, Math.ceil((targetAt - now) / 86400000)) : 0;
       const countdown = targetAt ? daysLeft + (daysLeft === 1 ? " DAY" : " DAYS") : "AVAILABLE NOW";
       const productName = product && product.name ? String(product.name) : "Help Is On The Way";
-      const title = featured
+      const title = product
         ? "MONOWEARS — " + productName + " | " + targetLabel + " " + countdown
-        : "MONOWEARS — Independent.";
-      const description = featured
-        ? "Featured piece: " + productName + ". " + targetLabel + (targetAt ? " " + countdown + ". " : ". ") + "Discover the Monowears drop."
-        : "MONOWEARS — Independent streetwear from Nigeria. Live the name. Wear the meaning.";
+        : "MONOWEARS — Help Is On The Way | " + targetLabel + " " + countdown;
+      const description = product
+        ? (featured ? "Featured piece: " : "New drop: ") + productName + ". " + targetLabel + (targetAt ? " " + countdown + ". " : ". ") + "Discover the Monowears drop."
+        : "Help Is On The Way by MONOWEARS. " + targetLabel + (targetAt ? " " + countdown + ". " : ". ") + "Independent streetwear from Nigeria. Live the name. Wear the meaning.";
       const escapeAttr = (value) => String(value || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       let image = featured && featured.image ? String(featured.image) : "";
       if (!image && featured && featured.images) {
@@ -4109,9 +4110,8 @@ app.get("/", (req, res, next) => {
           image = Array.isArray(images) ? String(images[0] || "") : "";
         } catch {}
       }
-      // With no featured product, always fall back to the uploaded brand logo.
-      // Do not substitute a hero background or an unrelated product image.
-      if (!featured) image = String(socialSettings.logo_image || "");
+      // Use the selected product image, or the brand logo if no product image exists.
+      if (!image) image = String(socialSettings.logo_image || "");
       if (image && !/^https?:\/\//i.test(image)) image = baseUrl + (image.startsWith("/") ? "" : "/") + image;
       const tags = {
         "og:title": title,
@@ -4129,13 +4129,13 @@ app.get("/", (req, res, next) => {
         if (regex.test(html)) html = html.replace(regex, tag);
         else html = html.replace("</head>", "  " + tag + "\n</head>");
       }
+      // Remove every existing image preview tag first. This prevents stale LabelD
+      // metadata in the static HTML from winning when links are shared elsewhere.
+      html = html.replace(/<meta\s+(?:property=["']og:image["']|name=["']twitter:image["'])[^>]*>\s*/gi, "");
       if (image) {
         const imageTag = '<meta property="og:image" content="' + escapeAttr(image) + '">';
         const twitterImageTag = '<meta name="twitter:image" content="' + escapeAttr(image) + '">';
-        if (/<meta\s+property=["']og:image["'][^>]*>/i.test(html)) html = html.replace(/<meta\s+property=["']og:image["'][^>]*>/i, imageTag);
-        else html = html.replace("</head>", "  " + imageTag + "\n</head>");
-        if (/<meta\s+name=["']twitter:image["'][^>]*>/i.test(html)) html = html.replace(/<meta\s+name=["']twitter:image["'][^>]*>/i, twitterImageTag);
-        else html = html.replace("</head>", "  " + twitterImageTag + "\n</head>");
+        html = html.replace("</head>", "  " + imageTag + "\n  " + twitterImageTag + "\n</head>");
       }
       html = html.replace(/<title>[^<]*<\/title>/i, "<title>" + escapeAttr(title) + "</title>");
       return res.type("html").send(html);
