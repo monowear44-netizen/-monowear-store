@@ -4064,6 +4064,66 @@ app.get("/studio", (req, res) => {
 const PUBLIC_DIR = path.join(__dirname, "public");
 
 if (fs.existsSync(PUBLIC_DIR)) {
+  // Let the root route below inject current product/drop metadata before HTML is served.
+  app.use(express.static(PUBLIC_DIR, { index: false }));
+}
+
+// Serve the storefront with live social-preview metadata.
+app.get("/", (req, res, next) => {
+  const indexFile = path.join(PUBLIC_DIR, "index.html");
+
+  if (fs.existsSync(indexFile)) {
+    try {
+      let html = fs.readFileSync(indexFile, "utf8");
+      const now = Date.now();
+      const featured = db.prepare(
+        "SELECT * FROM products WHERE published = 1 AND featured = 1 ORDER BY sort_order ASC, id DESC LIMIT 1"
+      ).get();
+      const newestArrival = db.prepare(
+        "SELECT * FROM products WHERE published = 1 AND new_arrival_until <> '' AND new_arrival_until > ? ORDER BY sort_order ASC, id DESC LIMIT 1"
+      ).get(new Date(now).toISOString());
+      const newestProduct = db.prepare(
+        "SELECT * FROM products WHERE published = 1 ORDER BY sort_order ASC, id DESC LIMIT 1"
+      ).get();
+      const product = featured || newestArrival || newestProduct;
+      const settingRows = db.prepare("SELECT key, value FROM settings").all();
+      const socialSettings = Object.fromEntries(settingRows.map((row) => [row.key, row.value]));
+      const baseUrl = BASE_URL || "https://monowears.com";
+      const preorderDate = String(socialSettings.drop_preorder_date || "2026-10-21");
+      const launchDate = String(socialSettings.drop_launch_date || "2026-11-10");
+      const preorderAt = new Date(preorderDate + "T00:00:00+01:00").getTime();
+      const launchAt = new Date(launchDate + "T00:00:00+01:00").getTime();
+      const targetAt = now < preorderAt ? preorderAt : now < launchAt ? launchAt : 0;
+      const targetLabel = now < preorderAt ? "PRE-ORDERS OPEN IN" : now < launchAt ? "DROP GOES LIVE IN" : "DROP LIVE";
+      const daysLeft = targetAt ? Math.max(0, Math.ceil((targetAt - now) / 86400000)) : 0;
+      const countdown = targetAt ? daysLeft + (daysLeft === 1 ? " DAY" : " DAYS") : "AVAILABLE NOW";
+      const productName = product && product.name ? String(product.name) : "Help Is On The Way";
+      const title = "MONOWEARS — " + productName + " | " + (targetAt ? countdown : "DROP LIVE");
+      const description = product
+        ? (featured ? "Featured piece: " : newestArrival ? "New arrival: " : "Latest piece: ") + productName + ". " + targetLabel + (targetAt ? " " + countdown + ". " : ". ") + "Discover the Monowears drop."
+        : "MONOWEARS — Help Is On The Way. Independent streetwear from Nigeria.";
+      const escapeAttr = (value) => String(value || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      let image = product && product.image ? String(product.image) : "";
+      if (!image && product && product.images) {
+        try {
+          const images = Array.isArray(product.images) ? product.images : JSON.parse(product.images);
+          image = Array.isArray(images) ? String(images[0] || "") : "";
+        } catch {}
+      }
+      if (!image) image = String(socialSettings.logo_image || socialSettings.hero_background_image || "");
+      if (image && !/^https?:\/\//i.test(image)) image = baseUrl + (image.startsWith("/") ? "" : "/") + image;
+      const tags = {
+        "og:title": title,
+        "og:description": description,
+        "og:url": baseUrl + "/",
+        "og:site_name": "MONOWEARS",
+        "twitter:title": title,
+        "twitter:description": description
+      };
+      for (const [property, value] of Object.entries(tags)) {
+        const escaped = escapeAttr(value);
+        const propertyAttr = property.startsWith("og:") ? "property" : "name";
+        const regex = new RegExp("<meta\\s+(?:property|name)=([\\"'])" + property.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\if (fs.existsSync(PUBLIC_DIR)) {
   app.use(express.static(PUBLIC_DIR));
 }
 
@@ -4073,6 +4133,25 @@ app.get("/", (req, res, next) => {
 
   if (fs.existsSync(indexFile)) {
     return res.sendFile(indexFile);
+  }") + "\\1[^>]*>", "i");
+        const tag = '<meta ' + propertyAttr + '="' + property + '" content="' + escaped + '">';
+        if (regex.test(html)) html = html.replace(regex, tag);
+        else html = html.replace("</head>", "  " + tag + "\\n</head>");
+      }
+      if (image) {
+        const imageTag = '<meta property="og:image" content="' + escapeAttr(image) + '">';
+        const twitterImageTag = '<meta name="twitter:image" content="' + escapeAttr(image) + '">';
+        if (/<meta\\s+property=["']og:image["'][^>]*>/i.test(html)) html = html.replace(/<meta\\s+property=["']og:image["'][^>]*>/i, imageTag);
+        else html = html.replace("</head>", "  " + imageTag + "\\n</head>");
+        if (/<meta\\s+name=["']twitter:image["'][^>]*>/i.test(html)) html = html.replace(/<meta\\s+name=["']twitter:image["'][^>]*>/i, twitterImageTag);
+        else html = html.replace("</head>", "  " + twitterImageTag + "\\n</head>");
+      }
+      html = html.replace(/<title>[^<]*<\\/title>/i, "<title>" + escapeAttr(title) + "</title>");
+      return res.type("html").send(html);
+    } catch (error) {
+      console.error("Social preview metadata error:", error);
+      return res.sendFile(indexFile);
+    }
   }
 
   res.status(200).send(`
