@@ -2006,7 +2006,33 @@ checkAuth();
      if (window.refreshDesignPreview) window.refreshDesignPreview();
    }
    window.applyMonowearThemePreset = applyPreset;
-   form.elements.design_theme.addEventListener("change", applyPreset);
+
+   // Save the selected theme and its matching palette immediately, independently
+   // of the larger Store Settings form's Save button.
+   let themeSaveTimer;
+   form.elements.design_theme.addEventListener("change", () => {
+     applyPreset();
+     clearTimeout(themeSaveTimer);
+     themeSaveTimer = setTimeout(async () => {
+       const message = document.getElementById("settingsMessage");
+       try {
+         const result = await api("/api/admin/settings", {
+           method: "PUT",
+           body: JSON.stringify({
+             design_theme: form.elements.design_theme.value,
+             design_background: form.elements.design_background.value,
+             design_text: form.elements.design_text.value,
+             design_accent: form.elements.design_accent.value
+           })
+         });
+         currentSettings = { ...currentSettings, ...(result.settings || {}) };
+         if (window.applyMonowearGlobalTheme) window.applyMonowearGlobalTheme(currentSettings);
+         if (message) message.textContent = "Theme saved and applied across MONOWEAR.";
+       } catch (error) {
+         if (message) message.textContent = "Theme could not be saved: " + error.message;
+       }
+     }, 120);
+   });
    // Keep saved custom colours when Studio loads; only an explicit theme change applies a preset.
  })();
 
