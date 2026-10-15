@@ -272,6 +272,7 @@ ensureColumn("products", "color_images", "TEXT DEFAULT '{}'");
 ensureColumn("products", "stock", "INTEGER DEFAULT 0");
 ensureColumn("products", "published", "INTEGER DEFAULT 0");
 ensureColumn("products", "featured", "INTEGER DEFAULT 0");
+ensureColumn("products", "new_arrival_until", "TEXT DEFAULT ''");
 ensureColumn("products", "sort_order", "INTEGER DEFAULT 0");
 ensureColumn("products", "updated_at", "TEXT DEFAULT CURRENT_TIMESTAMP");
 
@@ -769,6 +770,8 @@ function safeProduct(product) {
     stock: Number(product.stock || 0),
     published: Boolean(product.published),
     featured: Boolean(product.featured),
+    new_arrival: Boolean(product.new_arrival_until && Date.parse(product.new_arrival_until) > Date.now()),
+    new_arrival_until: product.new_arrival_until || "",
     images: parseJSON(product.images, []),
     sizes: parseJSON(product.sizes, []),
     colors: parseJSON(product.colors, []),
@@ -1519,6 +1522,7 @@ app.post("/api/customer/logout", (req, res) => {
 
 app.get("/api/store", (req, res) => {
   try {
+    syncFeaturedDropStatuses();
     const products = db.prepare(`
       SELECT *
       FROM products
@@ -1564,6 +1568,7 @@ app.get("/api/store", (req, res) => {
 // ============================================================
 
 app.get("/api/products", (req, res) => {
+  syncFeaturedDropStatuses();
   const { category, featured, search, limit } = req.query;
 
   let sql = "SELECT * FROM products WHERE published = 1";
@@ -1857,6 +1862,7 @@ app.put("/api/admin/products/:id", requireAdmin, (req, res) => {
         stock = @stock,
         published = @published,
         featured = @featured,
+        new_arrival_until = CASE WHEN @featured = 1 THEN '' ELSE new_arrival_until END,
         sort_order = @sort_order,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = @id
@@ -2349,6 +2355,22 @@ function getSetting(key, fallback = "") {
 }
 
 // Read a setting as a valid, non-negative monetary number.
+// Move featured products into New Arrivals on launch, then into the normal catalogue after 24 hours.
+function syncFeaturedDropStatuses() {
+  const launchDate = String(getSetting("drop_launch_date", "2026-11-10") || "");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(launchDate)) return;
+  const launchAt = new Date(launchDate + "T00:00:00+01:00").getTime();
+  if (!Number.isFinite(launchAt) || Date.now() < launchAt) return;
+  const now = Date.now();
+  const arrivalUntil = launchAt + 24 * 60 * 60 * 1000;
+  if (now < arrivalUntil) {
+    db.prepare("UPDATE products SET featured = 0, new_arrival_until = CASE WHEN new_arrival_until IS NULL OR new_arrival_until = '' THEN ? ELSE new_arrival_until END, updated_at = CURRENT_TIMESTAMP WHERE featured = 1").run(new Date(arrivalUntil).toISOString());
+  } else {
+    db.prepare("UPDATE products SET featured = 0, new_arrival_until = '', updated_at = CURRENT_TIMESTAMP WHERE featured = 1").run();
+    db.prepare("UPDATE products SET new_arrival_until = '', updated_at = CURRENT_TIMESTAMP WHERE new_arrival_until <> '' AND new_arrival_until <= ?").run(new Date(now).toISOString());
+  }
+}
+
 function moneySetting(key, fallback = 0) {
   const value = Number(getSetting(key, fallback));
 
@@ -2357,6 +2379,7 @@ function moneySetting(key, fallback = 0) {
     : fallback;
 }
 function normalizeCheckoutItems(items) {
+  syncFeaturedDropStatuses();
   if (!Array.isArray(items) || items.length === 0) {
     throw new Error("Your cart is empty.");
   }
