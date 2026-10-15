@@ -29,6 +29,7 @@ const EMAIL_FROM =
   process.env.EMAIL_FROM || "MONOWEAR <orders@monowears.com>";
 
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+const ORDER_NOTIFICATION_EMAIL = (process.env.ORDER_NOTIFICATION_EMAIL || "monowear44@gmail.com").trim().toLowerCase();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 
 const SESSION_SECRET = process.env.SESSION_SECRET || "";
@@ -1034,10 +1035,10 @@ async function sendNewOrderNotificationOnce(orderId) {
   const order = getOrderById(orderId);
   if (!order || order.payment_status !== 'paid') return { sent: false, reason: 'not_paid' };
   if (['sent', 'sending', 'skipped'].includes(order.admin_notification_status)) return { sent: false, reason: order.admin_notification_status };
-  if (!ADMIN_EMAIL) {
+  if (!ORDER_NOTIFICATION_EMAIL) {
     db.prepare("UPDATE orders SET admin_notification_status = 'skipped' WHERE id = ?").run(order.id);
-    console.warn('Order notification skipped: ADMIN_EMAIL is not configured.');
-    return { sent: false, reason: 'admin_email_missing' };
+    console.warn('Order notification skipped: ORDER_NOTIFICATION_EMAIL is not configured.');
+    return { sent: false, reason: 'notification_email_missing' };
   }
   const claim = db.prepare("UPDATE orders SET admin_notification_status = 'sending' WHERE id = ? AND (admin_notification_status IS NULL OR admin_notification_status IN ('', 'failed'))").run(order.id);
   if (!claim.changes) return { sent: false, reason: 'already_claimed' };
@@ -1056,7 +1057,7 @@ async function sendNewOrderNotificationOnce(orderId) {
     '<table style="width:100%;border-collapse:collapse">' + rows + '</table>' +
     '<p><strong>Subtotal:</strong> ' + naira(order.subtotal) + '<br><strong>Delivery:</strong> ' + naira(order.shipping_fee) + '<br><strong>Total paid:</strong> ' + naira(order.total) + '</p>' +
     (address ? '<p><strong>Delivery address</strong><br>' + address + '</p>' : '') + '<p>Open MONOWEAR Studio to manage this order.</p>';
-  const result = await sendEmail(ADMIN_EMAIL, 'New MONOWEAR order — ' + order.reference, emailShell(body));
+  const result = await sendEmail(ORDER_NOTIFICATION_EMAIL, 'New MONOWEAR order — ' + order.reference, emailShell(body));
   db.prepare('UPDATE orders SET admin_notification_status = ? WHERE id = ?').run(result.ok ? 'sent' : 'failed', order.id);
   if (!result.ok) console.error('Admin order notification failed:', result.error || 'unknown error');
   return result.ok ? { sent: true } : { sent: false, reason: 'failed', error: result.error };
