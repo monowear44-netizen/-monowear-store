@@ -15,9 +15,10 @@
     const theme = String(settings.design_theme || "dark").toLowerCase();
     const p = palettes[theme] || palettes.dark;
     const validColor = (value, fallback) => /^#[0-9a-f]{6}$/i.test(String(value || "")) ? value : fallback;
-    const bg = validColor(settings.design_background, p.bg);
-    const ink = validColor(settings.design_text, p.ink);
-    const accent = validColor(settings.design_accent, p.accent);
+    const fixedPreset = theme === "helpway" || theme === "helpway-gradient";
+    const bg = fixedPreset ? p.bg : validColor(settings.design_background, p.bg);
+    const ink = fixedPreset ? p.ink : validColor(settings.design_text, p.ink);
+    const accent = fixedPreset ? p.accent : validColor(settings.design_accent, p.accent);
     const root = document.documentElement;
     root.dataset.theme = palettes[theme] ? theme : "dark";
     const vars = {
