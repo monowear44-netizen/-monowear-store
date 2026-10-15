@@ -965,6 +965,7 @@ $("settingsForm").addEventListener("submit", async (event) => {
     );
 
     toast("Store settings saved.");
+    if (window.applyMonowearGlobalTheme) window.applyMonowearGlobalTheme(currentSettings);
     if (window.refreshDesignPreview) window.refreshDesignPreview();
     loadEmailStatus();
   } catch (error) {
@@ -1951,6 +1952,15 @@ checkAuth();
     preview.style.setProperty("--preview-bg", background);
     preview.style.setProperty("--preview-ink", ink);
     preview.style.setProperty("--preview-accent", accent);
+    // Apply the chosen colours immediately in Studio as well as inside the preview.
+    if (window.applyMonowearGlobalTheme) {
+      window.applyMonowearGlobalTheme({
+        design_theme: value("design_theme", "dark"),
+        design_background: background,
+        design_text: ink,
+        design_accent: accent
+      });
+    }
     preview.style.fontFamily = fonts[value("design_font", "Manrope")] || fonts.Manrope;
     preview.style.alignItems = alignment === "left" ? "flex-start" : alignment === "right" ? "flex-end" : "center";
     preview.style.textAlign = alignment;
