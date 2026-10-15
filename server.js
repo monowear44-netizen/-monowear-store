@@ -4079,13 +4079,10 @@ app.get("/", (req, res, next) => {
       const featured = db.prepare(
         "SELECT * FROM products WHERE published = 1 AND featured = 1 ORDER BY sort_order ASC, id DESC LIMIT 1"
       ).get();
-      const newestArrival = db.prepare(
-        "SELECT * FROM products WHERE published = 1 AND new_arrival_until <> '' AND new_arrival_until > ? ORDER BY sort_order ASC, id DESC LIMIT 1"
-      ).get(new Date(now).toISOString());
-      const newestProduct = db.prepare(
-        "SELECT * FROM products WHERE published = 1 ORDER BY sort_order ASC, id DESC LIMIT 1"
-      ).get();
-      const product = featured || newestArrival || newestProduct;
+      // Social previews are driven by featured products only.
+      // If there is no featured product, use the MONOWEAR logo rather than
+      // showing an unrelated/newest product in link previews.
+      const product = featured;
       const settingRows = db.prepare("SELECT key, value FROM settings").all();
       const socialSettings = Object.fromEntries(settingRows.map((row) => [row.key, row.value]));
       const baseUrl = "https://monowears.com";
@@ -4098,19 +4095,23 @@ app.get("/", (req, res, next) => {
       const daysLeft = targetAt ? Math.max(0, Math.ceil((targetAt - now) / 86400000)) : 0;
       const countdown = targetAt ? daysLeft + (daysLeft === 1 ? " DAY" : " DAYS") : "AVAILABLE NOW";
       const productName = product && product.name ? String(product.name) : "Help Is On The Way";
-      const title = "MONOWEARS — " + productName + " | " + (targetAt ? countdown : "DROP LIVE");
-      const description = product
-        ? (featured ? "Featured piece: " : newestArrival ? "New arrival: " : "Latest piece: ") + productName + ". " + targetLabel + (targetAt ? " " + countdown + ". " : ". ") + "Discover the Monowears drop."
-        : "MONOWEARS — Help Is On The Way. Independent streetwear from Nigeria.";
+      const title = featured
+        ? "MONOWEARS — " + productName + " | " + targetLabel + " " + countdown
+        : "MONOWEARS — Independent.";
+      const description = featured
+        ? "Featured piece: " + productName + ". " + targetLabel + (targetAt ? " " + countdown + ". " : ". ") + "Discover the Monowears drop."
+        : "MONOWEARS — Independent streetwear from Nigeria. Live the name. Wear the meaning.";
       const escapeAttr = (value) => String(value || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-      let image = product && product.image ? String(product.image) : "";
-      if (!image && product && product.images) {
+      let image = featured && featured.image ? String(featured.image) : "";
+      if (!image && featured && featured.images) {
         try {
-          const images = Array.isArray(product.images) ? product.images : JSON.parse(product.images);
+          const images = Array.isArray(featured.images) ? featured.images : JSON.parse(featured.images);
           image = Array.isArray(images) ? String(images[0] || "") : "";
         } catch {}
       }
-      if (!image) image = String(socialSettings.logo_image || socialSettings.hero_background_image || "");
+      // With no featured product, always fall back to the uploaded brand logo.
+      // Do not substitute a hero background or an unrelated product image.
+      if (!featured) image = String(socialSettings.logo_image || "");
       if (image && !/^https?:\/\//i.test(image)) image = baseUrl + (image.startsWith("/") ? "" : "/") + image;
       const tags = {
         "og:title": title,
