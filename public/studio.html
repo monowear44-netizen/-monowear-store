@@ -234,26 +234,19 @@
             placeholder="Hoodies, Tees, Accessories"
           >
         </label>
-        <label>
-          Price in naira (₦)
-          <input
-            name="price"
-            type="number"
-            min="0"
-            step="1"
-            required
-            placeholder="15000"
-          >
+        <label class="check span2">
+          <input name="discount_enabled" type="checkbox">
+          APPLY DISCOUNT TO THIS PRODUCT
         </label>
         <label>
-          Compare-at price (₦)
-          <input
-            name="compare_price"
-            type="number"
-            min="0"
-            step="1"
-            placeholder="20000"
-          >
+          Selling price (₦)
+          <input name="price" type="number" min="0" step="1" required placeholder="15000">
+          <small class="muted">The price customers pay. Enter the discounted price when a discount is active.</small>
+        </label>
+        <label>
+          Original price before discount (₦)
+          <input name="compare_price" type="number" min="0" step="1" placeholder="20000">
+          <small class="muted">Shown crossed out only when higher than the selling price.</small>
         </label>
         <label>
           Sizes, comma-separated
@@ -533,6 +526,21 @@
         <label class="span2">
           Hero subtitle
           <textarea name="hero_subtitle" rows="3"></textarea>
+        </label>
+        <div class="span2 editor-head">
+          <div>
+            <p class="eyebrow">DROP CALENDAR</p>
+            <h2>Next drop dates</h2>
+            <p class="muted">Published + featured products are reserved for the next drop: countdown first, pre-orders on the opening date, then regular sales on launch day. Change these dates for future drops without editing code.</p>
+          </div>
+        </div>
+        <label>
+          Pre-orders open
+          <input type="date" name="drop_preorder_date" required>
+        </label>
+        <label>
+          Official drop / regular sales start
+          <input type="date" name="drop_launch_date" required>
         </label>
         <div class="span2 editor-head">
           <div>
@@ -1097,7 +1105,7 @@
 ></div>
   </main>
   <!-- EXISTING STUDIO FUNCTIONALITY -->
-  <script src="/studio.js?v=labeld-history-combined-theme-20261015b"></script>
+  <script src="/studio.js?v=drop-countdown-discount-20261015"></script>
   <!-- IMAGE PREVIEWS AND VALIDATION -->
   <script>
     (() => {
