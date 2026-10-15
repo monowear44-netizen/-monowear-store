@@ -99,7 +99,9 @@
       dark: { bg: "#111210", ink: "#f4f2ea", muted: "#a6a69d", line: "#34352f", accent: "#c6ff4b", panel: "#1b1c19", soft: "#242520" },
       white: { bg: "#ffffff", ink: "#171815", muted: "#77786f", line: "#deded8", accent: "#c6ff4b", panel: "#f7f7f3", soft: "#ededE7" },
       emerald: { bg: "#073f32", ink: "#f2f5ef", muted: "#b8d0c5", line: "#286b59", accent: "#57d6a0", panel: "#0c4d3d", soft: "#145a48" },
-      gold: { bg: "#171510", ink: "#f6f0df", muted: "#c1b58f", line: "#51452a", accent: "#d5b15a", panel: "#211d14", soft: "#302817" }
+      gold: { bg: "#171510", ink: "#f6f0df", muted: "#c1b58f", line: "#51452a", accent: "#d5b15a", panel: "#211d14", soft: "#302817" },
+      wine: { bg: "#2b0b16", ink: "#f8edf0", muted: "#c6a6b0", line: "#603044", accent: "#d87994", panel: "#3a101f", soft: "#481629" },
+      gothic: { bg: "#0b0b0f", ink: "#e9e5ef", muted: "#aaa2b8", line: "#37313f", accent: "#b7a2d8", panel: "#15131a", soft: "#211d28" }
     };
     const palette = palettes[theme] || palettes.dark;
     root.dataset.theme = palettes[theme] ? theme : "dark";
