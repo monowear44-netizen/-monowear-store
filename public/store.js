@@ -233,6 +233,32 @@
   /* =========================================================
      PRODUCT DISPLAY
   ========================================================= */
+  function dropDates() {
+    const preorderDate = String(settings.drop_preorder_date || "2026-10-21");
+    const launchDate = String(settings.drop_launch_date || "2026-11-10");
+    return {preorderDate, launchDate, preorderAt:new Date(preorderDate+"T00:00:00+01:00"), launchAt:new Date(launchDate+"T00:00:00+01:00")};
+  }
+  function dropPhase() {
+    const d = dropDates(), now = Date.now();
+    if (now < d.preorderAt.getTime()) return {phase:"countdown",target:d.preorderAt,label:"PRE-ORDERS OPEN IN"};
+    if (now < d.launchAt.getTime()) return {phase:"preorder",target:d.launchAt,label:"DROP GOES LIVE IN"};
+    return {phase:"live",target:null,label:"DROP LIVE"};
+  }
+  function countdownText(target) {
+    const n=Math.max(0,Math.floor((new Date(target).getTime()-Date.now())/1000));
+    return Math.floor(n/86400)+"D "+String(Math.floor(n%86400/3600)).padStart(2,"0")+"H "+String(Math.floor(n%3600/60)).padStart(2,"0")+"M "+String(n%60).padStart(2,"0")+"S";
+  }
+  function updateDropCountdowns() {
+    const state=dropPhase();
+    document.querySelectorAll("[data-drop-countdown]").forEach((n)=>n.textContent=state.target?countdownText(state.target):"AVAILABLE NOW");
+    document.querySelectorAll("[data-drop-label]").forEach((n)=>n.textContent=state.label);
+    document.querySelectorAll("[data-featured-add]").forEach((b)=>{
+      const stock=Number(b.dataset.stock||0);
+      b.disabled=state.phase==="countdown"||stock<=0;
+      b.textContent=stock<=0?"SOLD OUT":state.phase==="countdown"?"PRE-ORDER OPENS SOON":state.phase==="preorder"?"PRE-ORDER +":"ADD TO BAG +";
+    });
+  }
+
   function renderProductCards(items) {
     return items.map((product) => {
       const id = Number(product.id);
@@ -240,6 +266,11 @@
       const sizes = Array.isArray(product.sizes) ? product.sizes : [];
       const colors = Array.isArray(product.colors) ? product.colors : [];
       const soldOut = stock <= 0;
+      const phase = dropPhase();
+      const isFeatured = !!product.featured;
+      const preorderBlocked = isFeatured && phase.phase === "countdown";
+      const originalPrice = Number(product.compare_price || 0);
+      const discounted = originalPrice > Number(product.price || 0);
       const sizeOptions = sizes.length
         ? sizes.map((size) => `<option value="${escapeHTML(size)}">${escapeHTML(size)}</option>`).join("")
         : '<option value="One size">One size</option>';
@@ -250,13 +281,14 @@
         <article class="product-card" data-product-id="${id}">
           <a class="product-image product-page-link" href="/product.html?slug=${encodeURIComponent(product.slug || "")}&id=${id}" aria-label="View product details">
             ${productImage(product)}
-            ${product.featured ? '<span class="product-badge">FEATURED</span>' : ""}
-            ${soldOut ? '<span class="sold-badge">SOLD OUT</span>' : ""}
+            ${isFeatured ? '<span class="product-badge">PRE-ORDER / NEXT DROP</span>' : ""}
+            ${soldOut && !preorderBlocked ? '<span class="sold-badge">SOLD OUT</span>' : ""}
           </a>
           <div class="product-meta">
             <h3><a class="product-name-link" href="/product.html?slug=${encodeURIComponent(product.slug || "")}&id=${id}">${escapeHTML(product.name || "MONOWEAR Piece")}</a></h3>
-            <span class="price">${money(product.price)}</span>
+            <span class="price">${discounted ? '<del class="original-price">' + money(originalPrice) + '</del> ' : ''}${money(product.price)}</span>
           </div>
+          ${isFeatured ? `<div class="drop-countdown"><span data-drop-label>${phase.label}</span><strong data-drop-countdown>${phase.target ? countdownText(phase.target) : "AVAILABLE NOW"}</strong><small>${phase.phase === "countdown" ? "Pre-orders begin " + escapeHTML(dropDates().preorderDate) : phase.phase === "preorder" ? "Official drop " + escapeHTML(dropDates().launchDate) : "The drop is live"}</small></div>` : ""}
           <div class="product-category">
             ${escapeHTML(product.category || "MONOWEAR")}
             ${stock > 0 ? ` · ${stock} available` : ""}
@@ -266,8 +298,8 @@
               ${sizeOptions}
             </select>
             ${colorOptions}
-            <button class="add-button" type="button" ${soldOut ? "disabled" : ""} onclick="addToCart(${id})">
-              ${soldOut ? "SOLD OUT" : "ADD TO BAG +"}
+            <button class="add-button" type="button" data-stock="${stock}" ${isFeatured ? 'data-featured-add="true"' : ""} ${soldOut || preorderBlocked ? "disabled" : ""} onclick="addToCart(${id})">
+              ${soldOut ? "SOLD OUT" : preorderBlocked ? "PRE-ORDER OPENS SOON" : isFeatured && phase.phase === "preorder" ? "PRE-ORDER +" : "ADD TO BAG +"}
             </button>
           </div>
         </article>
@@ -476,7 +508,14 @@
     if (img) img.src = src;
   });
 
+  window.setInterval(updateDropCountdowns, 1000);
+
   window.addToCart = function (productId) {
+    const targetProduct = products.find((item) => Number(item.id) === Number(productId));
+    if (targetProduct && targetProduct.featured && dropPhase().phase === "countdown") {
+      alert("Pre-orders for this drop open on " + dropDates().preorderDate + ".");
+      return;
+    }
     const product = products.find(
       (item) => Number(item.id) === Number(productId)
     );
@@ -969,6 +1008,7 @@ if (checkoutForm) {
       applySettings();
       renderCategoryFilter();
       renderProducts();
+      updateDropCountdowns();
       console.info(
         `MONOWEAR: Loaded ${products.length} published product(s).`
       );
