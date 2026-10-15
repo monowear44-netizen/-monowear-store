@@ -308,3 +308,106 @@ html[data-theme="helpway-gradient"] input,html[data-theme="helpway-gradient"] te
 }
 html[data-theme="helpway"] .button-outline,
 html[data-theme="helpway-gradient"] .button-outline {color:#F5F2EA!important;border-color:#8f978f}
+
+
+/* MONOWEAR refined collection palettes — intentionally distinct, premium color systems. */
+/* OXBLOOD / ESPRESSO / CHAMPAGNE */
+html[data-theme="helpway"] {
+  --bg:#211316; --ink:#F6EEE8; --text:#F6EEE8; --muted:#C8B5B0;
+  --line:#56343A; --accent:#8E3B4A; --lime:#8E3B4A;
+  --panel:#2B191D; --panel2:#392126; --surface-soft:#392126;
+  --preview-bg:#211316; --preview-ink:#F6EEE8; --preview-accent:#8E3B4A;
+  --theme-sidebar:#180D10;
+}
+html[data-theme="helpway"] body,
+html[data-theme="helpway"] .standalone-product-page,
+html[data-theme="helpway"] .standalone-product-main,
+html[data-theme="helpway"] .product-page-header,
+html[data-theme="helpway"] .site-header,
+html[data-theme="helpway"] footer,
+html[data-theme="helpway"] .newsletter,
+html[data-theme="helpway"] .section-wrap,
+html[data-theme="helpway"] .account-main,
+html[data-theme="helpway"] .policy-page,
+html[data-theme="helpway"] .confirmation { background:#211316!important; color:#F6EEE8!important; }
+html[data-theme="helpway"] .announcement,
+html[data-theme="helpway"] .ticker { background:#8E3B4A!important; color:#FFF8F2!important; }
+html[data-theme="helpway"] .button:not(.button-light),
+html[data-theme="helpway"] .add-button,
+html[data-theme="helpway"] .standalone-add-button,
+html[data-theme="helpway"] .mw-button-primary,
+html[data-theme="helpway"] .primary,
+html[data-theme="helpway"] .form-actions .primary,
+html[data-theme="helpway"] .login-panel .primary { background:#8E3B4A!important; border-color:#8E3B4A!important; color:#FFF8F2!important; }
+html[data-theme="helpway"] .product-image,
+html[data-theme="helpway"] .standalone-product-visual,
+html[data-theme="helpway"] .standalone-related-image,
+html[data-theme="helpway"] .manifesto { background:#392126!important; color:#F6EEE8!important; }
+html[data-theme="helpway"] .standalone-product-price,
+html[data-theme="helpway"] .standalone-stock,
+html[data-theme="helpway"] .product-page-status,
+html[data-theme="helpway"] .standalone-related-meta strong,
+html[data-theme="helpway"] .sidebar .nav.active { color:#D99AA2!important; }
+html[data-theme="helpway"] .sidebar .nav.active { background:#392126!important; }
+html[data-theme="helpway"] input,
+html[data-theme="helpway"] textarea,
+html[data-theme="helpway"] select { background:#2B191D!important; color:#F6EEE8!important; border-color:#70434C!important; }
+html[data-theme="helpway"] .button-outline,
+html[data-theme="helpway"] .secondary,
+html[data-theme="helpway"] .quiet,
+html[data-theme="helpway"] .small-button { color:#F6EEE8!important; border-color:#70434C!important; }
+
+/* MIDNIGHT COBALT / ICE / SILVER — cool, cinematic, not a green variation. */
+html[data-theme="helpway-gradient"] {
+  --bg:#0B1425; --ink:#EAF1FF; --text:#EAF1FF; --muted:#A9B9D4;
+  --line:#2D4164; --accent:#4169E1; --lime:#4169E1;
+  --panel:#111E34; --panel2:#192A47; --surface-soft:#192A47;
+  --preview-bg:#0B1425; --preview-ink:#EAF1FF; --preview-accent:#4169E1;
+  --theme-sidebar:#080F1D;
+}
+html[data-theme="helpway-gradient"] body,
+html[data-theme="helpway-gradient"] .standalone-product-page,
+html[data-theme="helpway-gradient"] .standalone-product-main,
+html[data-theme="helpway-gradient"] .product-page-header,
+html[data-theme="helpway-gradient"] .site-header,
+html[data-theme="helpway-gradient"] footer,
+html[data-theme="helpway-gradient"] .newsletter,
+html[data-theme="helpway-gradient"] .section-wrap,
+html[data-theme="helpway-gradient"] .account-main,
+html[data-theme="helpway-gradient"] .policy-page,
+html[data-theme="helpway-gradient"] .confirmation {
+  background:linear-gradient(135deg,#0B1425 0%,#122447 58%,#202B4B 100%)!important;
+  color:#EAF1FF!important;
+}
+html[data-theme="helpway-gradient"] .announcement,
+html[data-theme="helpway-gradient"] .ticker { background:#4169E1!important; color:#FFFFFF!important; }
+html[data-theme="helpway-gradient"] .button:not(.button-light),
+html[data-theme="helpway-gradient"] .add-button,
+html[data-theme="helpway-gradient"] .standalone-add-button,
+html[data-theme="helpway-gradient"] .mw-button-primary,
+html[data-theme="helpway-gradient"] .primary,
+html[data-theme="helpway-gradient"] .form-actions .primary,
+html[data-theme="helpway-gradient"] .login-panel .primary { background:#4169E1!important; border-color:#4169E1!important; color:#FFFFFF!important; }
+html[data-theme="helpway-gradient"] .product-image,
+html[data-theme="helpway-gradient"] .standalone-product-visual,
+html[data-theme="helpway-gradient"] .standalone-related-image,
+html[data-theme="helpway-gradient"] .manifesto,
+html[data-theme="helpway-gradient"] .cart-drawer,
+html[data-theme="helpway-gradient"] .checkout-dialog,
+html[data-theme="helpway-gradient"] .account-panel,
+html[data-theme="helpway-gradient"] .mw-panel,
+html[data-theme="helpway-gradient"] .panel,
+html[data-theme="helpway-gradient"] .settings-form { background:linear-gradient(145deg,#111E34 0%,#192A47 100%)!important; color:#EAF1FF!important; }
+html[data-theme="helpway-gradient"] .standalone-product-price,
+html[data-theme="helpway-gradient"] .standalone-stock,
+html[data-theme="helpway-gradient"] .product-page-status,
+html[data-theme="helpway-gradient"] .standalone-related-meta strong,
+html[data-theme="helpway-gradient"] .sidebar .nav.active { color:#9DB8FF!important; }
+html[data-theme="helpway-gradient"] .sidebar .nav.active { background:#192A47!important; }
+html[data-theme="helpway-gradient"] input,
+html[data-theme="helpway-gradient"] textarea,
+html[data-theme="helpway-gradient"] select { background:#111E34!important; color:#EAF1FF!important; border-color:#385487!important; }
+html[data-theme="helpway-gradient"] .button-outline,
+html[data-theme="helpway-gradient"] .secondary,
+html[data-theme="helpway-gradient"] .quiet,
+html[data-theme="helpway-gradient"] .small-button { color:#EAF1FF!important; border-color:#385487!important; }
