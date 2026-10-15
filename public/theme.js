@@ -9,6 +9,8 @@
     wine: { bg:"#2b0b16", ink:"#f8edf0", muted:"#c6a6b0", line:"#603044", accent:"#d87994", panel:"#3a101f", soft:"#481629", sidebar:"#210710" },
     gothic: { bg:"#0b0b0f", ink:"#e9e5ef", muted:"#aaa2b8", line:"#37313f", accent:"#b7a2d8", panel:"#15131a", soft:"#211d28", sidebar:"#08070b" },
     helpway: { bg:"#111111", ink:"#F2F0EA", muted:"#bcb9b0", line:"#34302f", accent:"#164A36", panel:"#191918", soft:"#242321", sidebar:"#0d0e0d" },
+    "helpway-gradient": { bg:"#0B0D0C", ink:"#F5F2EA", muted:"#c0c6c0", line:"#254238", accent:"#064E3B", panel:"#111b17", soft:"#17251f", sidebar:"#080b09" },
+    helpway: { bg:"#111111", ink:"#F2F0EA", muted:"#bcb9b0", line:"#34302f", accent:"#164A36", panel:"#191918", soft:"#242321", sidebar:"#0d0e0d" },
     "helpway-gradient": { bg:"#0B0D0C", ink:"#F5F2EA", muted:"#c0c6c0", line:"#254238", accent:"#064E3B", panel:"#111b17", soft:"#17251f", sidebar:"#080b09" }
   };
   function apply(settings) {
