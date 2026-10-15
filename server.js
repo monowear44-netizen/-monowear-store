@@ -4123,30 +4123,20 @@ app.get("/", (req, res, next) => {
       for (const [property, value] of Object.entries(tags)) {
         const escaped = escapeAttr(value);
         const propertyAttr = property.startsWith("og:") ? "property" : "name";
-        const regex = new RegExp("<meta\\s+(?:property|name)=([\\"'])" + property.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\if (fs.existsSync(PUBLIC_DIR)) {
-  app.use(express.static(PUBLIC_DIR));
-}
-
-// Serve the storefront entry page if it exists.
-app.get("/", (req, res, next) => {
-  const indexFile = path.join(PUBLIC_DIR, "index.html");
-
-  if (fs.existsSync(indexFile)) {
-    return res.sendFile(indexFile);
-  }") + "\\1[^>]*>", "i");
+        const regex = new RegExp(\`<meta\\s+(?:property|name)=["']\${property}["'][^>]*>\`, "i");
         const tag = '<meta ' + propertyAttr + '="' + property + '" content="' + escaped + '">';
         if (regex.test(html)) html = html.replace(regex, tag);
-        else html = html.replace("</head>", "  " + tag + "\\n</head>");
+        else html = html.replace("</head>", "  " + tag + "\n</head>");
       }
       if (image) {
         const imageTag = '<meta property="og:image" content="' + escapeAttr(image) + '">';
         const twitterImageTag = '<meta name="twitter:image" content="' + escapeAttr(image) + '">';
-        if (/<meta\\s+property=["']og:image["'][^>]*>/i.test(html)) html = html.replace(/<meta\\s+property=["']og:image["'][^>]*>/i, imageTag);
-        else html = html.replace("</head>", "  " + imageTag + "\\n</head>");
-        if (/<meta\\s+name=["']twitter:image["'][^>]*>/i.test(html)) html = html.replace(/<meta\\s+name=["']twitter:image["'][^>]*>/i, twitterImageTag);
-        else html = html.replace("</head>", "  " + twitterImageTag + "\\n</head>");
+        if (/<meta\s+property=["']og:image["'][^>]*>/i.test(html)) html = html.replace(/<meta\s+property=["']og:image["'][^>]*>/i, imageTag);
+        else html = html.replace("</head>", "  " + imageTag + "\n</head>");
+        if (/<meta\s+name=["']twitter:image["'][^>]*>/i.test(html)) html = html.replace(/<meta\s+name=["']twitter:image["'][^>]*>/i, twitterImageTag);
+        else html = html.replace("</head>", "  " + twitterImageTag + "\n</head>");
       }
-      html = html.replace(/<title>[^<]*<\\/title>/i, "<title>" + escapeAttr(title) + "</title>");
+      html = html.replace(/<title>[^<]*<\/title>/i, "<title>" + escapeAttr(title) + "</title>");
       return res.type("html").send(html);
     } catch (error) {
       console.error("Social preview metadata error:", error);
