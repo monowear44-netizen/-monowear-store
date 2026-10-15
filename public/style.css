@@ -605,3 +605,11 @@ body:has(.checkout-dialog[open]){overflow:hidden;overscroll-behavior:none}
   border-radius: 6px;
   background: rgba(128,128,128,.08);
 }
+
+/* Drop countdown and product discounts */
+.drop-countdown{display:flex;flex-direction:column;gap:5px;padding:12px 14px;margin:12px 0;border:1px solid var(--line,rgba(255,255,255,.18));background:rgba(127,127,127,.08);letter-spacing:.08em;text-transform:uppercase;font-size:10px}
+.drop-countdown strong{font-size:clamp(14px,2vw,18px);letter-spacing:.06em;font-variant-numeric:tabular-nums}
+.drop-countdown small{font-size:10px;letter-spacing:.04em;text-transform:none;opacity:.75}
+.discount-badge{display:inline-block;padding:5px 7px;margin:4px 4px 4px 0;background:#b42318;color:#fff;font-size:10px;font-weight:800;letter-spacing:.06em}
+.original-price{opacity:.6;margin-right:6px;font-size:.85em}
+.standalone-drop-countdown{margin:16px 0}
