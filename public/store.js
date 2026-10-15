@@ -248,8 +248,13 @@
     const n=Math.max(0,Math.floor((new Date(target).getTime()-Date.now())/1000));
     return Math.floor(n/86400)+"D "+String(Math.floor(n%86400/3600)).padStart(2,"0")+"H "+String(Math.floor(n%3600/60)).padStart(2,"0")+"M "+String(n%60).padStart(2,"0")+"S";
   }
+  let dropLifecycleRefreshRequested = false;
   function updateDropCountdowns() {
     const state=dropPhase();
+    if (state.phase === "live" && !dropLifecycleRefreshRequested && products.some((product) => Boolean(Number(product.featured)))) {
+      dropLifecycleRefreshRequested = true;
+      window.setTimeout(() => loadStore(), 250);
+    }
     document.querySelectorAll("[data-drop-countdown]").forEach((n)=>n.textContent=state.target?countdownText(state.target):"AVAILABLE NOW");
     document.querySelectorAll("[data-drop-label]").forEach((n)=>n.textContent=state.label);
     document.querySelectorAll("[data-featured-add]").forEach((b)=>{
@@ -281,7 +286,7 @@
         <article class="product-card" data-product-id="${id}">
           <a class="product-image product-page-link" href="/product.html?slug=${encodeURIComponent(product.slug || "")}&id=${id}" aria-label="View product details">
             ${productImage(product)}
-            ${isFeatured ? '<span class="product-badge">PRE-ORDER / NEXT DROP</span>' : ""}
+            ${isFeatured ? '<span class="product-badge">PRE-ORDER / NEXT DROP</span>' : product.new_arrival ? '<span class="product-badge">NEW ARRIVAL</span>' : ""}
             ${soldOut && !preorderBlocked ? '<span class="sold-badge">SOLD OUT</span>' : ""}
           </a>
           <div class="product-meta">
@@ -351,7 +356,8 @@
     });
 
     const featured = visibleProducts.filter((product) => Boolean(Number(product.featured)));
-    const otherProducts = visibleProducts.filter((product) => !Boolean(Number(product.featured)));
+    const newArrivals = visibleProducts.filter((product) => !Boolean(Number(product.featured)) && Boolean(product.new_arrival));
+    const otherProducts = visibleProducts.filter((product) => !Boolean(Number(product.featured)) && !Boolean(product.new_arrival));
     const featuredSection = $("featuredProductsSection");
     if (featuredSection) featuredSection.hidden = featured.length === 0;
     featuredGrid.innerHTML = featured.length ? renderProductCards(featured) : "";
@@ -365,8 +371,18 @@
       return;
     }
 
+    const arrivalsMarkup = newArrivals.length ? `
+      <section class="product-category-section new-arrivals-section" aria-labelledby="new-arrivals-heading">
+        <div class="product-subheading product-category-heading">
+          <p class="eyebrow">JUST DROPPED / FIRST 24 HOURS</p>
+          <h3 id="new-arrivals-heading">New <i>arrivals.</i></h3>
+        </div>
+        <div class="product-grid">${renderProductCards(newArrivals)}</div>
+      </section>
+    ` : "";
+
     if (!otherProducts.length) {
-      sections.innerHTML = "";
+      sections.innerHTML = arrivalsMarkup;
       renderPagination(0);
       return;
     }
@@ -376,7 +392,7 @@
     const start = (productPage - 1) * PRODUCTS_PER_PAGE;
     const pageProducts = otherProducts.slice(start, start + PRODUCTS_PER_PAGE);
 
-    sections.innerHTML = `
+    sections.innerHTML = arrivalsMarkup + `
       <section class="product-category-section" aria-labelledby="all-pieces-heading">
         <div class="product-subheading product-category-heading">
           <p class="eyebrow">THE FULL SELECTION</p>
