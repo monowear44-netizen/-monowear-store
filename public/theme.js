@@ -8,6 +8,7 @@
     gold: { bg:"#171510", ink:"#f6f0df", muted:"#c1b58f", line:"#51452a", accent:"#d5b15a", panel:"#211d14", soft:"#302817", sidebar:"#100f0b" },
     wine: { bg:"#2b0b16", ink:"#f8edf0", muted:"#c6a6b0", line:"#603044", accent:"#d87994", panel:"#3a101f", soft:"#481629", sidebar:"#210710" },
     gothic: { bg:"#0b0b0f", ink:"#e9e5ef", muted:"#aaa2b8", line:"#37313f", accent:"#b7a2d8", panel:"#15131a", soft:"#211d28", sidebar:"#08070b" },
+    afterglow: { bg:"#100e13", ink:"#f5f0f5", muted:"#a69aaa", line:"#342b3a", accent:"#e9a5c7", panel:"#19161e", soft:"#211c27", sidebar:"#100e13" },
     helpway: { bg:"#211316", ink:"#F6EEE8", muted:"#C8B5B0", line:"#56343A", accent:"#8E3B4A", panel:"#2B191D", soft:"#392126", sidebar:"#180D10" },
     "helpway-gradient": { bg:"#0B1425", ink:"#EAF1FF", muted:"#A9B9D4", line:"#2D4164", accent:"#4169E1", panel:"#111E34", soft:"#192A47", sidebar:"#080F1D" }
   };
@@ -15,7 +16,7 @@
     const theme = String(settings.design_theme || "dark").toLowerCase();
     const p = palettes[theme] || palettes.dark;
     const validColor = (value, fallback) => /^#[0-9a-f]{6}$/i.test(String(value || "")) ? value : fallback;
-    const fixedPreset = theme === "helpway" || theme === "helpway-gradient";
+    const fixedPreset = theme === "helpway" || theme === "helpway-gradient" || theme === "afterglow";
     const bg = fixedPreset ? p.bg : validColor(settings.design_background, p.bg);
     const ink = fixedPreset ? p.ink : validColor(settings.design_text, p.ink);
     const accent = fixedPreset ? p.accent : validColor(settings.design_accent, p.accent);
