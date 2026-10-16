@@ -87,3 +87,120 @@ code{background:#ecebe3;padding:2px 5px;font-size:11px;word-break:break-all}
 .traffic-page-row strong{font-size:11px}
 @media(max-width:1100px){.overview-primary-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:560px){.overview-primary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.traffic-numbers{gap:4px}.traffic-numbers strong{font-size:19px!important}}
+
+
+/* STUDIO THEME SYNC — all Studio surfaces inherit the live storefront palette. */
+html[data-theme] body,
+html[data-theme] #appScreen,
+html[data-theme] .main,
+html[data-theme] .topbar { background:var(--bg)!important; color:var(--ink)!important; }
+html[data-theme] .sidebar,
+html[data-theme] .sidebar .nav[data-tab],
+html[data-theme] .sidebar .nav.active,
+html[data-theme] .sidebar .nav:hover {
+  background:var(--theme-sidebar)!important;
+  color:var(--ink)!important;
+  border-color:var(--line)!important;
+}
+html[data-theme] .sidebar .nav.active,
+html[data-theme] .sidebar .nav:hover {
+  background:var(--panel)!important;
+  color:var(--accent)!important;
+  outline-color:var(--accent)!important;
+}
+html[data-theme] .sidebar .nav span {
+  background:var(--panel2)!important;
+  color:var(--ink)!important;
+}
+html[data-theme] .panel,
+html[data-theme] .settings-form,
+html[data-theme] .stat,
+html[data-theme] .product-row,
+html[data-theme] .order-card,
+html[data-theme] .login-panel,
+html[data-theme] .note,
+html[data-theme] .monitoring-metric,
+html[data-theme] .designer-preview,
+html[data-theme] .image-setting,
+html[data-theme] .picker label,
+html[data-theme] .collection-product-picker,
+html[data-theme] .table-wrap,
+html[data-theme] .payout-table {
+  background:var(--panel)!important;
+  color:var(--ink)!important;
+  border-color:var(--line)!important;
+}
+html[data-theme] .form-grid input:not([type=checkbox]):not([type=color]),
+html[data-theme] .form-grid textarea,
+html[data-theme] .form-grid select,
+html[data-theme] .login-panel input,
+html[data-theme] .filter-bar input,
+html[data-theme] .filter-bar select,
+html[data-theme] .inline-new input,
+html[data-theme] .order-card select,
+html[data-theme] #settingsForm select,
+html[data-theme] .traffic-stat select {
+  background:var(--panel2)!important;
+  color:var(--ink)!important;
+  border-color:var(--line)!important;
+  color-scheme:inherit;
+}
+html[data-theme] input::placeholder,
+html[data-theme] textarea::placeholder { color:var(--muted)!important; }
+html[data-theme] .primary,
+html[data-theme] .settings-form .primary,
+html[data-theme] .form-actions .primary,
+html[data-theme] .login-panel .primary,
+html[data-theme] #refreshMonitoring,
+html[data-theme] #downloadStoreBackup {
+  background:var(--accent)!important;
+  color:var(--bg)!important;
+  border-color:var(--accent)!important;
+}
+html[data-theme] .secondary,
+html[data-theme] .quiet,
+html[data-theme] .small-button,
+html[data-theme] .danger,
+html[data-theme] .side-bottom a,
+html[data-theme] .side-bottom button {
+  background:transparent!important;
+  color:var(--ink)!important;
+  border-color:var(--line)!important;
+}
+html[data-theme] .eyebrow,
+html[data-theme] .muted,
+html[data-theme] .side-label,
+html[data-theme] .product-row p,
+html[data-theme] .order-card p,
+html[data-theme] .stat span,
+html[data-theme] .traffic-stat small,
+html[data-theme] .payout-table th {
+  color:var(--muted)!important;
+}
+html[data-theme] .topbar,
+html[data-theme] .editor-head,
+html[data-theme] .payout-table td,
+html[data-theme] .payout-table th,
+html[data-theme] .monitoring-attention,
+html[data-theme] .traffic-top-pages,
+html[data-theme] .traffic-page-row {
+  border-color:var(--line)!important;
+}
+html[data-theme] .designer-preview i {
+  background:var(--accent)!important;
+  color:var(--bg)!important;
+}
+html[data-theme] .badge,
+html[data-theme] .badge.good,
+html[data-theme] .badge.warn,
+html[data-theme] .badge.bad,
+html[data-theme] .badge.muted {
+  background:var(--panel2)!important;
+  color:var(--ink)!important;
+  border-color:var(--line)!important;
+}
+html[data-theme] .toast {
+  background:var(--accent)!important;
+  color:var(--bg)!important;
+  border:1px solid var(--line)!important;
+}
