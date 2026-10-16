@@ -98,7 +98,7 @@
 <section id="appScreen" hidden>
   <!-- OVERVIEW -->
   <section class="tab-panel" id="tab-overview">
-    <div class="stats-grid">
+    <div class="stats-grid overview-primary-grid">
       <div class="stat">
         <span>PRODUCTS</span>
         <strong id="statProducts">—</strong>
@@ -114,6 +114,24 @@
       <div class="stat">
         <span>PAID REVENUE</span>
         <strong id="statRevenue">—</strong>
+      </div>
+      <div class="stat traffic-stat">
+        <span>WEBSITE TRAFFIC</span>
+        <label class="traffic-period-label" for="trafficPeriod">PERIOD</label>
+        <select id="trafficPeriod" aria-label="Website traffic period">
+          <option value="today">Today</option>
+          <option value="7d">7 days</option>
+          <option value="14d">2 weeks</option>
+          <option value="28d">4 weeks</option>
+          <option value="6m">6 months</option>
+          <option value="1y">1 year</option>
+        </select>
+        <div class="traffic-numbers">
+          <div><strong id="statVisitors">—</strong><small>Unique visitors</small></div>
+          <div><strong id="statPageViews">—</strong><small>Page views</small></div>
+        </div>
+        <small id="trafficUpdated" class="muted">Admin-only analytics</small>
+        <div id="trafficTopPages" class="traffic-top-pages"></div>
       </div>
     </div>
     <div class="stats-grid stats-row-2">
