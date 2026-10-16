@@ -28,25 +28,59 @@
   const slug = query.get("slug"), id = query.get("id");
   let product = null, products = [];
   function imageForColor(p, color) {
-    const map = p && p.color_images && typeof p.color_images === "object" ? p.color_images : {};
-    const key = Object.keys(map).find((item) => item.toLowerCase() === String(color || "").toLowerCase());
-    const value = key ? map[key] : "";
+    let map = p && p.color_images;
+    if (typeof map === "string") {
+      try { map = JSON.parse(map); } catch { map = {}; }
+    }
+    if (!map || typeof map !== "object" || Array.isArray(map)) map = {};
+    const wanted = String(color || "").trim().toLocaleLowerCase();
+    const key = Object.keys(map).find((item) => String(item).trim().toLocaleLowerCase() === wanted);
+    let value = key ? map[key] : "";
+    if (value && typeof value === "object") value = value.url || value.src || value.path || "";
+    value = String(value || "").trim();
     if (!value) return "";
-    return /^(data:|blob:|https?:\/\/|\/)/i.test(value) ? value : "/" + String(value).replace(/^\/+/, "");
+    if (/^(data:|blob:|https?:\/\/)/i.test(value)) return value;
+    if (value.startsWith("//")) return location.protocol + value;
+    return "/" + value.replace(/^\/+/, "");
   }
   function showProductColorImage(color) {
     const src = imageForColor(product, color);
     if (!src) return;
-    const main = document.querySelector(".standalone-product-visual > img");
-    if (main) {
-      main.src = src;
-      const sources = imageSources(product);
-      main.dataset.index = String(Math.max(0, sources.indexOf(src)));
-    }
+    const visual = document.querySelector(".standalone-product-visual");
+    const main = visual && visual.querySelector("img[data-sources]");
+    const placeholder = visual && visual.querySelector(".image-placeholder");
+    if (!main) return;
+
+    main.style.display = "";
+    if (placeholder) placeholder.hidden = true;
+    main.setAttribute("aria-busy", "true");
+    const previousSrc = main.currentSrc || main.src;
+    const finish = () => {
+      main.style.display = "";
+      main.removeAttribute("aria-busy");
+      if (placeholder) placeholder.hidden = true;
+    };
+    const fail = () => {
+      main.removeAttribute("aria-busy");
+      if (previousSrc && previousSrc !== src) main.src = previousSrc;
+      if (main.complete && main.naturalWidth > 0) {
+        main.style.display = "";
+        if (placeholder) placeholder.hidden = true;
+      } else {
+        main.style.display = "none";
+        if (placeholder) placeholder.hidden = false;
+      }
+    };
+    main.onload = finish;
+    main.onerror = fail;
+    main.src = src;
+    const sources = imageSources(product);
+    main.dataset.index = String(Math.max(0, sources.indexOf(src)));
     document.querySelectorAll(".product-image-thumbnail").forEach((button) => {
-      const img = button.querySelector("img");
-      button.classList.toggle("is-active", !!img && img.getAttribute("src") === src);
+      const thumb = button.querySelector("img");
+      button.classList.toggle("is-active", !!thumb && thumb.getAttribute("src") === src);
     });
+    if (main.complete && main.naturalWidth > 0) finish();
   }
   function relatedCard(p) {
     const q = new URLSearchParams(); if (p.slug) q.set("slug",p.slug); q.set("id",String(p.id));
