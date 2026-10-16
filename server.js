@@ -181,6 +181,20 @@ db.exec(`
     ON product_collections(collection_id);
 `);
 
+// Private first-party website analytics. Store only a random visitor token,
+// page path and timestamp; do not store IP addresses or raw user-agent strings.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS site_visits (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    visitor_id TEXT NOT NULL,
+    page_path TEXT NOT NULL DEFAULT '/',
+    visited_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_site_visits_time ON site_visits(visited_at);
+  CREATE INDEX IF NOT EXISTS idx_site_visits_visitor_time ON site_visits(visitor_id, visited_at);
+`);
+db.prepare("DELETE FROM site_visits WHERE visited_at < datetime('now', '-400 days')").run();
+
 // ============================================================
 // HISTORICAL LABELD RECORDS — idempotent seed, separate from live orders.
 // ============================================================
@@ -716,6 +730,50 @@ app.use(
     }
   })
 );
+
+// Record storefront document visits only. Never count Studio/admin/API/assets,
+// and never count the authenticated store owner browsing their own storefront.
+app.use((req, res, next) => {
+  try {
+    if (req.method !== "GET" || req.session?.adminId) return next();
+
+    const pathname = String(req.path || "/");
+    if (
+      pathname === "/studio" || pathname.startsWith("/api/") ||
+      pathname.startsWith("/uploads/") || pathname.startsWith("/assets/") ||
+      pathname.startsWith("/.well-known/") || pathname === "/favicon.ico" ||
+      pathname === "/robots.txt" || pathname === "/sitemap.xml"
+    ) return next();
+
+    const accept = String(req.headers.accept || "");
+    if (!accept.includes("text/html")) return next();
+
+    const userAgent = String(req.headers["user-agent"] || "");
+    if (/bot|crawler|spider|headless|preview|facebookexternalhit|twitterbot|whatsapp/i.test(userAgent)) {
+      return next();
+    }
+
+    const cookies = Object.fromEntries(
+      String(req.headers.cookie || "").split(";").map((part) => {
+        const index = part.indexOf("=");
+        return index < 0 ? ["", ""] : [part.slice(0, index).trim(), part.slice(index + 1).trim()];
+      }).filter(([key]) => key)
+    );
+
+    let visitorId = cookies.mw_visitor;
+    if (!visitorId || !/^[a-f0-9]{64}$/.test(visitorId)) {
+      visitorId = crypto.randomBytes(32).toString("hex");
+      res.append("Set-Cookie", "mw_visitor=" + visitorId + "; Max-Age=31536000; Path=/; SameSite=Lax; HttpOnly; Secure");
+    }
+
+    const pagePath = pathname.slice(0, 300) || "/";
+    db.prepare("INSERT INTO site_visits (visitor_id, page_path) VALUES (?, ?)").run(visitorId, pagePath);
+  } catch (error) {
+    // Analytics must never interrupt storefront requests.
+    console.warn("Website analytics skipped:", error.message);
+  }
+  next();
+});
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -3693,6 +3751,59 @@ app.get("/api/admin/dashboard", requireAdmin, (req, res) => {
     lowStock
   });
 });
+// ============================================================
+// ADMIN WEBSITE TRAFFIC ANALYTICS
+// ============================================================
+
+const TRAFFIC_PERIODS = {
+  today: { label: "Today", modifier: null },
+  "7d": { label: "7 days", modifier: "-7 days" },
+  "14d": { label: "2 weeks", modifier: "-14 days" },
+  "28d": { label: "4 weeks", modifier: "-28 days" },
+  "6m": { label: "6 months", modifier: "-6 months" },
+  "1y": { label: "1 year", modifier: "-1 year" }
+};
+
+app.get("/api/admin/traffic", requireAdmin, (req, res) => {
+  const periodKey = String(req.query.period || "today");
+  const period = TRAFFIC_PERIODS[periodKey] || TRAFFIC_PERIODS.today;
+  let whereSql;
+  let params = [];
+
+  if (periodKey === "today") {
+    // Nigeria local calendar day (UTC+1).
+    whereSql = "date(visited_at, '+1 hour') = date('now', '+1 hour')";
+  } else {
+    whereSql = "visited_at >= datetime('now', ?)";
+    params = [period.modifier];
+  }
+
+  const totals = db.prepare(`
+    SELECT COUNT(DISTINCT visitor_id) AS visitors,
+           COUNT(*) AS pageViews
+    FROM site_visits
+    WHERE ${whereSql}
+  `).get(...params);
+
+  const topPages = db.prepare(`
+    SELECT page_path AS path, COUNT(*) AS views
+    FROM site_visits
+    WHERE ${whereSql}
+    GROUP BY page_path
+    ORDER BY views DESC
+    LIMIT 5
+  `).all(...params);
+
+  res.set("Cache-Control", "no-store");
+  res.json({
+    period: periodKey,
+    label: period.label,
+    visitors: Number(totals.visitors || 0),
+    pageViews: Number(totals.pageViews || 0),
+    topPages
+  });
+});
+
 // ============================================================
 // ADMIN PAYMENTS, PAYOUTS AND EMAIL TOOLS
 // ============================================================
