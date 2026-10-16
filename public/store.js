@@ -101,15 +101,17 @@
       emerald: { bg: "#073f32", ink: "#f2f5ef", muted: "#b8d0c5", line: "#286b59", accent: "#57d6a0", panel: "#0c4d3d", soft: "#145a48" },
       gold: { bg: "#171510", ink: "#f6f0df", muted: "#c1b58f", line: "#51452a", accent: "#d5b15a", panel: "#211d14", soft: "#302817" },
       wine: { bg: "#2b0b16", ink: "#f8edf0", muted: "#c6a6b0", line: "#603044", accent: "#d87994", panel: "#3a101f", soft: "#481629" },
-      gothic: { bg: "#0b0b0f", ink: "#e9e5ef", muted: "#aaa2b8", line: "#37313f", accent: "#b7a2d8", panel: "#15131a", soft: "#211d28" }
+      gothic: { bg: "#0b0b0f", ink: "#e9e5ef", muted: "#aaa2b8", line: "#37313f", accent: "#b7a2d8", panel: "#15131a", soft: "#211d28" },
+      afterglow: { bg: "#100e13", ink: "#f5f0f5", muted: "#a69aaa", line: "#342b3a", accent: "#e9a5c7", panel: "#19161e", soft: "#211c27" }
     };
     const palette = palettes[theme] || palettes.dark;
+    const fixedPreset = theme === "afterglow";
     root.dataset.theme = palettes[theme] ? theme : "dark";
-    root.style.setProperty("--bg", validColor(settings.design_background, palette.bg));
-    root.style.setProperty("--ink", validColor(settings.design_text, palette.ink));
+    root.style.setProperty("--bg", fixedPreset ? palette.bg : validColor(settings.design_background, palette.bg));
+    root.style.setProperty("--ink", fixedPreset ? palette.ink : validColor(settings.design_text, palette.ink));
     root.style.setProperty("--muted", palette.muted);
     root.style.setProperty("--line", palette.line);
-    root.style.setProperty("--accent", validColor(settings.design_accent, palette.accent));
+    root.style.setProperty("--accent", fixedPreset ? palette.accent : validColor(settings.design_accent, palette.accent));
     root.style.setProperty("--panel", palette.panel);
     root.style.setProperty("--surface-soft", palette.soft);
     const fonts = { Manrope: "'Manrope', Arial, sans-serif", Arial: "Arial, sans-serif", Georgia: "Georgia, serif", system: "system-ui, sans-serif" };
