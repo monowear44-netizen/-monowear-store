@@ -511,23 +511,68 @@
      ADD TO CART
   ========================================================= */
   function productImageForColor(product, color) {
-    const map = product && product.color_images && typeof product.color_images === "object" ? product.color_images : {};
-    const key = Object.keys(map).find((item) => item.toLowerCase() === String(color || "").toLowerCase());
-    const value = key ? map[key] : "";
+    let map = product && product.color_images;
+    if (typeof map === "string") {
+      try { map = JSON.parse(map); } catch { map = {}; }
+    }
+    if (!map || typeof map !== "object" || Array.isArray(map)) map = {};
+    const wanted = String(color || "").trim().toLocaleLowerCase();
+    const key = Object.keys(map).find((item) => String(item).trim().toLocaleLowerCase() === wanted);
+    let value = key ? map[key] : "";
+    if (value && typeof value === "object") value = value.url || value.src || value.path || "";
+    value = String(value || "").trim();
     if (!value) return "";
-    return /^(data:|blob:|https?:\/\/|\/)/i.test(value) ? value : "/" + String(value).replace(/^\/+/, "");
+    if (/^(data:|blob:|https?:\/\/)/i.test(value)) return value;
+    if (value.startsWith("//")) return location.protocol + value;
+    return "/" + value.replace(/^\/+/, "");
   }
 
+  // Swap colour photos reliably: revive images hidden by an earlier load error,
+  // hide the placeholder on success, and restore the previous photo if the
+  // newly selected colour image cannot be loaded.
   document.addEventListener("change", (event) => {
     const select = event.target.closest(".color-select");
     if (!select) return;
     const card = select.closest(".product-card");
     const productId = Number(card && card.dataset.productId);
-    const product = products.find((item) => Number(item.id) === productId);
-    const src = productImageForColor(product, select.value);
+    const selectedProduct = products.find((item) => Number(item.id) === productId);
+    const src = productImageForColor(selectedProduct, select.value);
     if (!card || !src) return;
-    const img = card.querySelector(".product-image img");
-    if (img) img.src = src;
+
+    const imageLink = card.querySelector(".product-image");
+    const img = imageLink && imageLink.querySelector("img");
+    if (!img) return;
+
+    const placeholder = img.nextElementSibling && img.nextElementSibling.classList.contains("image-placeholder")
+      ? img.nextElementSibling : null;
+    const previousSrc = img.currentSrc || img.src;
+    if (previousSrc === new URL(src, location.href).href && img.style.display !== "none") return;
+
+    img.dataset.previousColorSrc = previousSrc;
+    img.style.display = "";
+    img.setAttribute("aria-busy", "true");
+    if (placeholder) placeholder.hidden = true;
+
+    const finish = () => {
+      img.style.display = "";
+      img.removeAttribute("aria-busy");
+      if (placeholder) placeholder.hidden = true;
+    };
+    const fail = () => {
+      img.removeAttribute("aria-busy");
+      if (img.dataset.previousColorSrc) img.src = img.dataset.previousColorSrc;
+      if (img.complete && img.naturalWidth > 0) {
+        img.style.display = "";
+        if (placeholder) placeholder.hidden = true;
+      } else {
+        img.style.display = "none";
+        if (placeholder) placeholder.hidden = false;
+      }
+    };
+    img.onload = finish;
+    img.onerror = fail;
+    img.src = src;
+    if (img.complete && img.naturalWidth > 0) finish();
   });
 
   window.setInterval(updateDropCountdowns, 1000);
