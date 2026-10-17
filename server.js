@@ -2480,37 +2480,37 @@ app.post(
 // NEWSLETTER
 // ============================================================
 
-app.post("/api/newsletter", loginLimiter, (req, res) => {
+app.post("/api/newsletter", loginLimiter, async (req, res) => {
   const email = String(req.body.email || "").trim().toLowerCase();
 
   if (!validEmail(email)) {
-    return res.status(400).json({
-      error: "Enter a valid email address."
-    });
+    return res.status(400).json({ error: "Enter a valid email address." });
   }
 
   try {
-    db.prepare(`
-      INSERT INTO newsletter (email) VALUES (?)
-    `).run(email);
+    db.prepare("INSERT INTO newsletter (email) VALUES (?)").run(email);
+    recordAdminNotification("waitlist", "New MONOWEAR waitlist signup", email + " joined the storefront waitlist.", "/studio");
 
-    res.status(201).json({
-      success: true,
-      message: "You're on the list."
-    });
+    const notice = await sendEmail(
+      ORDER_NOTIFICATION_EMAIL,
+      "New MONOWEAR waitlist signup",
+      `<div style="font-family:Arial,sans-serif;color:#101827;line-height:1.6">
+        <p style="letter-spacing:3px;font-size:12px;color:#9b7927;font-weight:bold">MONOWEAR / STUDIO ALERT</p>
+        <h2 style="margin-bottom:8px">Someone joined your waitlist.</h2>
+        <p><strong>Email:</strong> ${escapeHTML(email)}</p>
+        <p>Open MONOWEAR Studio to view your full subscriber list.</p>
+        <p><a href="https://monowear-store.onrender.com/studio" style="display:inline-block;background:#071426;color:#f5f1e6;padding:12px 18px;text-decoration:none">OPEN STUDIO</a></p>
+      </div>`
+    );
+    if (!notice.ok) console.error("Waitlist notification email failed:", notice.error);
+
+    res.status(201).json({ success: true, message: "You're on the list." });
   } catch (error) {
     if (String(error.message).includes("UNIQUE")) {
-      return res.json({
-        success: true,
-        message: "You're already on the list."
-      });
+      return res.json({ success: true, message: "You're already on the list." });
     }
-
     console.error("Newsletter error:", error);
-
-    res.status(500).json({
-      error: "Could not subscribe right now."
-    });
+    res.status(500).json({ error: "Could not subscribe right now." });
   }
 });
 
@@ -2526,26 +2526,41 @@ app.get("/api/admin/newsletter", requireAdmin, (req, res) => {
 // PRODUCT WAITLIST
 // ============================================================
 
-app.post("/api/waitlist", loginLimiter, (req, res) => {
+app.post("/api/waitlist", loginLimiter, async (req, res) => {
   const email = String(req.body.email || "").trim().toLowerCase();
   const productId = Number(req.body.product_id || 0);
   const productName = String(req.body.product_name || "").trim();
 
   if (!validEmail(email)) {
-    return res.status(400).json({
-      error: "Enter a valid email address."
-    });
+    return res.status(400).json({ error: "Enter a valid email address." });
   }
 
-  db.prepare(`
-    INSERT INTO waitlist (email, product_id, product_name)
-    VALUES (?, ?, ?)
-  `).run(email, productId || null, productName);
+  try {
+    db.prepare(`
+      INSERT INTO waitlist (email, product_id, product_name)
+      VALUES (?, ?, ?)
+    `).run(email, productId || null, productName);
 
-  res.status(201).json({
-    success: true,
-    message: "You've joined the waitlist."
-  });
+    const subject = productName ? "New MONOWEAR product waitlist signup" : "New MONOWEAR waitlist signup";
+    recordAdminNotification("waitlist", subject, email + (productName ? " joined the waitlist for " + productName + "." : " joined the product waitlist."), "/studio");
+    const notice = await sendEmail(
+      ORDER_NOTIFICATION_EMAIL,
+      subject,
+      `<div style="font-family:Arial,sans-serif;color:#101827;line-height:1.6">
+        <p style="letter-spacing:3px;font-size:12px;color:#9b7927;font-weight:bold">MONOWEAR / STUDIO ALERT</p>
+        <h2 style="margin-bottom:8px">New product waitlist signup.</h2>
+        <p><strong>Email:</strong> ${escapeHTML(email)}</p>
+        <p><strong>Product:</strong> ${escapeHTML(productName || "General waitlist")}</p>
+        <p><a href="https://monowear-store.onrender.com/studio" style="display:inline-block;background:#071426;color:#f5f1e6;padding:12px 18px;text-decoration:none">OPEN STUDIO</a></p>
+      </div>`
+    );
+    if (!notice.ok) console.error("Product waitlist notification email failed:", notice.error);
+
+    res.status(201).json({ success: true, message: "You've joined the waitlist." });
+  } catch (error) {
+    console.error("Product waitlist error:", error);
+    res.status(500).json({ error: "Could not join the waitlist right now." });
+  }
 });
 
 app.get("/api/admin/waitlist", requireAdmin, (req, res) => {
