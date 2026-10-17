@@ -8,41 +8,29 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-
-  background-image:
-    linear-gradient(
-      90deg,
-      rgba(0, 0, 0, 0.88) 0%,
-      rgba(0, 0, 0, 0.68) 55%,
-      rgba(0, 0, 0, 0.42) 100%
-    ),
-    url("/uploads/waitlist-background.jpg");
-
+  background-color: var(--panel, var(--bg, #111210));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-
-  color: #fff;
+  color: var(--ink, #f4f2ea);
   padding: 62px 7%;
   min-height: 300px;
-
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
   gap: 48px;
-
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid var(--line, #34352f);
+  border-bottom: 1px solid var(--line, #34352f);
 }
 
 .waitlist-section .eyebrow {
-  color: #b5b5b5;
+  color: var(--accent, #c6ff4b);
   letter-spacing: 0.18em;
   font-size: 11px;
 }
 
 .waitlist-section h2 {
-  color: #fff;
+  color: var(--ink, #f4f2ea);
   font-size: clamp(36px, 5vw, 64px);
   line-height: 0.98;
   letter-spacing: -0.045em;
@@ -50,14 +38,14 @@
 }
 
 .waitlist-section p {
-  color: #d0d0d0;
+  color: var(--muted, #a6a69d);
   max-width: 440px;
   line-height: 1.7;
 }
 
 .waitlist-section form label {
   display: block;
-  color: #fff;
+  color: var(--ink, #f4f2ea);
   font-size: 10px;
   letter-spacing: 0.15em;
   margin-bottom: 12px;
@@ -73,13 +61,13 @@
   min-width: 0;
   min-height: 50px;
   padding: 14px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  color: #fff;
+  background: var(--surface-soft, #242520);
+  border: 1px solid var(--line, #34352f);
+  color: var(--ink, #f4f2ea);
 }
 
 .waitlist-section input::placeholder {
-  color: #aaa;
+  color: var(--muted, #a6a69d);
 }
 
 .waitlist-section .button {
@@ -108,7 +96,6 @@
     width: 100%;
   }
 }
-
 
 /* Studio-controlled storefront control shape */
 .button,.add-button,.size-select,.checkout-dialog input,.checkout-dialog textarea{border-radius:var(--control-radius,0px)}
