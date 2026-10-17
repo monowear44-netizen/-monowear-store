@@ -309,60 +309,21 @@ function studioNotificationSoundEnabled() {
   try { return localStorage.getItem(STUDIO_NOTIFICATION_SOUND_KEY) !== "off"; } catch { return true; }
 }
 
+let studioOrderSoundAudio = null;
+
 async function playStudioNotificationSound(force = false) {
   if (!force && !studioNotificationSoundEnabled()) return;
   try {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) {
-      toast("This browser does not support Studio sound.");
-      return;
+    if (!studioOrderSoundAudio) {
+      studioOrderSoundAudio = new Audio("https://www.myinstants.com/media/sounds/shopify-sales-41469.mp3");
+      studioOrderSoundAudio.preload = "auto";
+      studioOrderSoundAudio.volume = 0.9;
     }
-    studioNotificationSoundContext = studioNotificationSoundContext || new AudioContextClass();
-    const context = studioNotificationSoundContext;
-    if (context.state !== "running") await context.resume();
-    if (context.state !== "running") {
-      toast("Tap Test sound again after allowing audio in your browser.");
-      return;
-    }
-
-    const t = context.currentTime + 0.04;
-
-    // Money-credit style notification: a crisp "cha-ching" with a bright
-    // coin-like attack, two clear rising notes, and a short metallic shimmer.
-    // Keep it musical and clean; no generic cash-drawer clack or long alarm.
-    const playBell = (frequency, startAt, peak, duration, type = "sine") => {
-      const osc = context.createOscillator();
-      const gain = context.createGain();
-      const tone = context.createBiquadFilter();
-      osc.type = type;
-      osc.frequency.setValueAtTime(frequency, startAt);
-      tone.type = "highpass";
-      tone.frequency.setValueAtTime(650, startAt);
-      gain.gain.setValueAtTime(0.0001, startAt);
-      gain.gain.exponentialRampToValueAtTime(peak, startAt + 0.009);
-      gain.gain.exponentialRampToValueAtTime(peak * 0.42, startAt + 0.075);
-      gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
-      osc.connect(tone);
-      tone.connect(gain);
-      gain.connect(context.destination);
-      osc.start(startAt);
-      osc.stop(startAt + duration + 0.02);
-    };
-
-    // Short metallic attack, then the familiar two-note credit chime.
-    playBell(1760, t, 0.13, 0.24, "triangle");
-    playBell(2637, t + 0.045, 0.10, 0.34, "sine");
-    playBell(2093, t + 0.16, 0.12, 0.42, "triangle");
-    playBell(3136, t + 0.19, 0.065, 0.48, "sine");
-    playBell(1568, t + 0.205, 0.045, 0.36, "sine");
-
-    // Tiny metallic shimmer under the final note to give it a money/coin feel.
-    [3951, 4699].forEach((frequency, index) => {
-      playBell(frequency, t + 0.22 + index * 0.018, 0.018, 0.20, "sine");
-    });
+    studioOrderSoundAudio.currentTime = 0;
+    await studioOrderSoundAudio.play();
   } catch (error) {
     console.debug("Studio notification sound unavailable:", error.message);
-    if (force) toast("Sound could not play. Tap Test sound once more.");
+    if (force) toast("The Shopify sound could not load. Check your connection and tap Test sound again.");
   }
 }
 
