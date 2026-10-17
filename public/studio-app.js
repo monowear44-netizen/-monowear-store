@@ -115,6 +115,12 @@
   }
 
   async function enableNotifications() {
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+    if (isIOS && !isStandalone) {
+      showMessage("First install MONOWEAR Studio: tap Safari's Share button, choose Add to Home Screen, then open the new MONOWEAR icon. Return here in the installed app and tap ENABLE NOTIFICATIONS.", "");
+      return;
+    }
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
       showMessage("This browser does not support web push. On iPhone, open this site in Safari, add it to the Home Screen, then open the installed app.", "error");
       return;
@@ -194,7 +200,9 @@
     observer.observe(appScreen, { attributes: true, attributeFilter: ["hidden", "style"] });
   }
   ensureNotificationPanel();
-  if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone) {
-    if (installButton) installButton.hidden = true;
+  const isStandaloneApp = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+  if (installButton) {
+    installButton.hidden = Boolean(isStandaloneApp);
+    if (/iphone|ipad|ipod/i.test(navigator.userAgent)) installButton.textContent = "HOW TO INSTALL";
   }
 })();
