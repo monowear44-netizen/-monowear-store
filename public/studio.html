@@ -3,7 +3,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#151613">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MONOWEAR Studio">
+  <link rel="manifest" href="/studio-manifest.json">
+  <link rel="apple-touch-icon" href="/studio-icon.svg">
   <title>MONOWEAR Studio</title>
   <link rel="stylesheet" href="/studio.css">
   <link rel="stylesheet" href="/studio-extra.css?v=studio-theme-sync-20261016">
@@ -60,7 +66,7 @@
     <p class="eyebrow">MONOWEAR / STUDIO</p>
     <h1 id="pageTitle">Overview</h1>
   </div>
-  <span id="loggedEmail" class="muted"></span>
+  <div class="studio-app-actions"><button id="studioInstallButton" class="secondary" type="button" hidden>INSTALL APP</button><button id="studioNotificationsButton" class="primary" type="button">ENABLE NOTIFICATIONS</button><span id="loggedEmail" class="muted"></span></div>
 </header>
 <!-- LOGIN SCREEN -->
 <section id="loginScreen" class="login-wrap">
@@ -1130,6 +1136,7 @@
   </main>
   <!-- EXISTING STUDIO FUNCTIONALITY -->
   <script src="/studio.js?v=afterglow-theme-20261016"></script>
+  <script src="/studio-app.js?v=20261017"></script>
   <!-- IMAGE PREVIEWS AND VALIDATION -->
   <script>
     (() => {
