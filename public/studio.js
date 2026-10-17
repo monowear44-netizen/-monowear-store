@@ -314,9 +314,8 @@ function renderStudioNotifications() {
   let seen = "";
   try { seen = localStorage.getItem(STUDIO_NOTIFICATIONS_SEEN_KEY) || ""; } catch {}
   if (dot) dot.hidden = !signature || signature === seen;
-
   if (!studioNotificationItems.length) {
-    list.innerHTML = '<div class="studio-notification-empty"><span class="notification-check">✓</span><strong>You’re all caught up.</strong><p class="muted">New orders, stock alerts and payment/email issues will appear here.</p></div>';
+    list.innerHTML = '<div class="studio-notification-empty"><span class="notification-check">✓</span><strong>You’re all caught up.</strong><p class="muted">New orders and important store activity will appear here.</p></div>';
     return;
   }
   list.innerHTML = studioNotificationItems.map(item => `
@@ -347,6 +346,19 @@ async function refreshStudioNotifications(summary = null) {
     }
   } catch (error) {
     console.warn("Dashboard notifications:", error.message);
+  }
+
+  try {
+    const history = await api("/api/admin/notifications");
+    (Array.isArray(history.notifications) ? history.notifications : []).forEach(notification => {
+      const title = String(notification.title || "").trim();
+      const body = String(notification.body || "").trim();
+      const url = String(notification.url || "/studio");
+      const tab = url.includes("products") ? "products" : url.includes("orders") ? "orders" : url.includes("payments") ? "payments" : url.includes("audience") ? "audience" : "overview";
+      items.push(notificationItem("history:" + notification.id, title || body || "Store update", body && body !== title ? body : "Open Studio to review this update.", tab, notification.read_at ? "attention" : "urgent"));
+    });
+  } catch (error) {
+    console.warn("Saved store notifications:", error.message);
   }
 
   try {
