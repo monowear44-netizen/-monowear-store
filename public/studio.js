@@ -254,7 +254,7 @@ async function loadSummary() {
     }
 
     if ($("statPending")) {
-      $("statPending").textContent = data.pendingOrders ?? 0;
+      $("statPending").textContent = data.lowStock ?? 0;
     }
 
     if ($("statRevenue")) {
