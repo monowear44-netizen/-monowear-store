@@ -1,4 +1,4 @@
-const CACHE_NAME = "monowear-studio-v2";
+const CACHE_NAME = "monowear-studio-v3";
 const APP_SHELL = ["/studio", "/studio.css", "/studio-extra.css", "/studio.js", "/studio-app.js", "/studio-manifest.json", "/studio-icon.svg"];
 
 self.addEventListener("install", (event) => {
