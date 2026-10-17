@@ -143,3 +143,22 @@ html[data-theme="blue-gold"] body[data-studio-mode] .sidebar .nav.active {
     margin-bottom: 20px !important;
   }
 }
+
+
+/* MONOWEAR AI campaign studio */
+.email-assistant-panel{display:flex;flex-direction:column;gap:12px}
+.email-assistant-panel>label,.campaign-review-box>label{display:block;font-size:13px;font-weight:650;margin-top:5px}
+.email-assistant-panel textarea,.email-assistant-panel input[type=text],.email-assistant-panel input[type=url]{width:100%;box-sizing:border-box;border:1px solid var(--sm-border,var(--line,#444));border-radius:9px;padding:12px;background:var(--sm-input,var(--panel,#151613));color:var(--sm-text,var(--text,#f5f5ef));font:inherit;min-width:0}
+.email-assistant-panel textarea{resize:vertical;line-height:1.55}
+.email-assistant-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.email-assistant-fields>div{display:flex;flex-direction:column;gap:7px;min-width:0}
+.email-assistant-fields label{font-size:12px;font-weight:650}
+.email-assistant-fields small{font-size:11px}
+.email-assistant-actions{display:flex;flex-wrap:wrap;gap:8px}
+.campaign-review-box{border:1px solid var(--sm-border,var(--line,#444));border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.campaign-review-box p{margin:0}
+.campaign-check{display:flex!important;align-items:flex-start;gap:9px;font-weight:400!important;line-height:1.5}
+.campaign-check input{margin-top:3px;accent-color:#d4b66c}
+.campaign-review-box button{align-self:flex-start;margin-top:4px}
+.email-assistant-panel .status-pill{font-size:10px;letter-spacing:1px;border:1px solid var(--sm-border,var(--line,#444));border-radius:20px;padding:7px 10px;white-space:nowrap}
+@media(max-width:600px){.email-assistant-fields{grid-template-columns:1fr}.campaign-review-box{padding:12px}.email-assistant-actions button,.campaign-review-box button{width:100%}.email-assistant-panel .toolbar{align-items:flex-start;flex-direction:column}}
