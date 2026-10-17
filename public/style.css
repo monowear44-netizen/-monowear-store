@@ -884,43 +884,71 @@ html[data-theme="gold"] .waitlist-section{
 }
 
 
-/* WAITLIST — MATCH EMAIL FIELD TO JOIN BUTTON, STACKED ABOVE */
+/* WAITLIST — SLIM HORIZONTAL FIELD, MATCHED TO JOIN BUTTON */
 .waitlist-section form{
   width:min(100%,300px)!important;
   max-width:300px!important;
+  justify-self:end!important;
 }
 .waitlist-section .newsletter-form-row{
   display:flex!important;
-  flex-direction:column!important;
-  align-items:stretch!important;
-  gap:8px!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  gap:6px!important;
   width:100%!important;
   max-width:300px!important;
 }
-.waitlist-section .newsletter-form-row input,
-.waitlist-section .newsletter-form-row .button{
-  box-sizing:border-box!important;
-  width:100%!important;
-  max-width:100%!important;
-  flex:0 0 auto!important;
-  height:38px!important;
-  min-height:38px!important;
-  border-radius:7px!important;
-}
 .waitlist-section .newsletter-form-row input{
-  padding:0 12px!important;
+  box-sizing:border-box!important;
+  flex:0 1 145px!important;
+  width:145px!important;
+  min-width:0!important;
+  max-width:145px!important;
+  height:30px!important;
+  min-height:30px!important;
+  padding:0 11px!important;
+  border-radius:7px!important;
   font-size:10px!important;
   border:1px solid rgba(245,241,230,.55)!important;
   background:rgba(7,20,38,.82)!important;
 }
 .waitlist-section .newsletter-form-row .button{
+  box-sizing:border-box!important;
+  flex:0 0 auto!important;
+  height:30px!important;
+  min-height:30px!important;
+  padding:0 9px!important;
+  border-radius:7px!important;
   justify-content:center!important;
-  padding:0 12px!important;
-  font-size:9px!important;
+  font-size:7px!important;
   letter-spacing:.04em!important;
 }
+@media(max-width:700px){
+  .waitlist-section form{
+    width:min(100%,300px)!important;
+    max-width:300px!important;
+    justify-self:start!important;
+  }
+  .waitlist-section .newsletter-form-row{
+    width:100%!important;
+    max-width:300px!important;
+    flex-direction:row!important;
+  }
+  .waitlist-section .newsletter-form-row input{
+    flex:0 1 145px!important;
+    width:145px!important;
+    max-width:145px!important;
+    height:30px!important;
+    min-height:30px!important;
+  }
+  .waitlist-section .newsletter-form-row .button{
+    width:auto!important;
+    height:30px!important;
+    min-height:30px!important;
+  }
+}
 @media(max-width:380px){
-  .waitlist-section .newsletter-form-row{flex-direction:column!important}
-  .waitlist-section .newsletter-form-row input,
-  .waitlist-section .newsletter-form-row .button{width:100%!important;height:38px!important;min-height:38px!important}
+  .waitlist-section .newsletter-form-row{flex-direction:row!important;gap:5px!important}
+  .waitlist-section .newsletter-form-row input{flex-basis:125px!important;width:125px!important;max-width:125px!important}
+  .waitlist-section .newsletter-form-row .button{padding:0 7px!important;font-size:6.5px!important}
 }
