@@ -351,8 +351,12 @@ async function refreshStudioNotifications(summary = null) {
   try {
     const history = await api("/api/admin/notifications");
     (Array.isArray(history.notifications) ? history.notifications : []).forEach(notification => {
-      const title = String(notification.title || "").trim();
-      const body = String(notification.body || "").trim();
+      let title = String(notification.title || "").trim();
+      let body = String(notification.body || "").trim();
+      if (title.toLowerCase() === "monowear notifications are on") {
+        title = body || "Studio is connected";
+        body = "";
+      }
       const url = String(notification.url || "/studio");
       const tab = url.includes("products") ? "products" : url.includes("orders") ? "orders" : url.includes("payments") ? "payments" : url.includes("audience") ? "audience" : "overview";
       items.push(notificationItem("history:" + notification.id, title || body || "Store update", body && body !== title ? body : "Open Studio to review this update.", tab, notification.read_at ? "attention" : "urgent"));
