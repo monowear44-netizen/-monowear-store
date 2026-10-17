@@ -738,3 +738,58 @@ html[data-theme="gold"] .waitlist-section{
   .waitlist-section .newsletter-form-row{flex-direction:column}
   .waitlist-section .newsletter-form-row .button{width:100%;justify-content:center}
 }
+
+
+/* WAITLIST FORM — ULTRA-COMPACT EMAIL BOX */
+.waitlist-section form{
+  max-width:390px!important;
+  width:100%!important;
+  justify-self:end;
+}
+.waitlist-section form label{
+  margin-bottom:6px!important;
+  font-size:9px!important;
+}
+.waitlist-section .newsletter-form-row{
+  display:flex!important;
+  align-items:stretch!important;
+  gap:6px!important;
+  max-width:390px!important;
+}
+.waitlist-section .newsletter-form-row input{
+  flex:1 1 120px!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:220px!important;
+  height:36px!important;
+  padding:0 10px!important;
+  font-size:11px!important;
+}
+.waitlist-section .newsletter-form-row .button{
+  flex:0 0 auto!important;
+  min-height:36px!important;
+  height:36px!important;
+  padding:0 10px!important;
+  font-size:8px!important;
+  letter-spacing:.025em!important;
+  gap:6px!important;
+}
+.waitlist-section #newsletterMessage{font-size:10px!important;margin-top:5px!important}
+@media(max-width:700px){
+  .waitlist-section form{max-width:330px!important;justify-self:start!important}
+  .waitlist-section .newsletter-form-row{max-width:330px!important;gap:5px!important}
+  .waitlist-section .newsletter-form-row input{
+    max-width:170px!important;
+    height:34px!important;
+    flex-basis:100px!important;
+    padding:0 8px!important;
+    font-size:11px!important;
+  }
+  .waitlist-section .newsletter-form-row .button{
+    height:34px!important;min-height:34px!important;padding:0 8px!important;font-size:7px!important;
+  }
+}
+@media(max-width:380px){
+  .waitlist-section .newsletter-form-row{flex-direction:row!important}
+  .waitlist-section .newsletter-form-row .button{width:auto!important;justify-content:center!important}
+}
