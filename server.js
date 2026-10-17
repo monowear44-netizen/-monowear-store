@@ -2533,12 +2533,42 @@ app.get("/api/unsubscribe", (req, res) => {
   res.status(200).send(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>MONOWEAR unsubscribe</title></head><body style="margin:0;background:#10110f;color:#f5f5ef;font:16px Arial,sans-serif;display:grid;min-height:100vh;place-items:center;text-align:center"><main style="max-width:480px;padding:32px"><p style="letter-spacing:5px;color:#d4b66c">MONOWEAR</p><h1>You’re unsubscribed.</h1><p>You won’t receive MONOWEAR drop emails at this address anymore.</p><a style="color:#d4b66c" href="/">Return to MONOWEAR</a></main></body></html>`);
 });
 
+function monowearFreeEmailDraft(request) {
+  const text = String(request || "").toLowerCase();
+  if (/welcome|joined|join(ed)? the waitlist|new subscriber|existing subscriber/.test(text)) {
+    return {
+      subject: "Welcome to MONOWEAR.",
+      preview: "LIVE THE NAME. WEAR THE MEANING.",
+      body: "Welcome to MONOWEAR.\n\nYou’re on the list now. MONOWEAR is built around independence, persistence, and finding your own way through.\n\nWhen a new drop is approaching, you’ll hear from us here first. Until then, stay in motion.\n\nLIVE THE NAME. WEAR THE MEANING.",
+      cta_label: "EXPLORE MONOWEAR",
+      cta_url: "https://monowears.com"
+    };
+  }
+  if (/drop|launch|collection|release|help is on the way|archive/.test(text)) {
+    return {
+      subject: "MONOWEAR — a new drop is approaching.",
+      preview: "The next chapter is taking shape.",
+      body: "A new MONOWEAR chapter is approaching.\n\nBuilt around independence, pressure, persistence, and finding a way through, this next drop carries the meaning behind the name.\n\nKeep an eye on your inbox for the official release details.\n\nLIVE THE NAME. WEAR THE MEANING.",
+      cta_label: "VISIT MONOWEAR",
+      cta_url: "https://monowears.com"
+    };
+  }
+  return {
+    subject: "A note from MONOWEAR.",
+    preview: "LIVE THE NAME. WEAR THE MEANING.",
+    body: "A note from MONOWEAR.\n\nIndependence is more than a look. It’s the decision to keep moving, keep building, and find your own way through.\n\nThank you for being part of the MONOWEAR list.\n\nLIVE THE NAME. WEAR THE MEANING.",
+    cta_label: "VISIT MONOWEAR",
+    cta_url: "https://monowears.com"
+  };
+}
+
 app.post("/api/admin/email-draft", requireAdmin, async (req, res) => {
   const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
-  if (!apiKey) return res.status(503).json({error:"AI email writing is not connected yet. Add OPENAI_API_KEY to the MONOWEAR Render service environment."});
   const request = String(req.body.request || "").trim().slice(0, 1200);
   const tone = String(req.body.tone || "cinematic, confident, concise").trim().slice(0, 100);
-  if (!request) return res.status(400).json({error:"Tell the AI what this email should announce."});
+  if (!request) return res.status(400).json({error:"Describe what this email should announce."});
+  const freeDraft = () => res.json({...monowearFreeEmailDraft(request), writer:"free_template"});
+  if (!apiKey) return freeDraft();
   try {
     const response = await fetch("https://api.openai.com/v1/responses", {
       method:"POST",
@@ -2556,7 +2586,8 @@ app.post("/api/admin/email-draft", requireAdmin, async (req, res) => {
     if (!response.ok) {
       const message=data?.error?.message || "OpenAI could not generate a draft.";
       console.error("MONOWEAR AI email draft failed:",JSON.stringify({status:response.status,message,requestId:response.headers.get("x-request-id"),model:"gpt-4.1-mini"}));
-      return res.status(response.status===429?429:502).json({error:response.status===429?(/no credits remaining|insufficient_quota|billing/i.test(message)?"MONOWEAR AI email drafts are paused because the OpenAI API account has no available credits. Add API credits to the account connected to OPENAI_API_KEY in Render, then try again. This is separate from a ChatGPT subscription.":"The OpenAI API usage limit was reached. Check the API account billing and usage, then try again."):"AI draft failed: "+message.slice(0,220)});
+      if (response.status === 429 || /insufficient_quota|no credits remaining|billing|usage limit/i.test(message)) return freeDraft();
+      return res.status(502).json({error:"AI draft failed: "+message.slice(0,220)});
     }
     // The raw Responses HTTP API returns generated text inside output[].content[];
     // output_text is an SDK convenience field and may not exist in raw REST responses.
@@ -2580,10 +2611,10 @@ app.post("/api/admin/email-draft", requireAdmin, async (req, res) => {
     let cta_url=String(draft.cta_url||"").trim().slice(0,500);
     if(cta_url&&!/^https?:\/\//i.test(cta_url)) cta_url="";
     if(!subject||!body) return res.status(502).json({error:"The AI draft was incomplete. Please generate again."});
-    res.json({subject,preview,body,cta_label,cta_url});
+    res.json({subject,preview,body,cta_label,cta_url,writer:"openai"});
   } catch(error) {
     console.error("MONOWEAR AI email draft error:",error.message);
-    res.status(502).json({error:"Could not reach the AI writer. Please try again."});
+    return freeDraft();
   }
 });
 
