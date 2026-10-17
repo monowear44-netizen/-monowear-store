@@ -841,3 +841,44 @@ html[data-theme="gold"] .waitlist-section{
     font-size:7px!important;
   }
 }
+
+
+/* WAITLIST INPUT — SLIM, HORIZONTAL, ROUNDED */
+.waitlist-section form{
+  width:min(100%,300px)!important;
+  max-width:300px!important;
+}
+.waitlist-section .newsletter-form-row{
+  width:100%!important;
+  max-width:300px!important;
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  gap:6px!important;
+}
+.waitlist-section .newsletter-form-row input{
+  box-sizing:border-box!important;
+  flex:1 1 auto!important;
+  width:auto!important;
+  min-width:0!important;
+  max-width:none!important;
+  height:30px!important;
+  min-height:30px!important;
+  padding:0 11px!important;
+  border-radius:7px!important;
+  font-size:10px!important;
+}
+.waitlist-section .newsletter-form-row .button{
+  box-sizing:border-box!important;
+  flex:0 0 auto!important;
+  height:30px!important;
+  min-height:30px!important;
+  padding:0 9px!important;
+  border-radius:7px!important;
+  font-size:7px!important;
+}
+@media(max-width:380px){
+  .waitlist-section .newsletter-form-row{flex-direction:row!important}
+  .waitlist-section .newsletter-form-row input{height:30px!important;min-height:30px!important}
+  .waitlist-section .newsletter-form-row .button{width:auto!important;height:30px!important;min-height:30px!important}
+}
