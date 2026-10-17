@@ -3,6 +3,8 @@
   const notificationButton = document.getElementById("studioNotificationsButton");
   let deferredInstallPrompt = null;
   let notificationPanel = null;
+  let notificationsEnabledOnThisDevice = false;
+  const NOTIFICATION_SETUP_KEY = "monowearStudioPushSetupV1";
 
   const request = async (url, options = {}) => {
     const response = await fetch(url, {
@@ -118,6 +120,14 @@
   }
 
   async function enableNotifications() {
+    // Once the browser has a saved subscription, the control becomes a status
+    // indicator. Never ask the owner to enable it again on every Studio visit.
+    if (notificationsEnabledOnThisDevice || notificationButton?.dataset.enabled === "true") {
+      showMessage("Device alerts are already enabled and saved on this device.", "success");
+      ensureNotificationPanel().hidden = false;
+      await loadNotifications();
+      return;
+    }
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
     if (isIOS && !isStandalone) {
@@ -150,7 +160,12 @@
       // ask for permission or create another "connected" alert.
       if (Notification.permission === "granted" && subscription) {
         await request("/api/admin/push/subscribe", { method: "POST", body: JSON.stringify({ subscription: subscription.toJSON() }) });
+        notificationsEnabledOnThisDevice = true;
+        notificationButton.dataset.enabled = "true";
+        try { localStorage.setItem(NOTIFICATION_SETUP_KEY, "1"); } catch {}
         notificationButton.textContent = "DEVICE ALERTS ON ✓";
+        notificationButton.disabled = true;
+        notificationButton.setAttribute("aria-label", "Device alerts are already enabled");
         showMessage("Device alerts are already enabled on this device. You're all set.", "success");
         ensureNotificationPanel().hidden = false;
         await loadNotifications();
@@ -174,15 +189,23 @@
       await request("/api/admin/push/subscribe", { method: "POST", body: JSON.stringify({ subscription: subscription.toJSON() }) });
       // Only send the test/connected notification for the first successful setup.
       await request("/api/admin/push/test", { method: "POST", body: "{}" });
+      notificationsEnabledOnThisDevice = true;
+      notificationButton.dataset.enabled = "true";
+      try { localStorage.setItem(NOTIFICATION_SETUP_KEY, "1"); } catch {}
       notificationButton.textContent = "DEVICE ALERTS ON ✓";
+      notificationButton.disabled = true;
+      notificationButton.setAttribute("aria-label", "Device alerts are already enabled");
+      notificationButton.title = "Enabled and saved on this device"; 
       showMessage("Device alerts are enabled and saved for this device. You won't need to enable them again here.", "success");
       ensureNotificationPanel().hidden = false;
       await loadNotifications();
     } catch (error) {
       showMessage(error.message || "Could not enable push notifications.", "error");
     } finally {
-      notificationButton.disabled = false;
-      if (notificationButton.textContent === "CONNECTING…") notificationButton.textContent = "ENABLE NOTIFICATIONS";
+      if (!notificationsEnabledOnThisDevice) {
+        notificationButton.disabled = false;
+        if (notificationButton.textContent === "CONNECTING…") notificationButton.textContent = "Enable device alerts";
+      }
     }
   }
 
@@ -227,13 +250,21 @@
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.getSubscription();
       if (Notification.permission === "granted" && subscription) {
+        notificationsEnabledOnThisDevice = true;
+        notificationButton.dataset.enabled = "true";
+        try { localStorage.setItem(NOTIFICATION_SETUP_KEY, "1"); } catch {}
         notificationButton.textContent = "DEVICE ALERTS ON ✓";
-        notificationButton.setAttribute("aria-label", "Device alerts are enabled on this device");
+        notificationButton.disabled = true;
+        notificationButton.setAttribute("aria-label", "Device alerts are already enabled on this device");
         notificationButton.title = "Device alerts are already enabled and saved";
       } else {
+        notificationsEnabledOnThisDevice = false;
+        delete notificationButton.dataset.enabled;
+        notificationButton.disabled = false;
         notificationButton.textContent = "Enable device alerts";
         notificationButton.removeAttribute("aria-label");
         notificationButton.removeAttribute("title");
+        try { localStorage.removeItem(NOTIFICATION_SETUP_KEY); } catch {}
       }
     } catch (error) {
       console.warn("Could not restore saved Studio alert state:", error);
