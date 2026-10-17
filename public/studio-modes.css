@@ -1,0 +1,16 @@
+body[data-studio-mode="light"]{--sm-bg:#f5f6f4;--sm-panel:#fff;--sm-text:#20231f;--sm-muted:#73786f;--sm-border:#e0e4dd;--sm-input:#fff;--sm-hover:#edf0e9;--sm-accent:#527c25;background:var(--sm-bg)!important;color:var(--sm-text)!important}
+body[data-studio-mode="dark"]{--sm-bg:#111210;--sm-panel:#191b18;--sm-text:#f2f3ed;--sm-muted:#a1a69a;--sm-border:#343830;--sm-input:#151713;--sm-hover:#282c24;--sm-accent:#c6ff4b;background:var(--sm-bg)!important;color:var(--sm-text)!important}
+body[data-studio-mode="wine"]{--sm-bg:#1b0910;--sm-panel:#2a101a;--sm-text:#fff0f3;--sm-muted:#d0aeb8;--sm-border:#603040;--sm-input:#210b13;--sm-hover:#421a2a;--sm-accent:#ed91ad;background:var(--sm-bg)!important;color:var(--sm-text)!important}
+body[data-studio-mode] .main,body[data-studio-mode] #appScreen,body[data-studio-mode] .tab-panel{color:var(--sm-text)!important}
+body[data-studio-mode] .sidebar,body[data-studio-mode] .topbar,body[data-studio-mode] .panel,body[data-studio-mode] .stat,body[data-studio-mode] .product-card,body[data-studio-mode] .collection-card,body[data-studio-mode] .editor,body[data-studio-mode] .settings-form,body[data-studio-mode] .studio-notification-panel,body[data-studio-mode] .studio-notifications-panel,body[data-studio-mode] .monitoring-metric,body[data-studio-mode] .monitoring-attention,body[data-studio-mode] .traffic-stat,body[data-studio-mode] .login-panel{background:var(--sm-panel)!important;color:var(--sm-text)!important;border-color:var(--sm-border)!important}
+body[data-studio-mode] .nav,body[data-studio-mode] .sidebar a,body[data-studio-mode] .side-bottom button,body[data-studio-mode] .quiet,body[data-studio-mode] .secondary{color:var(--sm-text)!important;border-color:var(--sm-border)!important}
+body[data-studio-mode] .nav:hover,body[data-studio-mode] .secondary:hover,body[data-studio-mode] .quiet:hover{background:var(--sm-hover)!important}
+body[data-studio-mode] .nav.active,body[data-studio-mode] .primary{background:var(--sm-accent)!important;color:#10130d!important;border-color:var(--sm-accent)!important}
+body[data-studio-mode] input:not([type=checkbox]):not([type=radio]),body[data-studio-mode] select,body[data-studio-mode] textarea{background:var(--sm-input)!important;color:var(--sm-text)!important;border-color:var(--sm-border)!important}
+body[data-studio-mode] input::placeholder,body[data-studio-mode] textarea::placeholder{color:var(--sm-muted)!important}
+body[data-studio-mode] .muted,body[data-studio-mode] .eyebrow,body[data-studio-mode] small{color:var(--sm-muted)}
+body[data-studio-mode] hr,body[data-studio-mode] th,body[data-studio-mode] td,body[data-studio-mode] .product-row,body[data-studio-mode] .studio-notification-item{border-color:var(--sm-border)!important}
+body[data-studio-mode] .studio-theme-switch{display:flex;align-items:center;gap:7px;flex-wrap:nowrap}
+body[data-studio-mode] .studio-theme-switch label{font-size:10px;letter-spacing:.08em;white-space:nowrap;color:var(--sm-muted)}
+body[data-studio-mode] .studio-theme-switch select{min-width:112px;width:auto;padding:9px 10px;border-radius:8px;font-size:12px}
+@media(max-width:800px){body[data-studio-mode] .studio-theme-switch{gap:4px}body[data-studio-mode] .studio-theme-switch label{display:none}body[data-studio-mode] .studio-theme-switch select{min-width:100px;max-width:120px;padding:9px 7px;font-size:11px}}
