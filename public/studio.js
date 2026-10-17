@@ -269,6 +269,7 @@ async function loadSummary() {
       $("statLowStock").textContent = data.lowStock ?? 0;
     }
     await loadTraffic();
+    await refreshStudioNotifications(data);
   } catch (error) {
     toast("Dashboard: " + error.message);
   }
@@ -290,6 +291,122 @@ async function loadTraffic() {
 }
 
 $("trafficPeriod")?.addEventListener("change", loadTraffic);
+
+
+// ============================================================
+// COMPACT STUDIO NOTIFICATIONS
+// Bell dot appears when there are new items to review.
+// ============================================================
+const STUDIO_NOTIFICATIONS_SEEN_KEY = "monowearStudioNotificationsSeenV1";
+let studioNotificationItems = [];
+let studioNotificationSignature = "";
+
+function notificationItem(id, title, detail, tab, kind = "attention") {
+  return { id: String(id), title, detail, tab, kind };
+}
+
+function renderStudioNotifications() {
+  const list = $("studioNotificationList");
+  const dot = $("studioBellDot");
+  if (!list) return;
+  const signature = studioNotificationItems.map(item => item.id).sort().join("|");
+  studioNotificationSignature = signature;
+  let seen = "";
+  try { seen = localStorage.getItem(STUDIO_NOTIFICATIONS_SEEN_KEY) || ""; } catch {}
+  if (dot) dot.hidden = !signature || signature === seen;
+
+  if (!studioNotificationItems.length) {
+    list.innerHTML = '<div class="studio-notification-empty"><span class="notification-check">✓</span><strong>You’re all caught up.</strong><p class="muted">New orders, stock alerts and payment/email issues will appear here.</p></div>';
+    return;
+  }
+  list.innerHTML = studioNotificationItems.map(item => `
+    <button type="button" class="studio-notification-item ${item.kind === "urgent" ? "is-urgent" : ""}" data-notification-tab="${esc(item.tab)}">
+      <span class="notification-indicator" aria-hidden="true"></span>
+      <span><strong>${esc(item.title)}</strong><small>${esc(item.detail)}</small></span>
+      <span class="notification-arrow" aria-hidden="true">↗</span>
+    </button>`).join("");
+  list.querySelectorAll("[data-notification-tab]").forEach(button => {
+    button.addEventListener("click", () => {
+      closeStudioNotifications();
+      switchTab(button.dataset.notificationTab);
+    });
+  });
+}
+
+async function refreshStudioNotifications(summary = null) {
+  const items = [];
+  try {
+    const dashboard = summary || await api("/api/admin/dashboard");
+    const products = currentProducts.length ? currentProducts : await api("/api/admin/products");
+    const lowStock = (Array.isArray(products) ? products : []).filter(product => Number(product.stock || 0) <= 5 && product.published !== false);
+    if (lowStock.length) {
+      items.push(notificationItem("stock:" + lowStock.map(p => p.id + "-" + p.stock).sort().join(","), "Low stock needs attention", lowStock.length + " published product" + (lowStock.length === 1 ? " has" : "s have") + " 5 or fewer units.", "products", "urgent"));
+    }
+    if (Number(dashboard.pendingOrders || 0) > 0) {
+      items.push(notificationItem("pending-orders:" + Number(dashboard.pendingOrders), "Orders need checking", Number(dashboard.pendingOrders) + " order" + (Number(dashboard.pendingOrders) === 1 ? " is" : "s are") + " pending review or payment.", "orders", "urgent"));
+    }
+  } catch (error) {
+    console.warn("Dashboard notifications:", error.message);
+  }
+
+  try {
+    const response = await api("/api/admin/monitoring");
+    const attention = Array.isArray(response.attention) ? response.attention : [];
+    attention.forEach(order => {
+      const payment = String(order.payment_status || "").toLowerCase();
+      const email = String(order.email_status || "").toLowerCase();
+      if (payment === "pending" || payment === "failed") {
+        items.push(notificationItem("payment:" + order.reference + ":" + payment, "Payment needs checking", "Order " + order.reference + " · " + payment.replace(/[_-]/g, " "), "payments", "urgent"));
+      }
+      if (email === "failed" || email === "sending" || email === "skipped") {
+        items.push(notificationItem("email:" + order.reference + ":" + email, "Order email needs attention", "Order " + order.reference + " · email " + email, "orders", "urgent"));
+      }
+    });
+    if (response.paystack_configured === false) {
+      items.push(notificationItem("config:paystack", "Paystack is not configured", "Check payment settings before accepting orders.", "payments", "urgent"));
+    }
+    if (response.email_configured === false) {
+      items.push(notificationItem("config:email", "Order email is not configured", "Check email settings in Studio.", "appearance", "urgent"));
+    }
+  } catch (error) {
+    console.warn("Store monitoring notifications:", error.message);
+  }
+
+  const deduped = new Map(items.map(item => [item.id, item]));
+  studioNotificationItems = [...deduped.values()];
+  renderStudioNotifications();
+}
+
+function closeStudioNotifications() {
+  const panel = $("studioNotificationPanel");
+  const button = $("studioBellButton");
+  if (panel) panel.hidden = true;
+  if (button) button.setAttribute("aria-expanded", "false");
+}
+
+function openStudioNotifications() {
+  const panel = $("studioNotificationPanel");
+  const button = $("studioBellButton");
+  if (!panel || !button) return;
+  panel.hidden = false;
+  button.setAttribute("aria-expanded", "true");
+  try { localStorage.setItem(STUDIO_NOTIFICATIONS_SEEN_KEY, studioNotificationSignature); } catch {}
+  renderStudioNotifications();
+}
+
+$("studioBellButton")?.addEventListener("click", () => {
+  const panel = $("studioNotificationPanel");
+  if (panel && !panel.hidden) closeStudioNotifications();
+  else openStudioNotifications();
+});
+$("studioCloseNotifications")?.addEventListener("click", closeStudioNotifications);
+document.addEventListener("click", event => {
+  const wrap = document.querySelector(".studio-notification-wrap");
+  if (wrap && !wrap.contains(event.target)) closeStudioNotifications();
+});
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") closeStudioNotifications();
+});
 
 // ============================================================
 // IMAGE UPLOAD
