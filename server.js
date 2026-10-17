@@ -220,6 +220,8 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_site_visits_visitor_time ON site_visits(visitor_id, visited_at);
 `);
 db.prepare("DELETE FROM site_visits WHERE visited_at < datetime('now', '-400 days')").run();
+// Remove any older URL-level analytics: the dashboard tracks totals only, never product views.
+db.prepare("UPDATE site_visits SET page_path = '/' WHERE page_path <> '/'").run();
 
 // ============================================================
 // HISTORICAL LABELD RECORDS — idempotent seed, separate from live orders.
@@ -828,8 +830,8 @@ app.use((req, res, next) => {
       res.append("Set-Cookie", "mw_visitor=" + visitorId + "; Max-Age=31536000; Path=/; SameSite=Lax; HttpOnly; Secure");
     }
 
-    const pagePath = pathname.slice(0, 300) || "/";
-    db.prepare("INSERT INTO site_visits (visitor_id, page_path) VALUES (?, ?)").run(visitorId, pagePath);
+    // Count visits only. Do not persist the URL or product slug a visitor opened.
+    db.prepare("INSERT INTO site_visits (visitor_id, page_path) VALUES (?, '/')").run(visitorId);
   } catch (error) {
     // Analytics must never interrupt storefront requests.
     console.warn("Website analytics skipped:", error.message);
@@ -3879,22 +3881,12 @@ app.get("/api/admin/traffic", requireAdmin, (req, res) => {
     WHERE ${whereSql}
   `).get(...params);
 
-  const topPages = db.prepare(`
-    SELECT page_path AS path, COUNT(*) AS views
-    FROM site_visits
-    WHERE ${whereSql}
-    GROUP BY page_path
-    ORDER BY views DESC
-    LIMIT 5
-  `).all(...params);
-
   res.set("Cache-Control", "no-store");
   res.json({
     period: periodKey,
     label: period.label,
     visitors: Number(totals.visitors || 0),
-    pageViews: Number(totals.pageViews || 0),
-    topPages
+    pageViews: Number(totals.pageViews || 0)
   });
 });
 
