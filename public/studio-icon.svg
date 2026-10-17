@@ -1,1 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#151613"/><path d="M90 360V152h56l110 128 110-128h56v208h-62V246L256 365 152 246v114z" fill="#c6ff4b"/><circle cx="414" cy="98" r="18" fill="#c6ff4b"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="MONOWEAR">
+  <rect width="512" height="512" rx="96" fill="#151613"/>
+  <path d="M0 112H512V400H0Z" fill="#151613"/>
+  <text x="256" y="273" text-anchor="middle" fill="#c6ff4b" font-family="Arial, Helvetica, sans-serif" font-size="68" font-weight="900" letter-spacing="-4">MONOWEAR</text>
+  <text x="447" y="211" text-anchor="middle" fill="#c6ff4b" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">®</text>
+  <path d="M110 320H402" stroke="#c6ff4b" stroke-width="5" stroke-linecap="round"/>
+  <text x="256" y="354" text-anchor="middle" fill="#f4f2eb" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="600" letter-spacing="5">LIVE THE NAME</text>
+</svg>
