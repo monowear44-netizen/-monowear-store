@@ -142,14 +142,29 @@
         await loadNotifications();
         return;
       }
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        showMessage("Notifications are blocked. Allow notifications for MONOWEAR Studio in your device settings, then try again.", "error");
-        return;
-      }
       const registration = await navigator.serviceWorker.register("/studio-sw.js", { scope: "/" });
       await navigator.serviceWorker.ready;
       let subscription = await registration.pushManager.getSubscription();
+
+      // This device's subscription survives reloads. Reopening Studio should never
+      // ask for permission or create another "connected" alert.
+      if (Notification.permission === "granted" && subscription) {
+        await request("/api/admin/push/subscribe", { method: "POST", body: JSON.stringify({ subscription: subscription.toJSON() }) });
+        notificationButton.textContent = "DEVICE ALERTS ON ✓";
+        showMessage("Device alerts are already enabled on this device. You're all set.", "success");
+        ensureNotificationPanel().hidden = false;
+        await loadNotifications();
+        return;
+      }
+
+      const permission = Notification.permission === "default"
+        ? await Notification.requestPermission()
+        : Notification.permission;
+      if (permission !== "granted") {
+        showMessage("Notifications are blocked for this device. Allow them in your device settings to connect Studio alerts.", "error");
+        return;
+      }
+
       if (!subscription) {
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
@@ -157,9 +172,10 @@
         });
       }
       await request("/api/admin/push/subscribe", { method: "POST", body: JSON.stringify({ subscription: subscription.toJSON() }) });
+      // Only send the test/connected notification for the first successful setup.
       await request("/api/admin/push/test", { method: "POST", body: "{}" });
-      notificationButton.textContent = "NOTIFICATIONS ON ✓";
-      showMessage("Device alerts are connected. New store updates will show their message content.", "success");
+      notificationButton.textContent = "DEVICE ALERTS ON ✓";
+      showMessage("Device alerts are enabled and saved for this device. You won't need to enable them again here.", "success");
       ensureNotificationPanel().hidden = false;
       await loadNotifications();
     } catch (error) {
@@ -203,6 +219,28 @@
     observer.observe(appScreen, { attributes: true, attributeFilter: ["hidden", "style"] });
   }
   ensureNotificationPanel();
+
+  // Reflect the saved browser subscription on every Studio visit.
+  async function restoreNotificationState() {
+    if (!notificationButton || !("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if (Notification.permission === "granted" && subscription) {
+        notificationButton.textContent = "DEVICE ALERTS ON ✓";
+        notificationButton.setAttribute("aria-label", "Device alerts are enabled on this device");
+        notificationButton.title = "Device alerts are already enabled and saved";
+      } else {
+        notificationButton.textContent = "Enable device alerts";
+        notificationButton.removeAttribute("aria-label");
+        notificationButton.removeAttribute("title");
+      }
+    } catch (error) {
+      console.warn("Could not restore saved Studio alert state:", error);
+    }
+  }
+  restoreNotificationState();
+
   const isStandaloneApp = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
   if (installButton) {
     installButton.hidden = Boolean(isStandaloneApp);
