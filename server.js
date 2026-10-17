@@ -1145,26 +1145,9 @@ function emailLogoUrl() {
   return "";
 }
 
-// Shared MONOWEAR email layout (matches the storefront palette).
+// Keep customer emails focused on the actual message; no extra brand header or slogan wrapper.
 function emailShell(bodyHtml) {
-  const logo = emailLogoUrl();
-
-  const header = logo
-    ? `<img src="${escapeHTML(logo)}" alt="MONOWEAR" width="150"
-         style="display:block;margin:0 auto;border:0;max-width:150px;height:auto">`
-    : `<div style="font-size:24px;font-weight:800;letter-spacing:6px;color:#141414">MONOWEAR</div>`;
-
-  return `
-  <div style="background:#f0efe9;padding:24px 12px">
-    <div style="max-width:600px;margin:0 auto;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#141414">
-      <div style="padding:30px 24px;text-align:center">${header}</div>
-      <div style="height:4px;background:#c6ff4b"></div>
-      <div style="padding:28px 24px;font-size:14px;line-height:1.6">${bodyHtml}</div>
-      <div style="background:#141414;padding:18px 24px;text-align:center;color:#c6ff4b;font-size:11px;letter-spacing:2px">
-        LIVE THE NAME. WEAR THE MEANING.
-      </div>
-    </div>
-  </div>`;
+  return `<div style="font-family:Arial,Helvetica,sans-serif;color:#141414;font-size:14px;line-height:1.6">${bodyHtml}</div>`;
 }
 
 // Notify the store owner once when a customer's payment is confirmed.
