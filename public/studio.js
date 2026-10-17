@@ -301,6 +301,65 @@ const STUDIO_NOTIFICATIONS_SEEN_KEY = "monowearStudioNotificationsSeenV1";
 const STUDIO_NOTIFICATIONS_DISMISSED_KEY = "monowearStudioNotificationsDismissedV2";
 let studioNotificationItems = [];
 let studioNotificationSignature = "";
+const STUDIO_NOTIFICATION_SOUND_KEY = "monowearStudioNotificationSoundV1";
+let studioNotificationSoundContext = null;
+let studioPreviousNotificationIds = null;
+
+function studioNotificationSoundEnabled() {
+  try { return localStorage.getItem(STUDIO_NOTIFICATION_SOUND_KEY) !== "off"; } catch { return true; }
+}
+
+function playStudioNotificationSound() {
+  if (!studioNotificationSoundEnabled()) return;
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    studioNotificationSoundContext = studioNotificationSoundContext || new AudioContextClass();
+    const context = studioNotificationSoundContext;
+    if (context.state === "suspended") context.resume().catch(() => {});
+    const now = context.currentTime + 0.02;
+    [[740, 0], [988, 0.13]].forEach(([frequency, offset]) => {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(frequency, now + offset);
+      gain.gain.setValueAtTime(0.0001, now + offset);
+      gain.gain.exponentialRampToValueAtTime(0.12, now + offset + 0.018);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.19);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(now + offset);
+      oscillator.stop(now + offset + 0.2);
+    });
+  } catch (error) {
+    // Sound is an enhancement; notifications must still work if audio is unavailable.
+    console.debug("Studio notification sound unavailable:", error.message);
+  }
+}
+
+function ensureStudioNotificationSoundControl() {
+  const footer = $("studioNotificationPanel")?.querySelector(".studio-notification-footer");
+  if (!footer || $("studioNotificationSoundToggle")) return;
+  const button = document.createElement("button");
+  button.id = "studioNotificationSoundToggle";
+  button.type = "button";
+  button.className = "quiet";
+  button.style.marginRight = "8px";
+  const update = () => {
+    const enabled = studioNotificationSoundEnabled();
+    button.textContent = enabled ? "Sound: ON ♪" : "Sound: OFF";
+    button.setAttribute("aria-pressed", String(enabled));
+    button.title = enabled ? "Turn Studio notification sounds off" : "Turn Studio notification sounds on";
+  };
+  button.addEventListener("click", () => {
+    const enabled = !studioNotificationSoundEnabled();
+    try { localStorage.setItem(STUDIO_NOTIFICATION_SOUND_KEY, enabled ? "on" : "off"); } catch {}
+    update();
+    if (enabled) playStudioNotificationSound();
+  });
+  footer.insertBefore(button, footer.firstChild);
+  update();
+}
 
 function getDismissedStudioNotifications() {
   try {
@@ -328,7 +387,14 @@ function renderStudioNotifications() {
   const dot = $("studioBellDot");
   if (!list) return;
   const signature = studioNotificationItems.map(item => item.id).sort().join("|");
+  if (studioPreviousNotificationIds !== null) {
+    const previous = new Set(studioPreviousNotificationIds);
+    const hasNewNotification = studioNotificationItems.some(item => !previous.has(item.id));
+    if (hasNewNotification) playStudioNotificationSound();
+  }
+  studioPreviousNotificationIds = studioNotificationItems.map(item => item.id);
   studioNotificationSignature = signature;
+  ensureStudioNotificationSoundControl();
   let seen = "";
   try { seen = localStorage.getItem(STUDIO_NOTIFICATIONS_SEEN_KEY) || ""; } catch {}
   if (dot) dot.hidden = !signature || signature === seen;
