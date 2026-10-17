@@ -109,7 +109,6 @@
     };
     const palette = palettes[theme] || palettes.dark;
     const fixedPreset = ["afterglow", "blue-gold", "helpway", "helpway-gradient"].includes(theme);
-    const fixedPreset = theme === "afterglow";
     root.dataset.theme = palettes[theme] ? theme : "dark";
     root.style.setProperty("--bg", fixedPreset ? palette.bg : validColor(settings.design_background, palette.bg));
     root.style.setProperty("--ink", fixedPreset ? palette.ink : validColor(settings.design_text, palette.ink));
