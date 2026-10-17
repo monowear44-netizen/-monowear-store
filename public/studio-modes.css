@@ -162,3 +162,40 @@ html[data-theme="blue-gold"] body[data-studio-mode] .sidebar .nav.active {
 .campaign-review-box button{align-self:flex-start;margin-top:4px}
 .email-assistant-panel .status-pill{font-size:10px;letter-spacing:1px;border:1px solid var(--sm-border,var(--line,#444));border-radius:20px;padding:7px 10px;white-space:nowrap}
 @media(max-width:600px){.email-assistant-fields{grid-template-columns:1fr}.campaign-review-box{padding:12px}.email-assistant-actions button,.campaign-review-box button{width:100%}.email-assistant-panel .toolbar{align-items:flex-start;flex-direction:column}}
+
+
+/* Audience subscriber rows: keep email addresses and dates visually separated. */
+#newsletterList .audience-subscriber-row,
+#waitlistList .audience-subscriber-row{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:12px!important;
+  padding:14px 12px!important;
+  margin:0!important;
+  border-bottom:1px solid var(--sm-border,var(--line,#343630))!important;
+  min-width:0!important;
+}
+.audience-subscriber-row .audience-email{
+  display:block!important;
+  min-width:0!important;
+  overflow-wrap:anywhere!important;
+  word-break:break-word!important;
+  line-height:1.45!important;
+  font-size:13px!important;
+}
+.audience-subscriber-row .audience-date{
+  display:block!important;
+  text-align:right!important;
+  white-space:normal!important;
+  font-size:11px!important;
+  line-height:1.45!important;
+  opacity:.8;
+  max-width:130px;
+}
+#newsletterList>.eyebrow,#waitlistList>.eyebrow{margin:8px 12px 10px!important}
+@media(max-width:480px){
+  #newsletterList .audience-subscriber-row,
+  #waitlistList .audience-subscriber-row{grid-template-columns:minmax(0,1fr)!important;gap:5px!important;padding:13px 10px!important}
+  .audience-subscriber-row .audience-date{text-align:left!important;max-width:none!important;font-size:10px!important}
+}
