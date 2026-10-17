@@ -78,3 +78,28 @@ body[data-studio-mode] .studio-theme-switch select{min-width:100px;width:auto;mi
   }
   body .topbar { z-index: 40; }
 }
+
+
+/* Keep the Blue & Gold palette consistent even when Studio's light/dark mode is selected. */
+html[data-theme="blue-gold"] body[data-studio-mode] {
+  --sm-bg:#071426;
+  --sm-panel:#0D2038;
+  --sm-text:#F5F1E6;
+  --sm-muted:#B7C4D8;
+  --sm-border:#304765;
+  --sm-input:#0D2038;
+  --sm-hover:#162D4B;
+  --sm-accent:#D8B65C;
+  --sm-accent-text:#071426;
+  background:var(--sm-bg)!important;
+  color:var(--sm-text)!important;
+}
+html[data-theme="blue-gold"] body[data-studio-mode] .sidebar {
+  background:#050E1D!important;
+  border-color:#304765!important;
+}
+html[data-theme="blue-gold"] body[data-studio-mode] .sidebar .nav.active {
+  background:#D8B65C!important;
+  color:#071426!important;
+  border-color:#D8B65C!important;
+}
