@@ -305,6 +305,7 @@ function ensureColumn(table, column, definition) {
   return false;
 }
 
+ensureColumn("newsletter", "unsubscribed_at", "TEXT");
 ensureColumn("products", "slug", "TEXT");
 ensureColumn("products", "compare_price", "REAL DEFAULT 0");
 ensureColumn("products", "images", "TEXT DEFAULT '[]'");
@@ -2519,6 +2520,94 @@ app.get("/api/admin/newsletter", requireAdmin, (req, res) => {
   `).all();
 
   res.json(subscribers);
+});
+
+function newsletterUnsubscribeToken(email) {
+  return crypto.createHmac("sha256", SESSION_SECRET || ADMIN_PASSWORD || "monowear-unsubscribe")
+    .update(String(email || "").trim().toLowerCase()).digest("hex");
+}
+
+app.get("/api/unsubscribe", (req, res) => {
+  const email = String(req.query.email || "").trim().toLowerCase();
+  const token = String(req.query.token || "");
+  if (!validEmail(email) || !token || token.length !== 64) return res.status(400).send("This unsubscribe link is invalid.");
+  const expected = newsletterUnsubscribeToken(email);
+  const a = Buffer.from(token), b = Buffer.from(expected);
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return res.status(400).send("This unsubscribe link is invalid.");
+  db.prepare("UPDATE newsletter SET unsubscribed_at = CURRENT_TIMESTAMP WHERE lower(email) = ?").run(email);
+  res.status(200).send(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>MONOWEAR unsubscribe</title></head><body style="margin:0;background:#10110f;color:#f5f5ef;font:16px Arial,sans-serif;display:grid;min-height:100vh;place-items:center;text-align:center"><main style="max-width:480px;padding:32px"><p style="letter-spacing:5px;color:#d4b66c">MONOWEAR</p><h1>You’re unsubscribed.</h1><p>You won’t receive MONOWEAR drop emails at this address anymore.</p><a style="color:#d4b66c" href="/">Return to MONOWEAR</a></main></body></html>`);
+});
+
+app.post("/api/admin/email-draft", requireAdmin, async (req, res) => {
+  const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
+  if (!apiKey) return res.status(503).json({error:"AI email writing is not connected yet. Add OPENAI_API_KEY to the MONOWEAR Render service environment."});
+  const request = String(req.body.request || "").trim().slice(0, 1200);
+  const tone = String(req.body.tone || "cinematic, confident, concise").trim().slice(0, 100);
+  if (!request) return res.status(400).json({error:"Tell the AI what this email should announce."});
+  try {
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method:"POST",
+      headers:{"Authorization":"Bearer "+apiKey,"Content-Type":"application/json"},
+      signal:AbortSignal.timeout(35000),
+      body:JSON.stringify({
+        model:process.env.OPENAI_EMAIL_MODEL || "gpt-6-luna",
+        instructions:"You are MONOWEAR's private email copywriter. MONOWEAR is an independent Nigerian streetwear label with a dark, cinematic, high-end streetwear voice. Brand line: LIVE THE NAME. WEAR THE MEANING. Themes: independence, pressure, persistence, self-reliance, motion, and finding a way through. Write concise, original, human-sounding emails. Avoid generic hype, fake urgency, unsupported claims, excessive emojis, and invented discounts, dates, prices, stock counts, or product facts. Return only valid JSON with keys subject, preview, body, cta_label, cta_url. body must be plain text with paragraphs separated by blank lines. cta_url should be an empty string unless a destination is clearly given in the request. Never send the email.",
+        input:"Write one campaign email based on this admin request. Tone: "+tone+". Request: "+request,
+        max_output_tokens:900
+      })
+    });
+    const data = await response.json().catch(()=>({}));
+    if (!response.ok) {
+      const message=data?.error?.message || "OpenAI could not generate a draft.";
+      console.error("MONOWEAR AI email draft failed:",response.status,message);
+      return res.status(response.status===429?429:502).json({error:response.status===429?"AI usage limit reached. Check your OpenAI API billing and usage.":"AI draft failed: "+message.slice(0,220)});
+    }
+    const output=String(data.output_text||"").trim();
+    let draft;
+    try { const match=output.match(/\{[\s\S]*\}/); draft=JSON.parse(match?match[0]:output); }
+    catch { return res.status(502).json({error:"The AI returned an unreadable draft. Please generate again."}); }
+    const subject=String(draft.subject||"").trim().slice(0,180);
+    const preview=String(draft.preview||"").trim().slice(0,220);
+    const body=String(draft.body||"").trim().slice(0,10000);
+    const cta_label=String(draft.cta_label||"").trim().slice(0,80);
+    let cta_url=String(draft.cta_url||"").trim().slice(0,500);
+    if(cta_url&&!/^https?:\/\//i.test(cta_url)) cta_url="";
+    if(!subject||!body) return res.status(502).json({error:"The AI draft was incomplete. Please generate again."});
+    res.json({subject,preview,body,cta_label,cta_url});
+  } catch(error) {
+    console.error("MONOWEAR AI email draft error:",error.message);
+    res.status(502).json({error:"Could not reach the AI writer. Please try again."});
+  }
+});
+
+app.post("/api/admin/email-campaign", requireAdmin, async (req, res) => {
+  if (!resend) return res.status(503).json({error:"Resend is not configured."});
+  if (String(req.body.confirm_text||"")!=="SEND") return res.status(400).json({error:"Type SEND to confirm this campaign."});
+  const subject=String(req.body.subject||"").trim().slice(0,180);
+  const preview=String(req.body.preview||"").trim().slice(0,220);
+  const body=String(req.body.body||"").trim().slice(0,10000);
+  const ctaLabel=String(req.body.cta_label||"").trim().slice(0,80);
+  const ctaUrl=String(req.body.cta_url||"").trim().slice(0,500);
+  if(!subject||!body) return res.status(400).json({error:"A subject and email body are required."});
+  if(ctaUrl&&!/^https?:\/\//i.test(ctaUrl)) return res.status(400).json({error:"The button link must start with https:// or http://."});
+  const recipients=db.prepare("SELECT email FROM newsletter WHERE unsubscribed_at IS NULL ORDER BY id ASC LIMIT 101").all();
+  if(!recipients.length) return res.status(400).json({error:"There are no active general-list subscribers to email."});
+  if(recipients.length>100) return res.status(413).json({error:"This campaign has more than 100 active subscribers. Send a smaller campaign or contact support before a larger send."});
+  let sent=0, failed=0;
+  const failures=[];
+  const escape=(value)=>escapeHTML(String(value||""));
+  const paragraphs=body.split(/\n\s*\n/).map(part=>"<p style=\"margin:0 0 16px\">"+escape(part).replace(/\n/g,"<br>")+"</p>").join("");
+  const cta=ctaLabel&&ctaUrl?'<p style="margin:24px 0"><a href="'+escape(ctaUrl)+'" style="display:inline-block;background:#141414;color:#d4b66c;text-decoration:none;padding:13px 18px;font-weight:bold;letter-spacing:1px">'+escape(ctaLabel)+'</a></p>':"";
+  const previewHtml=preview?'<div style="display:none;max-height:0;overflow:hidden;opacity:0">'+escape(preview)+'</div>':"";
+  for(const recipient of recipients) {
+    const email=String(recipient.email||"").trim().toLowerCase();
+    const token=newsletterUnsubscribeToken(email);
+    const unsubscribeUrl=(BASE_URL||"https://monowear-store.onrender.com")+"/api/unsubscribe?email="+encodeURIComponent(email)+"&token="+token;
+    const footer='<p style="margin-top:28px;padding-top:16px;border-top:1px solid #eee;font-size:11px;color:#777">You’re receiving MONOWEAR drop updates because you joined our email list. <a href="'+escape(unsubscribeUrl)+'" style="color:#777">Unsubscribe</a></p>';
+    const result=await sendEmail(email,subject,emailShell(previewHtml+paragraphs+cta+footer));
+    if(result.ok) sent++; else { failed++; if(failures.length<5) failures.push({email,error:String(result.error||"Send failed").slice(0,160)}); }
+  }
+  res.json({success:failed===0,sent,failed,attempted:recipients.length,failures});
 });
 
 // ============================================================
