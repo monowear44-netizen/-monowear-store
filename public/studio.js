@@ -1271,7 +1271,7 @@ $("generateCampaignDraft")?.addEventListener("click", async () => {
     $("emailCampaignCtaLabel").value=draft.cta_label||"";
     $("emailCampaignCtaUrl").value=draft.cta_url||"";
     resetCampaignConfirmation();
-    setCampaignMessage("campaignDraftMessage","Draft ready. Edit it freely, then review the audience before sending.");
+    setCampaignMessage("campaignDraftMessage",draft.writer==="free_template"?"Free draft ready (no AI API credits used). Edit it freely, then review the audience before sending.":"AI draft ready. Edit it freely, then review the audience before sending.");
     setCampaignMessage("campaignSendMessage","");
   } catch(error) { setCampaignMessage("campaignDraftMessage",error.message,true); }
   finally { button.disabled=false; button.textContent="WRITE EMAIL WITH AI ✦"; }
