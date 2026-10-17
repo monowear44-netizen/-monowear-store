@@ -621,3 +621,120 @@ html[data-theme="gothic"] .announcement, html[data-theme="gothic"] .ticker { bac
 html[data-theme="wine"] .waitlist-section { border-color:rgba(216,121,148,.28); }
 html[data-theme="gothic"] .waitlist-section { border-color:rgba(183,162,216,.24); }
 html[data-theme="gothic"] .section-heading h2, html[data-theme="gothic"] .newsletter h2 { letter-spacing:-.055em; }
+
+
+/* MONOWEAR — COMPACT EDITORIAL WAITLIST */
+.waitlist-section{
+  position:relative;
+  isolation:isolate;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(280px,.9fr);
+  align-items:center;
+  gap:20px clamp(24px,5vw,72px);
+  min-height:0!important;
+  padding:clamp(28px,4.5vw,58px) clamp(22px,7vw,100px)!important;
+  margin:0!important;
+  overflow:hidden;
+  color:#f5f1e6!important;
+  background-color:#071426!important;
+  background-image:linear-gradient(90deg,rgba(5,12,23,.91) 0%,rgba(5,12,23,.78) 48%,rgba(5,12,23,.62) 100%),url("https://images.unsplash.com/photo-1761167474127-1c6e596ecea6?auto=format&fit=crop&w=2200&q=85")!important;
+  background-position:center,center 38%!important;
+  background-size:cover!important;
+  border-top:1px solid rgba(216,182,92,.35);
+  border-bottom:1px solid rgba(216,182,92,.35);
+}
+.waitlist-section:before{
+  content:"MONO / WAITLIST";
+  position:absolute;
+  z-index:-1;
+  right:3%;
+  bottom:-.22em;
+  color:rgba(245,241,230,.07);
+  font:800 clamp(48px,9vw,132px)/1 Manrope,Arial,sans-serif;
+  letter-spacing:-.09em;
+  white-space:nowrap;
+  pointer-events:none;
+}
+.waitlist-section .newsletter-copy,
+.waitlist-section form,
+.waitlist-section #newsletterLink{position:relative;z-index:1;min-width:0}
+.waitlist-section .newsletter-copy .eyebrow{color:#d8b65c;margin:0 0 12px;font-size:10px}
+.waitlist-section h2{
+  max-width:520px;
+  margin:0!important;
+  color:#f5f1e6!important;
+  font-size:clamp(30px,4vw,52px)!important;
+  line-height:.98;
+  letter-spacing:-.065em;
+}
+.waitlist-section .newsletter-copy>p:not(.eyebrow){
+  margin:13px 0 0;
+  max-width:390px;
+  color:rgba(245,241,230,.78)!important;
+  font-size:12px;
+  line-height:1.65;
+}
+.waitlist-section form{width:100%;max-width:540px;justify-self:end}
+.waitlist-section form label{
+  display:block;
+  margin:0 0 9px;
+  color:#d8b65c;
+  font:10px 'DM Mono',monospace;
+  letter-spacing:.13em;
+}
+.waitlist-section .newsletter-form-row{display:flex;gap:8px;align-items:stretch}
+.waitlist-section .newsletter-form-row input{
+  flex:1;min-width:0;width:100%;height:48px;
+  padding:0 14px;
+  color:#f5f1e6!important;
+  background:rgba(7,20,38,.78)!important;
+  border:1px solid rgba(245,241,230,.38)!important;
+  border-radius:0;
+  font-size:12px;
+}
+.waitlist-section .newsletter-form-row input::placeholder{color:rgba(245,241,230,.62)}
+.waitlist-section .newsletter-form-row .button{
+  min-height:48px;padding:0 15px;gap:12px;white-space:nowrap;
+  background:#d8b65c!important;color:#071426!important;border-color:#d8b65c!important;
+  font-size:9px;
+}
+.waitlist-section .newsletter-form-row .button:hover{background:#f5f1e6!important;border-color:#f5f1e6!important}
+.waitlist-section #newsletterMessage{margin:8px 0 0;color:#f5f1e6;font-size:11px}
+.waitlist-section #newsletterLink{
+  grid-column:1;
+  justify-self:start;
+  margin-top:-8px;
+  padding:11px 0!important;
+  border:0!important;
+  border-bottom:1px solid rgba(216,182,92,.75)!important;
+  background:transparent!important;
+  color:#f5f1e6!important;
+  font-size:9px;
+}
+html[data-theme="blue-gold"] .waitlist-section,
+html[data-theme="dark"] .waitlist-section,
+html[data-theme="emerald"] .waitlist-section,
+html[data-theme="gold"] .waitlist-section{
+  background-color:#071426!important;
+  color:#f5f1e6!important;
+}
+@media(max-width:700px){
+  .waitlist-section{
+    grid-template-columns:minmax(0,1fr);
+    gap:18px;
+    padding:28px 20px 30px!important;
+    background-image:linear-gradient(90deg,rgba(5,12,23,.88),rgba(5,12,23,.72)),url("https://images.unsplash.com/photo-1761167474127-1c6e596ecea6?auto=format&fit=crop&w=1200&q=80")!important;
+    background-position:center,58% center!important;
+  }
+  .waitlist-section h2{font-size:clamp(31px,9vw,43px)!important;max-width:360px}
+  .waitlist-section .newsletter-copy>p:not(.eyebrow){font-size:12px;margin-top:10px}
+  .waitlist-section form{max-width:none;justify-self:stretch}
+  .waitlist-section .newsletter-form-row{gap:7px}
+  .waitlist-section .newsletter-form-row input{height:46px;padding:0 11px;font-size:12px}
+  .waitlist-section .newsletter-form-row .button{min-height:46px;padding:0 11px;font-size:8px;letter-spacing:.04em}
+  .waitlist-section #newsletterLink{margin-top:-5px}
+}
+@media(max-width:380px){
+  .waitlist-section .newsletter-form-row{flex-direction:column}
+  .waitlist-section .newsletter-form-row .button{width:100%;justify-content:center}
+}
