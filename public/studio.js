@@ -280,15 +280,7 @@ async function loadTraffic() {
     const data = await api("/api/admin/traffic?period=" + encodeURIComponent(period));
     if ($("statVisitors")) $("statVisitors").textContent = Number(data.visitors || 0).toLocaleString();
     if ($("statPageViews")) $("statPageViews").textContent = Number(data.pageViews || 0).toLocaleString();
-    if ($("trafficUpdated")) $("trafficUpdated").textContent = "Unique visitors and page views · " + data.label;
-    if ($("trafficTopPages")) {
-      const pages = Array.isArray(data.topPages) ? data.topPages : [];
-      $("trafficTopPages").innerHTML = pages.length
-        ? "<span class=\"traffic-pages-title\">MOST VIEWED</span>" + pages.map((page) =>
-            "<div class=\"traffic-page-row\"><span>" + esc(page.path) + "</span><strong>" + Number(page.views || 0).toLocaleString() + "</strong></div>"
-          ).join("")
-        : "<small class=\"muted\">No visits recorded for this period yet.</small>";
-    }
+    if ($("trafficUpdated")) $("trafficUpdated").textContent = "People who visited and total page views · " + data.label;
   } catch (error) {
     if ($("statVisitors")) $("statVisitors").textContent = "—";
     if ($("statPageViews")) $("statPageViews").textContent = "—";
