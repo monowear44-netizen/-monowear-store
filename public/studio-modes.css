@@ -103,3 +103,43 @@ html[data-theme="blue-gold"] body[data-studio-mode] .sidebar .nav.active {
   color:#071426!important;
   border-color:#D8B65C!important;
 }
+
+
+/* MOBILE STUDIO SPACING — keep headings, controls, and panels clear of the top edge. */
+@media (max-width: 800px) {
+  body .main {
+    padding-top: max(24px, calc(18px + env(safe-area-inset-top, 0px))) !important;
+  }
+  body .topbar {
+    padding-top: 8px !important;
+    gap: 16px !important;
+    margin-top: 0 !important;
+    margin-bottom: 24px !important;
+  }
+  body .topbar > div:first-child {
+    padding-top: 4px;
+  }
+  body .studio-app-actions {
+    padding-top: 6px !important;
+    margin-top: 2px !important;
+    row-gap: 10px !important;
+  }
+  body .tab-panel > .toolbar:first-child,
+  body .tab-panel > .section-head:first-child {
+    margin-top: 8px !important;
+  }
+  body .panel,
+  body .settings-form,
+  body .editor {
+    scroll-margin-top: 20px;
+  }
+}
+@media (max-width: 380px) {
+  body .main {
+    padding-top: max(22px, calc(16px + env(safe-area-inset-top, 0px))) !important;
+  }
+  body .topbar {
+    gap: 14px !important;
+    margin-bottom: 20px !important;
+  }
+}
