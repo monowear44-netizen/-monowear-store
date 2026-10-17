@@ -12,6 +12,7 @@ const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
 const { Resend } = require("resend");
+const webpush = require("web-push");
 const archiver = require("archiver");
 
 // ============================================================
@@ -33,6 +34,14 @@ const ORDER_NOTIFICATION_EMAIL = (process.env.ORDER_NOTIFICATION_EMAIL || "monow
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 
 const SESSION_SECRET = process.env.SESSION_SECRET || "";
+
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || "";
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "";
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:orders@monowears.com";
+if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+}
+
 
 const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
@@ -179,6 +188,23 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_product_collections_collection
     ON product_collections(collection_id);
+
+  CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    endpoint TEXT NOT NULL UNIQUE,
+    subscription_json TEXT NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE TABLE IF NOT EXISTS admin_notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL DEFAULT 'info',
+    title TEXT NOT NULL,
+    body TEXT NOT NULL DEFAULT '',
+    url TEXT NOT NULL DEFAULT '/studio',
+    read_at TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 // Private first-party website analytics. Store only a random visitor token,
@@ -671,6 +697,42 @@ for (let index = 0; index < catalogueDrafts.length; index += 1) {
 
   const collection = findCollectionBySlug.get(item.collection);
   if (collection) linkCatalogueProduct.run(product.id, collection.id);
+}
+
+// ============================================================
+// ADMIN PUSH NOTIFICATIONS
+// ============================================================
+function recordAdminNotification(type, title, body, url = "/studio") {
+  const safeUrl = String(url || "/studio").startsWith("/") ? String(url || "/studio") : "/studio";
+  const result = db.prepare(
+    "INSERT INTO admin_notifications (type, title, body, url) VALUES (?, ?, ?, ?)"
+  ).run(String(type || "info").slice(0, 40), String(title || "MONOWEAR update").slice(0, 140), String(body || "").slice(0, 500), safeUrl);
+  const notification = db.prepare("SELECT * FROM admin_notifications WHERE id = ?").get(result.lastInsertRowid);
+  sendPushToAdmins(notification).catch((error) => console.error("Admin push notification error:", error.message));
+  return notification;
+}
+
+async function sendPushToAdmins(notification) {
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) return;
+  const subscriptions = db.prepare("SELECT id, subscription_json FROM push_subscriptions").all();
+  const payload = JSON.stringify({
+    title: notification.title,
+    body: notification.body,
+    url: notification.url || "/studio",
+    tag: "monowear-" + notification.id,
+    notificationId: notification.id
+  });
+  for (const row of subscriptions) {
+    try {
+      await webpush.sendNotification(JSON.parse(row.subscription_json), payload);
+    } catch (error) {
+      if (error.statusCode === 404 || error.statusCode === 410) {
+        db.prepare("DELETE FROM push_subscriptions WHERE id = ?").run(row.id);
+      } else {
+        console.error("Push delivery failed:", error.statusCode || error.message);
+      }
+    }
+  }
 }
 
 // ============================================================
@@ -2799,7 +2861,28 @@ function finalizePaidOrder(reference, paymentReference = "", details = {}) {
     };
   });
 
-  return transaction();
+  const result = transaction();
+  if (!result.alreadyPaid) {
+    const amount = Number(result.order.total || 0).toLocaleString("en-NG");
+    recordAdminNotification(
+      "order",
+      "New MONOWEAR order — " + result.order.reference,
+      "Payment confirmed: ₦" + amount + " from " + (result.order.customer_name || "a customer") + ". Order is processing.",
+      "/studio"
+    );
+    if (result.shortfalls?.length) {
+      recordAdminNotification("stock", "Stock needs attention", result.shortfalls.join("; "), "/studio");
+    } else {
+      const paidItems = parseJSON(result.order.items, []);
+      for (const item of paidItems) {
+        const product = db.prepare("SELECT name, stock FROM products WHERE id = ?").get(Number(item.product_id));
+        if (product && Number(product.stock) <= 5) {
+          recordAdminNotification("stock", "Low stock: " + product.name, "Only " + product.stock + " left in stock.", "/studio");
+        }
+      }
+    }
+  }
+  return result;
 }
 
 function markOrderFailed(reference, message = "Payment was not completed.") {
@@ -2818,6 +2901,7 @@ function markOrderFailed(reference, message = "Payment was not completed.") {
   `).run(order.id);
 
   recordOrderEvent(order.id, "cancelled", message);
+  recordAdminNotification("payment", "Payment failed", "Order " + order.reference + ": " + message, "/studio");
 }
 
 // ============================================================
@@ -4145,6 +4229,54 @@ app.get("/api/admin/backup", loginLimiter, requireAdmin, async (req, res) => {
       error: "Could not create a backup."
     });
   }
+});
+
+// ============================================================
+// ADMIN PUSH NOTIFICATION API
+// ============================================================
+app.get("/api/admin/push/public-key", requireAdmin, (req, res) => {
+  res.json({ enabled: Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY), publicKey: VAPID_PUBLIC_KEY || "" });
+});
+
+app.post("/api/admin/push/subscribe", requireAdmin, (req, res) => {
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+    return res.status(503).json({ error: "Push notifications are not configured on the server yet." });
+  }
+  const subscription = req.body?.subscription;
+  if (!subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) {
+    return res.status(400).json({ error: "Invalid push subscription." });
+  }
+  db.prepare(`
+    INSERT INTO push_subscriptions (endpoint, subscription_json, updated_at)
+    VALUES (?, ?, CURRENT_TIMESTAMP)
+    ON CONFLICT(endpoint) DO UPDATE SET subscription_json = excluded.subscription_json, updated_at = CURRENT_TIMESTAMP
+  `).run(subscription.endpoint, JSON.stringify(subscription));
+  res.json({ success: true });
+});
+
+app.post("/api/admin/push/unsubscribe", requireAdmin, (req, res) => {
+  const endpoint = String(req.body?.endpoint || "");
+  if (endpoint) db.prepare("DELETE FROM push_subscriptions WHERE endpoint = ?").run(endpoint);
+  res.json({ success: true });
+});
+
+app.post("/api/admin/push/test", requireAdmin, (req, res) => {
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+    return res.status(503).json({ error: "Push notifications are not configured on the server yet." });
+  }
+  const notification = recordAdminNotification("test", "MONOWEAR notifications are on", "Your Studio app is connected. Important store activity will appear here.", "/studio");
+  res.json({ success: true, notification });
+});
+
+app.get("/api/admin/notifications", requireAdmin, (req, res) => {
+  const notifications = db.prepare("SELECT * FROM admin_notifications ORDER BY id DESC LIMIT 100").all();
+  const unread = db.prepare("SELECT COUNT(*) AS count FROM admin_notifications WHERE read_at IS NULL").get().count;
+  res.json({ notifications, unread, pushConfigured: Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY), subscriptions: db.prepare("SELECT COUNT(*) AS count FROM push_subscriptions").get().count });
+});
+
+app.post("/api/admin/notifications/:id/read", requireAdmin, (req, res) => {
+  db.prepare("UPDATE admin_notifications SET read_at = CURRENT_TIMESTAMP WHERE id = ?").run(Number(req.params.id));
+  res.json({ success: true });
 });
 
 // ============================================================
