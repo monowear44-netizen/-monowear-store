@@ -135,12 +135,15 @@
   .sidebar .nav.active{background:#c6ff4b;color:#151613;border-color:#c6ff4b}
   .sidebar .nav span{font:10px 'DM Mono',monospace}
   .main{margin-left:0;padding:18px 14px calc(115px + env(safe-area-inset-bottom,0px));width:100%;max-width:none}
-  .topbar{position:relative;z-index:40;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding-bottom:17px;margin-bottom:20px}
-  .topbar h1{font-size:clamp(25px,7vw,34px)}
+  .topbar{position:relative;z-index:40;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:14px;padding-bottom:18px;margin-bottom:20px}
+  .topbar>div:first-child{width:100%}
+  .topbar h1{font-size:clamp(25px,7vw,34px);margin-bottom:0}
   .topbar .eyebrow{font-size:9px}
-  .studio-app-actions{gap:7px;flex:0 0 auto}
+  .studio-app-actions{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:10px;flex:0 0 auto;width:100%;padding-top:2px}
+  .studio-app-actions button,.studio-app-actions select{min-height:46px;touch-action:manipulation}
+  .studio-bell-button{width:46px;height:46px}
   #loggedEmail{display:none}
-  #studioInstallButton{max-width:112px;padding:10px 8px;font-size:9px}
+  #studioInstallButton{max-width:140px;min-height:46px;padding:11px 12px;font-size:10px}
   .studio-notification-panel{z-index:80}
   .toolbar{gap:12px}
   .toolbar h2{font-size:21px}
