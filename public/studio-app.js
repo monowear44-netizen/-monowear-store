@@ -148,7 +148,7 @@
         });
       }
       await request("/api/admin/push/subscribe", { method: "POST", body: JSON.stringify({ subscription: subscription.toJSON() }) });
-      const result = await request("/api/admin/push/test", { method: "POST", body: "{}" });
+      await request("/api/admin/push/test", { method: "POST", body: "{}" });
       notificationButton.textContent = "NOTIFICATIONS ON ✓";
       showMessage("This device is subscribed. A test push has been sent; check your Home Screen notification settings.", "success");
       ensureNotificationPanel().hidden = false;
@@ -162,10 +162,7 @@
   }
 
   notificationButton?.addEventListener("click", async () => {
-    const panel = ensureNotificationPanel();
-    panel.hidden = !panel.hidden;
-    if (!panel.hidden) await loadNotifications();
-    else await enableNotifications();
+    await enableNotifications();
   });
 
   window.addEventListener("beforeinstallprompt", (event) => {
