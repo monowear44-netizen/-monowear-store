@@ -1,0 +1,31 @@
+/* MONOWEAR Studio — Shopify-inspired overview, MONOWEAR black/green identity. */
+#tab-overview{--dash-green:#18794e;--dash-green-soft:#e8f5ed;--dash-border:#e3e7e2;--dash-ink:#202820}
+#tab-overview .overview-primary-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:16px}
+#tab-overview .stat{position:relative;min-width:0;padding:22px 22px 24px;border:1px solid var(--dash-border);border-radius:14px;background:#fff;box-shadow:0 1px 2px rgba(20,35,24,.035)}
+#tab-overview .stat>span{display:block;color:#647067;font-size:10px;font-weight:700;letter-spacing:.09em}
+#tab-overview .stat>strong{margin-top:15px;color:var(--dash-ink);font-size:clamp(25px,2.4vw,36px);font-weight:700;letter-spacing:-.055em;line-height:1.1;overflow-wrap:anywhere}
+#tab-overview .stat:not(.traffic-stat):after{content:"";position:absolute;left:22px;right:22px;bottom:0;height:3px;border-radius:4px 4px 0 0;background:#d9e8dd}
+#tab-overview .stat:nth-child(1):after{background:#18794e}
+#tab-overview .stat:nth-child(2):after{background:#2e8b57}
+#tab-overview .stat:nth-child(3):after{background:#d6a243}
+#tab-overview .stat:nth-child(4):after{background:#111}
+#tab-overview .traffic-stat{grid-column:1/-1;padding:24px 26px;background:linear-gradient(120deg,#fff 0%,#f7fbf8 100%)}
+#tab-overview .traffic-stat>span{font-size:11px;color:#33483a}
+#tab-overview .traffic-period-label{display:inline-block;margin:18px 8px 0 0;color:#68756b;font-size:10px;font-weight:700;letter-spacing:.08em}
+#tab-overview #trafficPeriod{max-width:180px;border:1px solid #d6ded7;border-radius:8px;background:#fff;padding:9px 12px;color:#26372b;font:12px Manrope,Arial,sans-serif}
+#tab-overview .traffic-numbers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px}
+#tab-overview .traffic-numbers>div{padding:18px 20px;border:1px solid #dce8df;border-radius:12px;background:#fff}
+#tab-overview .traffic-numbers strong{display:block;color:#176b43;font-size:clamp(28px,3vw,42px);font-weight:750;letter-spacing:-.06em;line-height:1.1}
+#tab-overview .traffic-numbers small{display:block;margin-top:8px;color:#59675d;font-size:12px}
+#tab-overview #trafficUpdated{display:block;margin-top:14px}
+#tab-overview .traffic-privacy-note{margin-top:10px;color:#68756b;font-size:11px;line-height:1.5}
+#tab-overview .stats-row-2{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:24px}
+#tab-overview #monitoringPanel,#tab-overview .welcome{border:1px solid var(--dash-border);border-radius:14px;background:#fff;box-shadow:0 1px 2px rgba(20,35,24,.035)}
+#tab-overview #monitoringPanel{margin-top:20px;padding:24px}
+#tab-overview #monitoringPanel h2,#tab-overview .welcome h2{color:#202820;letter-spacing:-.045em}
+#tab-overview .welcome{max-width:none;margin-top:16px;padding:24px}
+#tab-overview .welcome .primary{border-color:#176b43;background:#176b43;border-radius:8px}
+#tab-overview .welcome .secondary{border-color:#cfd8d0;border-radius:8px}
+#tab-overview #monitoringPanel .primary,#tab-overview #monitoringPanel .secondary{border-radius:8px}
+@media(max-width:1000px){#tab-overview .overview-primary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#tab-overview .traffic-stat{grid-column:1/-1}}
+@media(max-width:540px){#tab-overview .overview-primary-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#tab-overview .stat{padding:16px 14px 19px;border-radius:11px}#tab-overview .stat>strong{font-size:25px;margin-top:12px}#tab-overview .stat>span{font-size:9px;line-height:1.5}#tab-overview .traffic-stat{padding:18px 15px}#tab-overview .traffic-numbers{gap:9px}#tab-overview .traffic-numbers>div{padding:15px 12px}#tab-overview .traffic-numbers strong{font-size:29px}#tab-overview .traffic-numbers small{font-size:10px}#tab-overview .stats-row-2{gap:10px}#tab-overview #monitoringPanel,#tab-overview .welcome{padding:18px}}
