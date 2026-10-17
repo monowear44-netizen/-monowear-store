@@ -59,45 +59,48 @@
   function ensureNotificationPanel() {
     addStyles();
     if (notificationPanel) return notificationPanel;
-    notificationPanel = document.createElement("section");
-    notificationPanel.className = "studio-notifications-panel";
-    notificationPanel.id = "studioNotificationsPanel";
-    notificationPanel.hidden = true;
-    notificationPanel.innerHTML = '<div class="studio-notifications-head"><div><p class="eyebrow">STORE ACTIVITY</p><h2>Notifications</h2></div><button id="studioRefreshNotifications" class="secondary" type="button">REFRESH ↻</button></div><p id="studioPushStatus" class="studio-notification-status">Checking notification setup…</p><div id="studioNotificationItems"></div>';
-    const main = document.querySelector(".main");
-    const topbar = main?.querySelector(".topbar");
-    if (main && topbar) main.insertBefore(notificationPanel, topbar.nextSibling);
-    notificationPanel.querySelector("#studioRefreshNotifications").addEventListener("click", loadNotifications);
+    notificationPanel = document.getElementById("studioNotificationPanel");
+    if (!notificationPanel) return null;
+    let status = notificationPanel.querySelector("#studioPushStatus");
+    if (!status) {
+      status = document.createElement("p");
+      status.id = "studioPushStatus";
+      status.className = "studio-notification-status";
+      status.hidden = true;
+      const head = notificationPanel.querySelector(".studio-notification-head");
+      if (head) head.insertAdjacentElement("afterend", status);
+    }
+    let refresh = notificationPanel.querySelector("#studioRefreshNotifications");
+    if (!refresh) {
+      refresh = document.createElement("button");
+      refresh.id = "studioRefreshNotifications";
+      refresh.type = "button";
+      refresh.className = "quiet";
+      refresh.textContent = "Refresh";
+      notificationPanel.querySelector(".studio-notification-head")?.appendChild(refresh);
+      refresh.addEventListener("click", loadNotifications);
+    }
     return notificationPanel;
   }
 
   async function loadNotifications() {
     const panel = ensureNotificationPanel();
-    const list = panel.querySelector("#studioNotificationItems");
+    if (!panel) return;
     const status = panel.querySelector("#studioPushStatus");
     try {
       const data = await request("/api/admin/notifications");
-      status.textContent = data.pushConfigured
-        ? (data.subscriptions ? "Push is configured · " + data.subscriptions + " device subscription(s) · notifications are saved here too." : "Push is configured, but this device has not subscribed yet.")
-        : "Push service needs secure VAPID keys in Render before alerts can reach your Home Screen. The in-app notification history is ready.";
-      if (!data.notifications.length) {
-        list.innerHTML = '<p class="muted">No store notifications yet. New confirmed orders and important events will appear here.</p>';
-      } else {
-        list.innerHTML = data.notifications.map((item) => {
-          const unread = !item.read_at;
-          const date = item.created_at ? new Date(item.created_at.replace(" ", "T") + (item.created_at.includes("Z") ? "" : "Z")).toLocaleString() : "";
-          return '<article class="studio-notification-item">' + (unread ? '<span class="studio-notification-unread"></span>' : '<span style="width:7px;flex:0 0 7px"></span>') +
-            '<div class="studio-notification-copy"><strong>' + escapeHtml(item.title) + '</strong><p>' + escapeHtml(item.body) + '</p><small>' + escapeHtml(date) + '</small></div>' +
-            (unread ? '<button type="button" data-read="' + Number(item.id) + '">MARK READ</button>' : '') + '</article>';
-        }).join("");
-        list.querySelectorAll("[data-read]").forEach((button) => button.addEventListener("click", async () => {
-          try { await request("/api/admin/notifications/" + Number(button.dataset.read) + "/read", { method: "POST", body: "{}" }); await loadNotifications(); }
-          catch (error) { showMessage(error.message, "error"); }
-        }));
+      if (status) {
+        status.hidden = false;
+        status.textContent = data.pushConfigured
+          ? (data.subscriptions ? "Push alerts connected on " + data.subscriptions + " device(s)." : "Push alerts are ready to connect on this device.")
+          : "Device alerts are not configured yet. Store updates still appear here.";
       }
+      window.dispatchEvent(new CustomEvent("monowear:notifications-updated"));
     } catch (error) {
-      status.textContent = "Log in to MONOWEAR Studio to view notifications.";
-      list.innerHTML = "";
+      if (status) {
+        status.hidden = false;
+        status.textContent = "Notification history will appear after you log in.";
+      }
     }
   }
 
@@ -156,7 +159,7 @@
       await request("/api/admin/push/subscribe", { method: "POST", body: JSON.stringify({ subscription: subscription.toJSON() }) });
       await request("/api/admin/push/test", { method: "POST", body: "{}" });
       notificationButton.textContent = "NOTIFICATIONS ON ✓";
-      showMessage("This device is subscribed. A test push has been sent; check your Home Screen notification settings.", "success");
+      showMessage("Device alerts are connected. New store updates will show their message content.", "success");
       ensureNotificationPanel().hidden = false;
       await loadNotifications();
     } catch (error) {
