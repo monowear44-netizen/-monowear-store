@@ -1,4 +1,4 @@
-const CACHE_NAME = "monowear-studio-v1";
+const CACHE_NAME = "monowear-studio-v2";
 const APP_SHELL = ["/studio", "/studio.css", "/studio-extra.css", "/studio.js", "/studio-app.js", "/studio-manifest.json", "/studio-icon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -35,7 +35,7 @@ self.addEventListener("push", (event) => {
   try { data = event.data ? event.data.json() : {}; } catch (_) { data = { body: event.data ? event.data.text() : "" }; }
   const title = data.title || "MONOWEAR Studio";
   const options = {
-    body: data.body || "There is a new update in your store.",
+    body: data.body || "",
     icon: "/studio-icon.svg",
     badge: "/studio-icon.svg",
     tag: data.tag || "monowear-update",
