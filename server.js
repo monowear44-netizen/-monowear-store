@@ -1549,12 +1549,13 @@ app.get("/api/health", (req, res) => {
 
 app.get("/api/settings", (req, res) => {
   const rows = db.prepare("SELECT key, value FROM settings").all();
-  const settings = {};
+  const settings = { ...defaults };
 
   for (const row of rows) {
     settings[row.key] = row.value;
   }
 
+  res.set("Cache-Control", "no-store");
   res.json(settings);
 });
 
@@ -1772,12 +1773,13 @@ app.get("/api/store", (req, res) => {
       SELECT key, value FROM settings
     `).all();
 
-    const settings = {};
+    const settings = { ...defaults };
 
     for (const row of rows) {
       settings[row.key] = row.value;
     }
 
+    res.set("Cache-Control", "no-store");
     res.json({
       products: products.map((product) => productWithCollections(product)),
       collections: collections.map(collection => ({
