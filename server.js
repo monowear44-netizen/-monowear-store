@@ -1300,6 +1300,7 @@ async function sendPreorderConfirmationOnce(orderId, options = {}) {
   db.prepare("UPDATE orders SET preorder_email_status = ? WHERE id = ?").run(result.ok ? "sent" : "failed", order.id);
   if (!result.ok) {
     recordOrderEvent(order.id, order.order_status || "processing", "Preorder confirmation email failed: " + (result.error || "unknown error"));
+    recordAdminNotification("email", "Preorder confirmation email failed", "Order " + order.reference + ": " + (result.error || "unknown email error"), "/studio");
     console.error("Preorder confirmation email failed:", result.error || "unknown error");
     return { sent: false, reason: "failed", error: result.error };
   }
@@ -1366,6 +1367,7 @@ async function sendOrderConfirmationOnce(orderId, options = {}) {
     order.order_status || "processing",
     `Confirmation email failed: ${result.error || "unknown error"}`
   );
+  recordAdminNotification("email", "Order confirmation email failed", "Order " + order.reference + ": " + (result.error || "unknown email error"), "/studio");
 
   return { sent: false, reason: "failed", error: result.error };
 }
