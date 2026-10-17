@@ -315,7 +315,7 @@ async function playStudioNotificationSound(force = false) {
   if (!force && !studioNotificationSoundEnabled()) return;
   try {
     if (!studioOrderSoundAudio) {
-      studioOrderSoundAudio = new Audio("https://www.myinstants.com/media/sounds/shopify-sales-41469.mp3");
+      studioOrderSoundAudio = new Audio("https://www.myinstants.com/media/sounds/shopify-sales.mp3");
       studioOrderSoundAudio.preload = "auto";
       studioOrderSoundAudio.volume = 0.9;
     }
