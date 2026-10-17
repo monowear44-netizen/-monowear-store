@@ -3722,6 +3722,14 @@ app.put("/api/admin/orders/:id/status", requireAdmin, async (req, res) => {
   }
 
   recordOrderEvent(id, status, `Order status changed to ${status}.`);
+  if (status === "shipped" || status === "delivered" || status === "cancelled" || status === "refunded") {
+    recordAdminNotification(
+      "order_status",
+      "Order " + order.reference + " — " + status,
+      "Customer: " + (order.customer_name || "Unknown") + ". Order status changed to " + status + ".",
+      "/studio"
+    );
+  }
 
   let deliveryEmailResult = null;
   if (status === "delivered" && order.payment_status === "paid") {
