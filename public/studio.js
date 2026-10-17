@@ -317,20 +317,40 @@ function playStudioNotificationSound() {
     studioNotificationSoundContext = studioNotificationSoundContext || new AudioContextClass();
     const context = studioNotificationSoundContext;
     if (context.state === "suspended") context.resume().catch(() => {});
-    const now = context.currentTime + 0.02;
-    [[740, 0], [988, 0.13]].forEach(([frequency, offset]) => {
+    const now = context.currentTime + 0.025;
+
+    // A short cash-register "ka-ching" style test sound, synthesized locally.
+    // Bright metallic register bell, followed by a quick low drawer/cash clack.
+    [[1318.5, 0, 0.34, 0.105], [1760, 0.018, 0.27, 0.065], [2637, 0.012, 0.19, 0.028]].forEach(([frequency, offset, duration, volume]) => {
       const oscillator = context.createOscillator();
       const gain = context.createGain();
-      oscillator.type = "sine";
+      const filter = context.createBiquadFilter();
+      oscillator.type = "triangle";
       oscillator.frequency.setValueAtTime(frequency, now + offset);
+      filter.type = "highpass";
+      filter.frequency.setValueAtTime(650, now + offset);
       gain.gain.setValueAtTime(0.0001, now + offset);
-      gain.gain.exponentialRampToValueAtTime(0.12, now + offset + 0.018);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.19);
-      oscillator.connect(gain);
+      gain.gain.exponentialRampToValueAtTime(volume, now + offset + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + duration);
+      oscillator.connect(filter);
+      filter.connect(gain);
       gain.connect(context.destination);
       oscillator.start(now + offset);
-      oscillator.stop(now + offset + 0.2);
+      oscillator.stop(now + offset + duration + 0.01);
     });
+
+    const clack = context.createOscillator();
+    const clackGain = context.createGain();
+    clack.type = "square";
+    clack.frequency.setValueAtTime(185, now + 0.105);
+    clack.frequency.exponentialRampToValueAtTime(72, now + 0.19);
+    clackGain.gain.setValueAtTime(0.0001, now + 0.105);
+    clackGain.gain.exponentialRampToValueAtTime(0.055, now + 0.115);
+    clackGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    clack.connect(clackGain);
+    clackGain.connect(context.destination);
+    clack.start(now + 0.105);
+    clack.stop(now + 0.23);
   } catch (error) {
     // Sound is an enhancement; notifications must still work if audio is unavailable.
     console.debug("Studio notification sound unavailable:", error.message);
