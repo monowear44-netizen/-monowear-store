@@ -100,11 +100,15 @@
       white: { bg: "#ffffff", ink: "#171815", muted: "#77786f", line: "#deded8", accent: "#c6ff4b", panel: "#f7f7f3", soft: "#ededE7" },
       emerald: { bg: "#073f32", ink: "#f2f5ef", muted: "#b8d0c5", line: "#286b59", accent: "#57d6a0", panel: "#0c4d3d", soft: "#145a48" },
       gold: { bg: "#171510", ink: "#f6f0df", muted: "#c1b58f", line: "#51452a", accent: "#d5b15a", panel: "#211d14", soft: "#302817" },
+      "blue-gold": { bg: "#071426", ink: "#F5F1E6", muted: "#B7C4D8", line: "#304765", accent: "#D8B65C", panel: "#0D2038", soft: "#162D4B" },
       wine: { bg: "#2b0b16", ink: "#f8edf0", muted: "#c6a6b0", line: "#603044", accent: "#d87994", panel: "#3a101f", soft: "#481629" },
       gothic: { bg: "#0b0b0f", ink: "#e9e5ef", muted: "#aaa2b8", line: "#37313f", accent: "#b7a2d8", panel: "#15131a", soft: "#211d28" },
-      afterglow: { bg: "#100e13", ink: "#f5f0f5", muted: "#a69aaa", line: "#342b3a", accent: "#e9a5c7", panel: "#19161e", soft: "#211c27" }
+      afterglow: { bg: "#100e13", ink: "#f5f0f5", muted: "#a69aaa", line: "#342b3a", accent: "#e9a5c7", panel: "#19161e", soft: "#211c27" },
+      helpway: { bg: "#211316", ink: "#F6EEE8", muted: "#C8B5B0", line: "#56343A", accent: "#8E3B4A", panel: "#2B191D", soft: "#392126" },
+      "helpway-gradient": { bg: "#0B1425", ink: "#EAF1FF", muted: "#A9B9D4", line: "#2D4164", accent: "#4169E1", panel: "#111E34", soft: "#192A47" }
     };
     const palette = palettes[theme] || palettes.dark;
+    const fixedPreset = ["afterglow", "blue-gold", "helpway", "helpway-gradient"].includes(theme);
     const fixedPreset = theme === "afterglow";
     root.dataset.theme = palettes[theme] ? theme : "dark";
     root.style.setProperty("--bg", fixedPreset ? palette.bg : validColor(settings.design_background, palette.bg));
