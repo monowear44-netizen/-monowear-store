@@ -2556,7 +2556,7 @@ app.post("/api/admin/email-draft", requireAdmin, async (req, res) => {
     if (!response.ok) {
       const message=data?.error?.message || "OpenAI could not generate a draft.";
       console.error("MONOWEAR AI email draft failed:",JSON.stringify({status:response.status,message,requestId:response.headers.get("x-request-id"),model:"gpt-4.1-mini"}));
-      return res.status(response.status===429?429:502).json({error:response.status===429?"AI usage limit reached. Check your OpenAI API billing and usage.":"AI draft failed: "+message.slice(0,220)});
+      return res.status(response.status===429?429:502).json({error:response.status===429?(/no credits remaining|insufficient_quota|billing/i.test(message)?"MONOWEAR AI email drafts are paused because the OpenAI API account has no available credits. Add API credits to the account connected to OPENAI_API_KEY in Render, then try again. This is separate from a ChatGPT subscription.":"The OpenAI API usage limit was reached. Check the API account billing and usage, then try again."):"AI draft failed: "+message.slice(0,220)});
     }
     // The raw Responses HTTP API returns generated text inside output[].content[];
     // output_text is an SDK convenience field and may not exist in raw REST responses.
