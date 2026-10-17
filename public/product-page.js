@@ -192,7 +192,7 @@
           const queryWords = words(freeText);
           queryWords.forEach(w => { if(pWords.has(w)) score += 5; });
           if (/cheap|budget|affordable|less|lower price|under|below|less than/.test(freeText.toLowerCase()) && Number(p.price) < Number(product.price)) score += 4;
-          const budgetMatch = String(freeText).match(/(?:under|below|less than|max(?:imum)?|within|budget|₦|ngn)\s*₦?\s*([\d,]+)\s*(k)?/i) || String(freeText).match(/([\d,]+)\s*k\b/i);
+          const budgetMatch = String(freeText).match(/(?:under|below|less than|max(?:imum)?|within|budget|₦|ngn)\s*₦?\s*([\d,]+)\s*(k)?/i) || String(freeText).match(/([\d,]+)\s*(k)\b/i);
           if (budgetMatch) {
             const rawAmount = Number(String(budgetMatch[1]).replace(/,/g, ""));
             const budget = rawAmount * (String(budgetMatch[2] || "").toLowerCase() === "k" ? 1000 : 1);
