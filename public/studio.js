@@ -1221,8 +1221,8 @@ function renderAudienceTable(targetId, rows, kind) {
     const email = esc(row.email || "");
     const date = esc(audienceDate(row.created_at));
     return kind === "waitlist"
-      ? '<div class="product-row"><div><strong>' + email + '</strong><p class="muted">' + esc(row.product_name || "General waitlist") + '</p></div><span>' + date + '</span></div>'
-      : '<div class="product-row"><div><strong>' + email + '</strong></div><span>' + date + '</span></div>';
+      ? '<div class="product-row audience-subscriber-row"><div class="audience-email"><strong>' + email + '</strong><p class="muted">' + esc(row.product_name || "General waitlist") + '</p></div><span class="audience-date">' + date + '</span></div>'
+      : '<div class="product-row audience-subscriber-row"><strong class="audience-email">' + email + '</strong><span class="audience-date">' + date + '</span></div>';
   }).join("");
   target.innerHTML = '<p class="eyebrow">' + headings.map(esc).join(" · ") + '</p>' + body;
 }
