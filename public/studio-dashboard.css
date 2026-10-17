@@ -29,3 +29,63 @@
 #tab-overview #monitoringPanel .primary,#tab-overview #monitoringPanel .secondary{border-radius:8px}
 @media(max-width:1000px){#tab-overview .overview-primary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#tab-overview .traffic-stat{grid-column:1/-1}}
 @media(max-width:540px){#tab-overview .overview-primary-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}#tab-overview .stat{padding:16px 14px 19px;border-radius:11px}#tab-overview .stat>strong{font-size:25px;margin-top:12px}#tab-overview .stat>span{font-size:9px;line-height:1.5}#tab-overview .traffic-stat{padding:18px 15px}#tab-overview .traffic-numbers{gap:9px}#tab-overview .traffic-numbers>div{padding:15px 12px}#tab-overview .traffic-numbers strong{font-size:29px}#tab-overview .traffic-numbers small{font-size:10px}#tab-overview .stats-row-2{gap:10px}#tab-overview #monitoringPanel,#tab-overview .welcome{padding:18px}}
+
+/* Compact Shopify-style overview and bell notification center */
+.topbar{position:relative;z-index:30}
+.studio-app-actions{display:flex;align-items:center;gap:12px}
+.studio-notification-wrap{position:relative}
+.studio-bell-button{position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;border:1px solid #dce3dd;border-radius:12px;background:#fff;color:#1d2a21;cursor:pointer}
+.studio-bell-button svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.studio-bell-dot{position:absolute;right:7px;top:6px;width:10px;height:10px;border:2px solid #fff;border-radius:50%;background:#e03131;box-shadow:0 0 0 1px rgba(224,49,49,.08)}
+.studio-notification-panel{position:absolute;top:calc(100% + 12px);right:0;width:min(390px,calc(100vw - 28px));max-height:min(70vh,540px);overflow:auto;border:1px solid #e0e6e0;border-radius:16px;background:#fff;box-shadow:0 18px 55px rgba(20,32,24,.18);color:#202820}
+.studio-notification-panel[hidden]{display:none!important}
+.studio-notification-head{display:flex;align-items:center;justify-content:space-between;padding:19px 20px 14px;border-bottom:1px solid #edf0ed}
+.studio-notification-head .eyebrow{margin:0 0 5px;font-size:9px;letter-spacing:.12em;color:#66756a}
+.studio-notification-head h2{margin:0;font-size:21px;letter-spacing:-.04em}
+.studio-notification-list{padding:8px}
+.studio-notification-item{display:grid;grid-template-columns:10px minmax(0,1fr) 16px;align-items:start;gap:12px;width:100%;padding:14px 12px;border:0;border-radius:10px;background:#fff;text-align:left;color:#202820;cursor:pointer}
+.studio-notification-item:hover{background:#f5f8f5}
+.notification-indicator{width:8px;height:8px;margin-top:6px;border-radius:50%;background:#258451}
+.studio-notification-item.is-urgent .notification-indicator{background:#e03131}
+.studio-notification-item strong{display:block;font-size:13px;font-weight:750}
+.studio-notification-item small{display:block;margin-top:4px;color:#6b766d;font-size:11px;line-height:1.5}
+.notification-arrow{color:#6b766d;font-size:16px}
+.studio-notification-empty{padding:28px 20px 30px;text-align:center}
+.notification-check{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#e8f5ed;color:#176b43;font-weight:800}
+.studio-notification-empty strong{display:block;margin-top:12px;font-size:15px}
+.studio-notification-empty p{font-size:12px;line-height:1.5}
+.studio-notification-footer{padding:12px 18px 16px;border-top:1px solid #edf0ed}
+.studio-notification-footer button{width:100%;border-radius:9px}
+#tab-overview .overview-primary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-bottom:14px}
+#tab-overview .stat{padding:18px 19px 21px}
+#tab-overview .stat>strong{display:block;margin-top:10px;font-size:clamp(23px,2vw,30px)}
+#tab-overview .sales-hero{grid-column:1/-1;padding:26px 30px 29px;border:1px solid #cbded0;background:linear-gradient(115deg,#fff 0%,#f1f8f3 100%)}
+#tab-overview .sales-hero>span{font-size:11px;letter-spacing:.14em;color:#176b43}
+#tab-overview .sales-hero>strong{display:block;margin-top:11px;font-size:clamp(42px,6vw,68px);font-weight:900;letter-spacing:-.075em;line-height:1.02;color:#101a13}
+#tab-overview .sales-hero>small{display:block;margin-top:10px;color:#637167;font-size:12px}
+#tab-overview .sales-hero:after{left:0;right:auto;top:0;bottom:0;width:5px;height:auto;border-radius:14px 0 0 14px;background:#18794e}
+#tab-overview .traffic-stat{grid-column:1/-1;padding:18px 21px}
+#tab-overview .traffic-heading{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#tab-overview .traffic-heading>span{margin-right:auto;font-size:10px;font-weight:750;letter-spacing:.09em;color:#33483a}
+#tab-overview .traffic-period-label{margin:0;font-size:9px}
+#tab-overview .traffic-numbers{margin-top:12px;gap:10px}
+#tab-overview .traffic-numbers>div{padding:13px 16px}
+#tab-overview .traffic-numbers strong{font-size:clamp(24px,3vw,34px)}
+#tab-overview #trafficUpdated{margin-top:9px;font-size:10px}
+#tab-overview .traffic-privacy-note{margin-top:6px;font-size:10px}
+#tab-overview .overview-quick-links{display:flex;gap:10px;margin-top:2px}
+#tab-overview .overview-quick-links button{border-radius:8px}
+@media(max-width:700px){
+ .studio-app-actions{gap:8px}.studio-bell-button{width:40px;height:40px}
+ .studio-notification-panel{position:fixed;top:calc(env(safe-area-inset-top,0px) + 68px);right:12px;width:calc(100vw - 24px);max-height:calc(100dvh - 92px)}
+ #tab-overview .overview-primary-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ #tab-overview .sales-hero{grid-column:1/-1;padding:23px 21px 24px}
+ #tab-overview .sales-hero>strong{font-size:clamp(38px,9vw,56px)}
+ #tab-overview .stat{padding:15px 13px 18px}
+ #tab-overview .stat>strong{font-size:24px}
+ #tab-overview .traffic-stat{grid-column:1/-1;padding:16px 14px}
+ #tab-overview .traffic-numbers>div{padding:12px 10px}
+ #tab-overview .traffic-numbers strong{font-size:25px}
+ #tab-overview .overview-quick-links{flex-wrap:wrap}
+}
+@media(max-width:390px){#loggedEmail{display:none}.studio-app-actions{gap:6px}}
