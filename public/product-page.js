@@ -121,7 +121,7 @@
         '<div class="mono-fit-messages" id="monoFitMessages" aria-live="polite"></div>' +
         '<div class="mono-fit-options" id="monoFitOptions"></div>' +
         '<form class="mono-fit-input-row" id="monoFitForm"><input id="monoFitInput" type="text" maxlength="180" placeholder="Tell MONO what you have in mind…" aria-label="Ask the style concierge"><button type="submit" aria-label="Send message">↑</button></form>' +
-        '<p class="mono-fit-disclaimer">Personalised using available MONOWEAR pieces. No AI service or paid API required.</p>' +
+        '<p class="mono-fit-disclaimer">Style suggestions based on the MONOWEAR collection. Availability can change.</p>' +
       '</section>';
     const launcher = $("monoFitLauncher"), panel = $("monoFitPanel");
     const messages = $("monoFitMessages"), options = $("monoFitOptions");
@@ -266,13 +266,30 @@
         addMessage("I'll use that direction and your note to choose some pairings.", "assistant");
         recommend(message);
       } else {
-        addMessage("I can make another set of suggestions. Tell me a vibe or choose an option below.", "assistant");
-        setOptions([
-          {label:"Try another vibe", action:restart},
-          {label:"More minimal", action:()=>{vibe="minimal";recommend("");}},
-          {label:"More statement", action:()=>{vibe="bold";recommend("");}},
-          {label:"Keep browsing", action:closeChat}
-        ]);
+        if (/cheap|budget|afford|lower price|less expensive|less costly/.test(lower)) {
+          addMessage("I'll prioritise lower-priced pieces from the available collection.", "assistant");
+          recommend(message);
+        } else if (/minimal|clean|simple/.test(lower)) {
+          vibe = "minimal";
+          addMessage("I'll keep the next pairing clean and minimal.", "assistant");
+          recommend(message);
+        } else if (/layer|oversized|streetwear/.test(lower)) {
+          vibe = "layered";
+          addMessage("I'll focus on layering and streetwear proportions.", "assistant");
+          recommend(message);
+        } else if (/bold|statement|colour|color|loud/.test(lower)) {
+          vibe = "bold";
+          addMessage("I'll look for a bolder combination.", "assistant");
+          recommend(message);
+        } else {
+          addMessage("I can adjust the recommendations by price or style. Choose a direction or tell me what you want to change.", "assistant");
+          setOptions([
+            {label:"Try another vibe", action:restart},
+            {label:"More minimal", action:()=>{vibe="minimal";recommend("");}},
+            {label:"More statement", action:()=>{vibe="bold";recommend("");}},
+            {label:"Keep browsing", action:closeChat}
+          ]);
+        }
       }
     });
   }
