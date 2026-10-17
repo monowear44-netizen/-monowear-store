@@ -882,3 +882,45 @@ html[data-theme="gold"] .waitlist-section{
   .waitlist-section .newsletter-form-row input{height:30px!important;min-height:30px!important}
   .waitlist-section .newsletter-form-row .button{width:auto!important;height:30px!important;min-height:30px!important}
 }
+
+
+/* WAITLIST — MATCH EMAIL FIELD TO JOIN BUTTON, STACKED ABOVE */
+.waitlist-section form{
+  width:min(100%,300px)!important;
+  max-width:300px!important;
+}
+.waitlist-section .newsletter-form-row{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  gap:8px!important;
+  width:100%!important;
+  max-width:300px!important;
+}
+.waitlist-section .newsletter-form-row input,
+.waitlist-section .newsletter-form-row .button{
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-width:100%!important;
+  flex:0 0 auto!important;
+  height:38px!important;
+  min-height:38px!important;
+  border-radius:7px!important;
+}
+.waitlist-section .newsletter-form-row input{
+  padding:0 12px!important;
+  font-size:10px!important;
+  border:1px solid rgba(245,241,230,.55)!important;
+  background:rgba(7,20,38,.82)!important;
+}
+.waitlist-section .newsletter-form-row .button{
+  justify-content:center!important;
+  padding:0 12px!important;
+  font-size:9px!important;
+  letter-spacing:.04em!important;
+}
+@media(max-width:380px){
+  .waitlist-section .newsletter-form-row{flex-direction:column!important}
+  .waitlist-section .newsletter-form-row input,
+  .waitlist-section .newsletter-form-row .button{width:100%!important;height:38px!important;min-height:38px!important}
+}
