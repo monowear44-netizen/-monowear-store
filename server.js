@@ -2533,7 +2533,7 @@ app.post("/api/admin/email-draft", requireAdmin, async (req, res) => {
       headers:{"Authorization":"Bearer "+apiKey,"Content-Type":"application/json"},
       signal:AbortSignal.timeout(35000),
       body:JSON.stringify({
-        model:process.env.OPENAI_EMAIL_MODEL || "gpt-4.1-mini",
+        model:"gpt-4.1-mini",
         instructions:"You are MONOWEAR's private email copywriter. MONOWEAR is an independent Nigerian streetwear label with a dark, cinematic, high-end streetwear voice. Brand line: LIVE THE NAME. WEAR THE MEANING. Themes: independence, pressure, persistence, self-reliance, motion, and finding a way through. Write concise, original, human-sounding emails. Avoid generic hype, fake urgency, unsupported claims, excessive emojis, and invented discounts, dates, prices, stock counts, or product facts. The body must be plain text with paragraphs separated by blank lines. Use an empty string for cta_url unless a destination is clearly given in the request. Never send the email.",
         input:"Write one campaign email based on this admin request. Tone: "+tone+". Request: "+request,
         text:{format:{type:"json_schema",name:"monowear_email_draft",strict:true,schema:{type:"object",properties:{subject:{type:"string"},preview:{type:"string"},body:{type:"string"},cta_label:{type:"string"},cta_url:{type:"string"}},required:["subject","preview","body","cta_label","cta_url"],additionalProperties:false}}},
@@ -2543,7 +2543,7 @@ app.post("/api/admin/email-draft", requireAdmin, async (req, res) => {
     const data = await response.json().catch(()=>({}));
     if (!response.ok) {
       const message=data?.error?.message || "OpenAI could not generate a draft.";
-      console.error("MONOWEAR AI email draft failed:",response.status,message);
+      console.error("MONOWEAR AI email draft failed:",JSON.stringify({status:response.status,message,requestId:response.headers.get("x-request-id"),model:"gpt-4.1-mini"}));
       return res.status(response.status===429?429:502).json({error:response.status===429?"AI usage limit reached. Check your OpenAI API billing and usage.":"AI draft failed: "+message.slice(0,220)});
     }
     // The raw Responses HTTP API returns generated text inside output[].content[];
@@ -2551,7 +2551,7 @@ app.post("/api/admin/email-draft", requireAdmin, async (req, res) => {
     const outputParts = Array.isArray(data.output)
       ? data.output.flatMap(item => Array.isArray(item.content) ? item.content.filter(part => part.type === "output_text" && typeof part.text === "string").map(part => part.text) : [])
       : [];
-    const output = String(data.output_text || outputParts.join("\\n") || "").trim();
+    const output = String(data.output_text || outputParts.join("\n") || "").trim();
     let draft;
     try {
       const cleaned = output.replace(/^\\s*```(?:json)?\\s*/i, "").replace(/\\s*```\\s*$/, "").trim();
