@@ -715,12 +715,7 @@ function recordAdminNotification(type, title, body, url = "/studio") {
   sendEmail(
     ORDER_NOTIFICATION_EMAIL,
     "[MONOWEAR ALERT] " + notification.title,
-    `<div style="font-family:Arial,sans-serif;color:#101827;line-height:1.6">
-      <p style="letter-spacing:3px;font-size:12px;color:#9b7927;font-weight:bold">MONOWEAR / STUDIO ALERT</p>
-      <h2 style="margin-bottom:8px">${escapeHTML(notification.title)}</h2>
-      <p>${escapeHTML(notification.body)}</p>
-      <p><a href="https://monowear-store.onrender.com/studio" style="display:inline-block;background:#071426;color:#f5f1e6;padding:12px 18px;text-decoration:none">OPEN STUDIO</a></p>
-    </div>`
+    adminNotificationEmail(`<h2 style="margin:0 0 8px">${escapeHTML(notification.title)}</h2><p>${escapeHTML(notification.body)}</p><p><a href="https://monowear-store.onrender.com/studio">Open Studio</a></p>`)
   ).then((result) => {
     if (!result.ok) console.error("Admin notification email failed:", result.error);
   }).catch((error) => console.error("Admin notification email error:", error.message));
@@ -1145,8 +1140,25 @@ function emailLogoUrl() {
   return "";
 }
 
-// Keep customer emails focused on the actual message; no extra brand header or slogan wrapper.
+// Customer emails retain MONOWEAR's branded layout.
 function emailShell(bodyHtml) {
+  const logo = emailLogoUrl();
+  const header = logo
+    ? `<img src="${escapeHTML(logo)}" alt="MONOWEAR" width="150" style="display:block;margin:0 auto;border:0;max-width:150px;height:auto">`
+    : `<div style="font-size:24px;font-weight:800;letter-spacing:6px;color:#141414">MONOWEAR</div>`;
+  return `
+  <div style="background:#f0efe9;padding:24px 12px">
+    <div style="max-width:600px;margin:0 auto;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#141414">
+      <div style="padding:30px 24px;text-align:center">${header}</div>
+      <div style="height:4px;background:#c6ff4b"></div>
+      <div style="padding:28px 24px;font-size:14px;line-height:1.6">${bodyHtml}</div>
+      <div style="background:#141414;padding:18px 24px;text-align:center;color:#c6ff4b;font-size:11px;letter-spacing:2px">LIVE THE NAME. WEAR THE MEANING.</div>
+    </div>
+  </div>`;
+}
+
+// Admin-only email alerts should contain the alert itself, without the customer-facing brand wrapper.
+function adminNotificationEmail(bodyHtml) {
   return `<div style="font-family:Arial,Helvetica,sans-serif;color:#141414;font-size:14px;line-height:1.6">${bodyHtml}</div>`;
 }
 
@@ -1177,7 +1189,7 @@ async function sendNewOrderNotificationOnce(orderId) {
     '<table style="width:100%;border-collapse:collapse">' + rows + '</table>' +
     '<p><strong>Subtotal:</strong> ' + naira(order.subtotal) + '<br><strong>Delivery:</strong> ' + naira(order.shipping_fee) + '<br><strong>Total paid:</strong> ' + naira(order.total) + '</p>' +
     (address ? '<p><strong>Delivery address</strong><br>' + address + '</p>' : '') + '<p>Open MONOWEAR Studio to manage this order.</p>';
-  const result = await sendEmail(ORDER_NOTIFICATION_EMAIL, 'New MONOWEAR order — ' + order.reference, emailShell(body));
+  const result = await sendEmail(ORDER_NOTIFICATION_EMAIL, 'New MONOWEAR order — ' + order.reference, adminNotificationEmail(body));
   db.prepare('UPDATE orders SET admin_notification_status = ? WHERE id = ?').run(result.ok ? 'sent' : 'failed', order.id);
   if (!result.ok) console.error('Admin order notification failed:', result.error || 'unknown error');
   return result.ok ? { sent: true } : { sent: false, reason: 'failed', error: result.error };
