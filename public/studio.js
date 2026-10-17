@@ -298,8 +298,26 @@ $("trafficPeriod")?.addEventListener("change", loadTraffic);
 // Bell dot appears when there are new items to review.
 // ============================================================
 const STUDIO_NOTIFICATIONS_SEEN_KEY = "monowearStudioNotificationsSeenV1";
+const STUDIO_NOTIFICATIONS_DISMISSED_KEY = "monowearStudioNotificationsDismissedV2";
 let studioNotificationItems = [];
 let studioNotificationSignature = "";
+
+function getDismissedStudioNotifications() {
+  try {
+    const value = JSON.parse(localStorage.getItem(STUDIO_NOTIFICATIONS_DISMISSED_KEY) || "{}");
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  } catch { return {}; }
+}
+
+function dismissStudioNotification(id) {
+  try {
+    const dismissed = getDismissedStudioNotifications();
+    dismissed[String(id)] = Date.now();
+    // Keep this small and bounded for long-lived Studio installs.
+    const entries = Object.entries(dismissed).sort((a, b) => Number(b[1]) - Number(a[1])).slice(0, 300);
+    localStorage.setItem(STUDIO_NOTIFICATIONS_DISMISSED_KEY, JSON.stringify(Object.fromEntries(entries)));
+  } catch {}
+}
 
 function notificationItem(id, title, detail, tab, kind = "attention") {
   return { id: String(id), title, detail, tab, kind };
@@ -315,19 +333,33 @@ function renderStudioNotifications() {
   try { seen = localStorage.getItem(STUDIO_NOTIFICATIONS_SEEN_KEY) || ""; } catch {}
   if (dot) dot.hidden = !signature || signature === seen;
   if (!studioNotificationItems.length) {
-    list.innerHTML = '<div class="studio-notification-empty"><span class="notification-check">✓</span><strong>You’re all caught up.</strong><p class="muted">New orders and important store activity will appear here.</p></div>';
+    list.innerHTML = '<div class="studio-notification-empty"><span class="notification-check">✓</span><strong>You’re all caught up.</strong><p class="muted">Read notifications clear from this panel. Admin email alerts remain unchanged.</p></div>';
     return;
   }
   list.innerHTML = studioNotificationItems.map(item => `
-    <button type="button" class="studio-notification-item ${item.kind === "urgent" ? "is-urgent" : ""}" data-notification-tab="${esc(item.tab)}">
+    <button type="button" class="studio-notification-item ${item.kind === "urgent" ? "is-urgent" : ""}" data-notification-id="${esc(item.id)}" data-notification-tab="${esc(item.tab)}" aria-label="${esc(item.title)}. Open and mark as read">
       <span class="notification-indicator" aria-hidden="true"></span>
       <span><strong>${esc(item.title)}</strong><small>${esc(item.detail)}</small></span>
       <span class="notification-arrow" aria-hidden="true">↗</span>
     </button>`).join("");
-  list.querySelectorAll("[data-notification-tab]").forEach(button => {
-    button.addEventListener("click", () => {
+  list.querySelectorAll("[data-notification-id]").forEach(button => {
+    button.addEventListener("click", async () => {
+      const id = String(button.dataset.notificationId || "");
+      const tab = button.dataset.notificationTab || "overview";
+      // Remove it from the Studio panel immediately. This never touches admin email delivery.
+      dismissStudioNotification(id);
+      studioNotificationItems = studioNotificationItems.filter(item => item.id !== id);
+      try { localStorage.setItem(STUDIO_NOTIFICATIONS_SEEN_KEY, studioNotificationItems.map(item => item.id).sort().join("|")); } catch {}
+      renderStudioNotifications();
       closeStudioNotifications();
-      switchTab(button.dataset.notificationTab);
+      if (id.startsWith("history:")) {
+        const notificationId = Number(id.slice("history:".length));
+        if (Number.isInteger(notificationId) && notificationId > 0) {
+          try { await api("/api/admin/notifications/" + notificationId + "/read", { method: "POST", body: "{}" }); }
+          catch (error) { console.warn("Could not mark Studio notification as read:", error.message); }
+        }
+      }
+      switchTab(tab);
     });
   });
 }
@@ -351,15 +383,18 @@ async function refreshStudioNotifications(summary = null) {
   try {
     const history = await api("/api/admin/notifications");
     (Array.isArray(history.notifications) ? history.notifications : []).forEach(notification => {
+      // Already-read historical notifications should not return to the Studio bell.
+      if (notification.read_at) return;
       let title = String(notification.title || "").trim();
       let body = String(notification.body || "").trim();
       if (title.toLowerCase() === "monowear notifications are on") {
-        title = body || "Studio is connected";
+        title = "Studio is connected";
         body = "";
       }
+      if (title.toLowerCase() === "studio is connected") body = "";
       const url = String(notification.url || "/studio");
       const tab = url.includes("products") ? "products" : url.includes("orders") ? "orders" : url.includes("payments") ? "payments" : url.includes("audience") ? "audience" : "overview";
-      items.push(notificationItem("history:" + notification.id, title || body || "Store update", body && body !== title ? body : "Open Studio to review this update.", tab, notification.read_at ? "attention" : "urgent"));
+      items.push(notificationItem("history:" + notification.id, title || body || "Store update", body && body !== title ? body : "Open Studio to review this update.", tab, "urgent"));
     });
   } catch (error) {
     console.warn("Saved store notifications:", error.message);
@@ -388,8 +423,9 @@ async function refreshStudioNotifications(summary = null) {
     console.warn("Store monitoring notifications:", error.message);
   }
 
+  const dismissed = getDismissedStudioNotifications();
   const deduped = new Map(items.map(item => [item.id, item]));
-  studioNotificationItems = [...deduped.values()];
+  studioNotificationItems = [...deduped.values()].filter(item => !dismissed[item.id]);
   renderStudioNotifications();
 }
 
