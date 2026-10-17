@@ -4363,7 +4363,7 @@ app.post("/api/admin/push/test", requireAdmin, (req, res) => {
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
     return res.status(503).json({ error: "Push notifications are not configured on the server yet." });
   }
-  const notification = recordAdminNotification("test", "Studio is connected", "Important store activity will appear here.", "/studio");
+  const notification = recordAdminNotification("test", "Studio is connected", "", "/studio");
   res.json({ success: true, notification });
 });
 
