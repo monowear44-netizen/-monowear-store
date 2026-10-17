@@ -89,3 +89,65 @@
  #tab-overview .overview-quick-links{flex-wrap:wrap}
 }
 @media(max-width:390px){#loggedEmail{display:none}.studio-app-actions{gap:6px}}
+
+/* Phone navigation: readable, swipeable tab bar pinned above the safe area */
+@media(max-width:800px){
+  .sidebar{
+    inset:auto 0 0 0;
+    width:100%;
+    height:auto;
+    min-height:0;
+    max-height:92px;
+    padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));
+    display:flex;
+    flex-direction:row;
+    align-items:center;
+    gap:7px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    overscroll-behavior-x:contain;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    box-shadow:0 -6px 24px rgba(0,0,0,.12);
+    z-index:50;
+  }
+  .sidebar::-webkit-scrollbar{display:none}
+  .sidebar>.logo,.sidebar>.side-label,.sidebar>.side-bottom{display:none!important}
+  .sidebar .nav{
+    flex:0 0 auto;
+    width:auto;
+    min-width:max-content;
+    min-height:43px;
+    margin:0;
+    padding:12px 13px;
+    display:inline-flex;
+    justify-content:center;
+    align-items:center;
+    gap:6px;
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:9px;
+    color:#deded7;
+    font-family:Manrope,Arial,sans-serif;
+    font-size:11px;
+    font-weight:650;
+    white-space:nowrap;
+  }
+  .sidebar .nav.active{background:#c6ff4b;color:#151613;border-color:#c6ff4b}
+  .sidebar .nav span{font:10px 'DM Mono',monospace}
+  .main{margin-left:0;padding:18px 14px calc(115px + env(safe-area-inset-bottom,0px));width:100%;max-width:none}
+  .topbar{position:relative;z-index:40;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding-bottom:17px;margin-bottom:20px}
+  .topbar h1{font-size:clamp(25px,7vw,34px)}
+  .topbar .eyebrow{font-size:9px}
+  .studio-app-actions{gap:7px;flex:0 0 auto}
+  #loggedEmail{display:none}
+  #studioInstallButton{max-width:112px;padding:10px 8px;font-size:9px}
+  .studio-notification-panel{z-index:80}
+  .toolbar{gap:12px}
+  .toolbar h2{font-size:21px}
+}
+@media(max-width:380px){
+  .sidebar{gap:5px;padding-left:6px;padding-right:6px}
+  .sidebar .nav{padding:11px 10px;font-size:10px}
+  .main{padding-left:11px;padding-right:11px}
+  .topbar h1{font-size:25px}
+}
