@@ -2148,6 +2148,7 @@ checkAuth();
      white:   { background: "#ffffff", text: "#171815", accent: "#c6ff4b" },
      emerald: { background: "#073f32", text: "#f2f5ef", accent: "#57d6a0" },
      gold:    { background: "#171510", text: "#f6f0df", accent: "#d5b15a" },
+     "blue-gold": { background: "#071426", text: "#F5F1E6", accent: "#D8B65C" },
      wine:    { background: "#2b0b16", text: "#f8edf0", accent: "#d87994" },
      gothic:  { background: "#0b0b0f", text: "#e9e5ef", accent: "#b7a2d8" },
      afterglow: { background: "#100e13", text: "#f5f0f5", accent: "#e9a5c7" },
