@@ -11,7 +11,7 @@
   "theme_color": "#151613",
   "icons": [
     {
-      "src": "/studio-icon.svg",
+      "src": "/studio-icon.svg?v=monowear-main-logo-20261017",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
