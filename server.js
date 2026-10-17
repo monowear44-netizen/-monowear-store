@@ -711,6 +711,18 @@ function recordAdminNotification(type, title, body, url = "/studio") {
   ).run(String(type || "info").slice(0, 40), String(title || "MONOWEAR update").slice(0, 140), String(body || "").slice(0, 500), safeUrl);
   const notification = db.prepare("SELECT * FROM admin_notifications WHERE id = ?").get(result.lastInsertRowid);
   sendPushToAdmins(notification).catch((error) => console.error("Admin push notification error:", error.message));
+  sendEmail(
+    ORDER_NOTIFICATION_EMAIL,
+    "[MONOWEAR ALERT] " + notification.title,
+    `<div style="font-family:Arial,sans-serif;color:#101827;line-height:1.6">
+      <p style="letter-spacing:3px;font-size:12px;color:#9b7927;font-weight:bold">MONOWEAR / STUDIO ALERT</p>
+      <h2 style="margin-bottom:8px">${escapeHTML(notification.title)}</h2>
+      <p>${escapeHTML(notification.body)}</p>
+      <p><a href="https://monowear-store.onrender.com/studio" style="display:inline-block;background:#071426;color:#f5f1e6;padding:12px 18px;text-decoration:none">OPEN STUDIO</a></p>
+    </div>`
+  ).then((result) => {
+    if (!result.ok) console.error("Admin notification email failed:", result.error);
+  }).catch((error) => console.error("Admin notification email error:", error.message));
   return notification;
 }
 
@@ -2491,19 +2503,6 @@ app.post("/api/newsletter", loginLimiter, async (req, res) => {
     db.prepare("INSERT INTO newsletter (email) VALUES (?)").run(email);
     recordAdminNotification("waitlist", "New MONOWEAR waitlist signup", email + " joined the storefront waitlist.", "/studio");
 
-    const notice = await sendEmail(
-      ORDER_NOTIFICATION_EMAIL,
-      "New MONOWEAR waitlist signup",
-      `<div style="font-family:Arial,sans-serif;color:#101827;line-height:1.6">
-        <p style="letter-spacing:3px;font-size:12px;color:#9b7927;font-weight:bold">MONOWEAR / STUDIO ALERT</p>
-        <h2 style="margin-bottom:8px">Someone joined your waitlist.</h2>
-        <p><strong>Email:</strong> ${escapeHTML(email)}</p>
-        <p>Open MONOWEAR Studio to view your full subscriber list.</p>
-        <p><a href="https://monowear-store.onrender.com/studio" style="display:inline-block;background:#071426;color:#f5f1e6;padding:12px 18px;text-decoration:none">OPEN STUDIO</a></p>
-      </div>`
-    );
-    if (!notice.ok) console.error("Waitlist notification email failed:", notice.error);
-
     res.status(201).json({ success: true, message: "You're on the list." });
   } catch (error) {
     if (String(error.message).includes("UNIQUE")) {
@@ -2543,19 +2542,6 @@ app.post("/api/waitlist", loginLimiter, async (req, res) => {
 
     const subject = productName ? "New MONOWEAR product waitlist signup" : "New MONOWEAR waitlist signup";
     recordAdminNotification("waitlist", subject, email + (productName ? " joined the waitlist for " + productName + "." : " joined the product waitlist."), "/studio");
-    const notice = await sendEmail(
-      ORDER_NOTIFICATION_EMAIL,
-      subject,
-      `<div style="font-family:Arial,sans-serif;color:#101827;line-height:1.6">
-        <p style="letter-spacing:3px;font-size:12px;color:#9b7927;font-weight:bold">MONOWEAR / STUDIO ALERT</p>
-        <h2 style="margin-bottom:8px">New product waitlist signup.</h2>
-        <p><strong>Email:</strong> ${escapeHTML(email)}</p>
-        <p><strong>Product:</strong> ${escapeHTML(productName || "General waitlist")}</p>
-        <p><a href="https://monowear-store.onrender.com/studio" style="display:inline-block;background:#071426;color:#f5f1e6;padding:12px 18px;text-decoration:none">OPEN STUDIO</a></p>
-      </div>`
-    );
-    if (!notice.ok) console.error("Product waitlist notification email failed:", notice.error);
-
     res.status(201).json({ success: true, message: "You've joined the waitlist." });
   } catch (error) {
     console.error("Product waitlist error:", error);
