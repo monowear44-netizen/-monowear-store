@@ -17,3 +17,64 @@ body[data-studio-mode] .studio-theme-switch{display:flex;align-items:center;gap:
 body[data-studio-mode] .studio-theme-switch label{font-size:9px;letter-spacing:.09em;white-space:nowrap;color:var(--sm-muted)}
 body[data-studio-mode] .studio-theme-switch select{min-width:100px;width:auto;min-height:44px;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer}
 @media(max-width:800px){body[data-studio-mode] .studio-theme-switch{gap:0}body[data-studio-mode] .studio-theme-switch label{display:none}body[data-studio-mode] .studio-theme-switch select{min-width:108px;max-width:125px;min-height:46px;padding:10px 9px;font-size:12px}body[data-studio-mode] .studio-app-actions{display:flex;align-items:center;justify-content:flex-start;flex-wrap:wrap;gap:10px;width:100%;padding-top:4px}body[data-studio-mode] .studio-app-actions>*{flex:0 0 auto}}
+
+/* Installed Studio app: pin every Studio section button to a bottom dock on phones. */
+@media (max-width: 1024px) {
+  body .sidebar {
+    position: fixed !important;
+    inset: auto 0 0 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 94px !important;
+    padding: 7px 8px calc(7px + env(safe-area-inset-bottom, 0px)) !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    gap: 7px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    background: var(--bg, #071426) !important;
+    border-top: 1px solid var(--line, #304765) !important;
+    box-shadow: 0 -8px 26px rgba(0,0,0,.24);
+    z-index: 999 !important;
+  }
+  body .sidebar::-webkit-scrollbar { display:none; }
+  body .sidebar > .logo,
+  body .sidebar > .side-label,
+  body .sidebar > .side-bottom { display:none !important; }
+  body .sidebar .nav {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    min-width: max-content !important;
+    min-height: 48px !important;
+    margin: 0 !important;
+    padding: 11px 13px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 1px solid var(--line, #304765) !important;
+    border-radius: 11px !important;
+    background: var(--panel, #0D2038) !important;
+    color: var(--ink, #F5F1E6) !important;
+    font: 650 11px Manrope, Arial, sans-serif !important;
+    white-space: nowrap !important;
+    touch-action: manipulation;
+  }
+  body .sidebar .nav.active {
+    background: var(--accent, #D8B65C) !important;
+    color: #071426 !important;
+    border-color: var(--accent, #D8B65C) !important;
+  }
+  body .sidebar .nav span { color: inherit !important; font: 10px 'DM Mono', monospace !important; }
+  body .main {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 18px 14px calc(116px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  body .topbar { z-index: 40; }
+}
