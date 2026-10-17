@@ -325,60 +325,41 @@ async function playStudioNotificationSound(force = false) {
       return;
     }
 
-    const now = context.currentTime + 0.035;
+    const t = context.currentTime + 0.04;
 
-    // Layered cash-register style "ka-ching": bright inharmonic bell partials,
-    // a short rising double chime, and a soft register/drawer clack.
-    const bells = [
-      [1568, 0.000, 0.42, 0.105],
-      [2093, 0.014, 0.36, 0.075],
-      [2637, 0.028, 0.29, 0.046],
-      [3136, 0.018, 0.24, 0.024],
-      [1174.7, 0.095, 0.32, 0.052],
-      [1760, 0.102, 0.28, 0.042],
-      [2349.3, 0.108, 0.22, 0.023]
-    ];
-    bells.forEach(([frequency, offset, duration, volume]) => {
-      const oscillator = context.createOscillator();
+    // Money-credit style notification: a crisp "cha-ching" with a bright
+    // coin-like attack, two clear rising notes, and a short metallic shimmer.
+    // Keep it musical and clean; no generic cash-drawer clack or long alarm.
+    const playBell = (frequency, startAt, peak, duration, type = "sine") => {
+      const osc = context.createOscillator();
       const gain = context.createGain();
-      const filter = context.createBiquadFilter();
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(frequency, now + offset);
-      filter.type = "highpass";
-      filter.frequency.setValueAtTime(480, now + offset);
-      filter.Q.setValueAtTime(0.7, now + offset);
-      gain.gain.setValueAtTime(0.0001, now + offset);
-      gain.gain.exponentialRampToValueAtTime(volume, now + offset + 0.006);
-      gain.gain.exponentialRampToValueAtTime(volume * 0.34, now + offset + 0.055);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + duration);
-      oscillator.connect(filter);
-      filter.connect(gain);
+      const tone = context.createBiquadFilter();
+      osc.type = type;
+      osc.frequency.setValueAtTime(frequency, startAt);
+      tone.type = "highpass";
+      tone.frequency.setValueAtTime(650, startAt);
+      gain.gain.setValueAtTime(0.0001, startAt);
+      gain.gain.exponentialRampToValueAtTime(peak, startAt + 0.009);
+      gain.gain.exponentialRampToValueAtTime(peak * 0.42, startAt + 0.075);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+      osc.connect(tone);
+      tone.connect(gain);
       gain.connect(context.destination);
-      oscillator.start(now + offset);
-      oscillator.stop(now + offset + duration + 0.015);
-    });
+      osc.start(startAt);
+      osc.stop(startAt + duration + 0.02);
+    };
 
-    // Brief low, filtered clack to suggest the cash drawer closing.
-    const clack = context.createBufferSource();
-    const buffer = context.createBuffer(1, Math.floor(context.sampleRate * 0.075), context.sampleRate);
-    const channel = buffer.getChannelData(0);
-    for (let i = 0; i < channel.length; i++) {
-      const envelope = Math.pow(1 - i / channel.length, 7);
-      channel[i] = (Math.random() * 2 - 1) * envelope;
-    }
-    clack.buffer = buffer;
-    const lowpass = context.createBiquadFilter();
-    lowpass.type = "lowpass";
-    lowpass.frequency.setValueAtTime(900, now + 0.13);
-    const clackGain = context.createGain();
-    clackGain.gain.setValueAtTime(0.0001, now + 0.13);
-    clackGain.gain.exponentialRampToValueAtTime(0.12, now + 0.136);
-    clackGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.205);
-    clack.connect(lowpass);
-    lowpass.connect(clackGain);
-    clackGain.connect(context.destination);
-    clack.start(now + 0.13);
-    clack.stop(now + 0.215);
+    // Short metallic attack, then the familiar two-note credit chime.
+    playBell(1760, t, 0.13, 0.24, "triangle");
+    playBell(2637, t + 0.045, 0.10, 0.34, "sine");
+    playBell(2093, t + 0.16, 0.12, 0.42, "triangle");
+    playBell(3136, t + 0.19, 0.065, 0.48, "sine");
+    playBell(1568, t + 0.205, 0.045, 0.36, "sine");
+
+    // Tiny metallic shimmer under the final note to give it a money/coin feel.
+    [3951, 4699].forEach((frequency, index) => {
+      playBell(frequency, t + 0.22 + index * 0.018, 0.018, 0.20, "sine");
+    });
   } catch (error) {
     console.debug("Studio notification sound unavailable:", error.message);
     if (force) toast("Sound could not play. Tap Test sound once more.");
