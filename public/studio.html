@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="/studio-extra.css?v=bluegold-bottomnav-20261017">
   <link rel="stylesheet" href="/theme.css?v=bluegold-theme-20261017">
   <link rel="stylesheet" href="/studio-dashboard.css?v=bottom-nav-dock-20261017">
-  <link rel="stylesheet" href="/studio-modes.css?v=mobile-spacing-20261017">
+  <link rel="stylesheet" href="/studio-modes.css?v=ai-email-assistant-20261017">
 </head>
 <body>
   <!-- SIDEBAR -->
@@ -979,6 +979,36 @@
       </div>
     </div>
     <p id="audienceMessage" class="message" role="status" aria-live="polite"></p>
+    <div class="panel email-assistant-panel">
+      <div class="toolbar">
+        <div><p class="eyebrow">AI CAMPAIGN STUDIO</p><h2>AI Email Assistant</h2><p class="muted">Describe what you want to announce. The AI writes a draft for you to review and edit. Nothing sends until you confirm.</p></div>
+        <span class="status-pill">DRAFT FIRST · SEND BY APPROVAL</span>
+      </div>
+      <label for="emailCampaignRequest">What should this email say?</label>
+      <textarea id="emailCampaignRequest" rows="3" maxlength="1200" placeholder="Example: Announce that HELP IS ON THE WAY launches soon. Keep it cinematic, personal and concise."></textarea>
+      <div class="email-assistant-fields">
+        <div><label for="emailCampaignTone">Writing tone</label><input id="emailCampaignTone" type="text" maxlength="100" value="cinematic, confident, concise"></div>
+        <div><label for="emailCampaignAudience">Recipients</label><input id="emailCampaignAudience" type="text" value="Active general drop-list subscribers only" readonly><small class="muted">Product-specific waitlists are not included.</small></div>
+      </div>
+      <div class="toolbar-actions email-assistant-actions"><button class="primary" type="button" id="generateCampaignDraft">WRITE EMAIL WITH AI ✦</button><button class="secondary" type="button" id="clearCampaignDraft">CLEAR DRAFT</button></div>
+      <p id="campaignDraftMessage" class="message" role="status" aria-live="polite"></p>
+      <div class="email-assistant-fields">
+        <div><label for="emailCampaignSubject">Email subject</label><input id="emailCampaignSubject" type="text" maxlength="180" placeholder="Subject line"></div>
+        <div><label for="emailCampaignPreview">Preview text</label><input id="emailCampaignPreview" type="text" maxlength="220" placeholder="Short inbox preview"></div>
+      </div>
+      <label for="emailCampaignBody">Email body <span class="muted">(editable)</span></label>
+      <textarea id="emailCampaignBody" rows="9" maxlength="10000" placeholder="Your AI-written email will appear here. You can edit every word before sending."></textarea>
+      <div class="email-assistant-fields">
+        <div><label for="emailCampaignCtaLabel">Button text (optional)</label><input id="emailCampaignCtaLabel" type="text" maxlength="80" placeholder="EXPLORE THE DROP"></div>
+        <div><label for="emailCampaignCtaUrl">Button link (optional)</label><input id="emailCampaignCtaUrl" type="url" maxlength="500" placeholder="https://monowears.com"></div>
+      </div>
+      <div class="campaign-review-box">
+        <p><strong>Before sending</strong></p><p class="muted">Review the subject, preview and full body. Sending uses Resend and emails every active general-list subscriber. A one-click unsubscribe link is included. Product-specific waitlists are kept separate.</p>
+        <label class="campaign-check"><input id="emailCampaignReviewed" type="checkbox"> I have reviewed the final email and recipient audience.</label>
+        <label for="emailCampaignConfirm">Type <strong>SEND</strong> to authorize delivery</label><input id="emailCampaignConfirm" type="text" autocomplete="off" placeholder="Type SEND">
+        <button class="primary" type="button" id="sendCampaignEmail">SEND CAMPAIGN THROUGH RESEND ↗</button><p id="campaignSendMessage" class="message" role="status" aria-live="polite"></p>
+      </div>
+    </div>
     <div class="panel">
       <div class="toolbar">
         <div><p class="eyebrow">01 / PRODUCT INTEREST</p><h2>Product waitlist</h2><p class="muted">Customers who asked to be notified about a product or drop.</p></div>
@@ -988,7 +1018,7 @@
     </div>
     <div class="panel">
       <div class="toolbar">
-        <div><p class="eyebrow">02 / NEWSLETTER</p><h2>Newsletter subscribers</h2><p class="muted">Customers who joined the general email list.</p></div>
+        <div><p class="eyebrow">02 / NEWSLETTER</p><h2>General drop-list subscribers</h2><p class="muted">People who joined the storefront email list. Campaigns are sent to active subscribers here; product-specific interest stays separate.</p></div>
         <strong id="newsletterCount">0 subscribers</strong>
       </div>
       <div id="newsletterList" class="products-list"><p class="muted">Loading subscribers…</p></div>
@@ -1110,7 +1140,7 @@
 ></div>
   </main>
   <!-- EXISTING STUDIO FUNCTIONALITY -->
-  <script src="/studio.js?v=bluegold-preset-20261017"></script>
+  <script src="/studio.js?v=ai-email-assistant-20261017"></script>
   <script src="/studio-app.js?v=bell-history-20261017"></script>
   <!-- IMAGE PREVIEWS AND VALIDATION -->
   <script>
