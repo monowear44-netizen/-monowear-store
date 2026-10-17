@@ -86,6 +86,52 @@
     const q = new URLSearchParams(); if (p.slug) q.set("slug",p.slug); q.set("id",String(p.id));
     return '<a class="standalone-related-card" href="/product.html?'+q.toString()+'"><div class="standalone-related-image">'+imageMarkup(p)+'</div><div class="standalone-related-meta"><span>'+esc(p.name)+'</span><strong>'+money(p.price)+'</strong></div><small>'+esc(p.category||"MONOWEAR")+'</small></a>';
   }
+  function fitReason(base, candidate) {
+    const baseText = [base.name, base.category, base.description].join(" ").toLowerCase();
+    const otherText = [candidate.name, candidate.category, candidate.description].join(" ").toLowerCase();
+    const baseIsTop = /tee|t-shirt|shirt|longsleeve|long sleeve|hoodie|sweatshirt|raglan|top/.test(baseText);
+    const baseIsBottom = /trouser|pant|jean|denim|shorts|skirt/.test(baseText);
+    const otherIsTop = /tee|t-shirt|shirt|longsleeve|long sleeve|hoodie|sweatshirt|raglan|top/.test(otherText);
+    const otherIsBottom = /trouser|pant|jean|denim|shorts|skirt/.test(otherText);
+    const otherIsAccessory = /cap|hat|bag|beanie|belt|sock/.test(otherText);
+    if (baseIsTop && otherIsBottom) return "Pair it with a bottom for a balanced everyday fit.";
+    if (baseIsBottom && otherIsTop) return "A strong top layer to build the fit around.";
+    if (otherIsAccessory) return "Finish the look with a considered accessory.";
+    if (baseText.includes("hoodie") && /tee|shirt|longsleeve/.test(otherText)) return "Layer it over this piece for an easy streetwear combination.";
+    const sameCategory = String(base.category || "").toLowerCase() === String(candidate.category || "").toLowerCase();
+    if (sameCategory) return "A complementary piece from the same MONOWEAR lane.";
+    return "A contrasting piece to build a more complete MONOWEAR look.";
+  }
+  function renderFitMatcher() {
+    const mount = $("fitMatcher");
+    if (!mount || !product) return;
+    const candidates = products.filter(p => Number(p.id) !== Number(product.id) && Number(p.stock) > 0);
+    const baseText = [product.name, product.category, product.description].join(" ").toLowerCase();
+    const ranked = candidates.map(p => {
+      const text = [p.name, p.category, p.description].join(" ").toLowerCase();
+      let score = 0;
+      const baseWords = baseText.split(/[^a-z0-9]+/).filter(w => w.length > 3);
+      const otherWords = new Set(text.split(/[^a-z0-9]+/).filter(w => w.length > 3));
+      score += baseWords.filter(w => otherWords.has(w)).length * 2;
+      const baseTop = /tee|t-shirt|shirt|longsleeve|long sleeve|hoodie|sweatshirt|raglan|top/.test(baseText);
+      const baseBottom = /trouser|pant|jean|denim|shorts|skirt/.test(baseText);
+      const otherTop = /tee|t-shirt|shirt|longsleeve|long sleeve|hoodie|sweatshirt|raglan|top/.test(text);
+      const otherBottom = /trouser|pant|jean|denim|shorts|skirt/.test(text);
+      const accessory = /cap|hat|bag|beanie|belt|sock/.test(text);
+      if ((baseTop && otherBottom) || (baseBottom && otherTop)) score += 7;
+      if (accessory) score += 3;
+      if (String(p.category || "").toLowerCase() !== String(product.category || "").toLowerCase()) score += 1;
+      if (String(p.category || "").toLowerCase() === String(product.category || "").toLowerCase()) score += 2;
+      return { product:p, score };
+    }).sort((a,b)=>b.score-a.score).slice(0,3);
+    if (!ranked.length) {
+      mount.innerHTML = '<p class="fit-matcher-empty">More pieces are coming soon. Check back to complete your fit.</p>';
+      return;
+    }
+    mount.innerHTML = '<div class="fit-matcher-heading"><div><p class="eyebrow">MONO FIT MATCHER</p><h2>Complete <i>the fit.</i></h2><p>Pieces selected to work with your choice.</p></div><span class="fit-matcher-mark">STYLE / MATCH</span></div><div class="fit-matcher-grid">' +
+      ranked.map(({product:p}) => '<a class="fit-matcher-card" href="/product.html?'+(p.slug?'slug='+encodeURIComponent(p.slug)+'&':'')+'id='+encodeURIComponent(p.id)+'"><div class="fit-matcher-image">'+imageMarkup(p)+'</div><div class="fit-matcher-copy"><span>'+esc(p.name)+'</span><strong>'+money(p.price)+'</strong><small>'+esc(fitReason(product,p))+'</small></div></a>').join("") +
+      '</div>';
+  }
   function updateBagCount() {
     try { const bag=JSON.parse(localStorage.getItem("monowear-cart")||"[]"); $("productCartCount").textContent=String(bag.reduce((n,item)=>n+Math.max(0,Number(item.quantity)||0),0)); }
     catch { $("productCartCount").textContent="0"; }
@@ -138,6 +184,7 @@
       const related=products.filter(p=>Number(p.id)!==Number(product.id));
       const sameCategory=product.category ? related.filter(p=>String(p.category||"").toLowerCase()===String(product.category).toLowerCase()) : [];
       $("productRelatedGrid").innerHTML=(sameCategory.length?sameCategory:related).slice(0,4).map(relatedCard).join("");
+      renderFitMatcher();
       if(!related.length) $("productRelatedGrid").innerHTML='<p class="muted">More pieces are coming soon.</p>';
     } catch(error) { $("productPageStatus").textContent=error.message||"Could not load this product."; $("productPageStatus").classList.add("is-error"); $("productPageContent").hidden=true; }
   }
