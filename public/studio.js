@@ -1229,23 +1229,17 @@ function renderAudienceTable(targetId, rows, kind) {
 
 async function loadAudience() {
   const message = $("audienceMessage");
-  if (message) message.textContent = "Loading customer sign-ups…";
+  if (message) message.textContent = "Loading subscribers…";
   try {
-    const [waitlist, newsletter] = await Promise.all([
-      api("/api/admin/waitlist"),
-      api("/api/admin/newsletter")
-    ]);
-    currentWaitlist = Array.isArray(waitlist) ? waitlist : [];
+    const newsletter = await api("/api/admin/newsletter");
     currentNewsletter = Array.isArray(newsletter) ? newsletter : [];
-    if ($("waitlistCount")) $("waitlistCount").textContent = currentWaitlist.length + (currentWaitlist.length === 1 ? " sign-up" : " sign-ups");
+    currentWaitlist = [];
     if ($("newsletterCount")) $("newsletterCount").textContent = currentNewsletter.length + (currentNewsletter.length === 1 ? " subscriber" : " subscribers");
-    renderAudienceTable("waitlistList", currentWaitlist, "waitlist");
     renderAudienceTable("newsletterList", currentNewsletter, "newsletter");
-    if (message) message.textContent = "Updated. " + currentWaitlist.length + " product waitlist sign-ups and " + currentNewsletter.length + " newsletter subscribers found.";
+    if (message) message.textContent = "Updated. " + currentNewsletter.length + " general drop-list subscribers found.";
   } catch (error) {
-    if (message) message.textContent = "Could not load sign-ups: " + error.message;
-    if ($("waitlistList")) $("waitlistList").innerHTML = '<p class="error">Could not load the product waitlist.</p>';
-    if ($("newsletterList")) $("newsletterList").innerHTML = '<p class="error">Could not load newsletter subscribers.</p>';
+    if (message) message.textContent = "Could not load subscribers: " + error.message;
+    if ($("newsletterList")) $("newsletterList").innerHTML = '<p class="error">Could not load subscribers.</p>';
   }
 }
 
@@ -1255,19 +1249,18 @@ function csvCell(value) {
 
 function exportAudienceCsv() {
   const rows = [
-    ["Type", "Email", "Product / drop", "Joined at"],
-    ...currentWaitlist.map((item) => ["Product waitlist", item.email, item.product_name || "General waitlist", item.created_at]),
-    ...currentNewsletter.map((item) => ["Newsletter", item.email, "", item.created_at])
+    ["Email", "Subscribed"],
+    ...currentNewsletter.map((item) => [item.email, item.created_at])
   ];
   if (rows.length === 1) {
-    toast("There are no customer sign-ups to export yet.");
+    toast("There are no subscribers to export yet.");
     return;
   }
   const csv = "\uFEFF" + rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
   const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
   const link = document.createElement("a");
   link.href = url;
-  link.download = "monowear-waitlist-subscribers.csv";
+  link.download = "monowear-subscribers.csv";
   document.body.appendChild(link);
   link.click();
   link.remove();
