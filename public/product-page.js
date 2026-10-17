@@ -86,51 +86,195 @@
     const q = new URLSearchParams(); if (p.slug) q.set("slug",p.slug); q.set("id",String(p.id));
     return '<a class="standalone-related-card" href="/product.html?'+q.toString()+'"><div class="standalone-related-image">'+imageMarkup(p)+'</div><div class="standalone-related-meta"><span>'+esc(p.name)+'</span><strong>'+money(p.price)+'</strong></div><small>'+esc(p.category||"MONOWEAR")+'</small></a>';
   }
-  function fitReason(base, candidate) {
+  function fitReason(base, candidate, vibe, occasion) {
     const baseText = [base.name, base.category, base.description].join(" ").toLowerCase();
     const otherText = [candidate.name, candidate.category, candidate.description].join(" ").toLowerCase();
-    const baseIsTop = /tee|t-shirt|shirt|longsleeve|long sleeve|hoodie|sweatshirt|raglan|top/.test(baseText);
-    const baseIsBottom = /trouser|pant|jean|denim|shorts|skirt/.test(baseText);
-    const otherIsTop = /tee|t-shirt|shirt|longsleeve|long sleeve|hoodie|sweatshirt|raglan|top/.test(otherText);
-    const otherIsBottom = /trouser|pant|jean|denim|shorts|skirt/.test(otherText);
-    const otherIsAccessory = /cap|hat|bag|beanie|belt|sock/.test(otherText);
-    if (baseIsTop && otherIsBottom) return "Pair it with a bottom for a balanced everyday fit.";
-    if (baseIsBottom && otherIsTop) return "A strong top layer to build the fit around.";
-    if (otherIsAccessory) return "Finish the look with a considered accessory.";
-    if (baseText.includes("hoodie") && /tee|shirt|longsleeve/.test(otherText)) return "Layer it over this piece for an easy streetwear combination.";
-    const sameCategory = String(base.category || "").toLowerCase() === String(candidate.category || "").toLowerCase();
-    if (sameCategory) return "A complementary piece from the same MONOWEAR lane.";
-    return "A contrasting piece to build a more complete MONOWEAR look.";
+    const top = /tee|t-shirt|shirt|longsleeve|long sleeve|hoodie|sweatshirt|raglan|top/.test(otherText);
+    const bottom = /trouser|pant|jean|denim|shorts|skirt/.test(otherText);
+    const accessory = /cap|hat|bag|beanie|belt|sock/.test(otherText);
+    if (top && /trouser|pant|jean|denim|shorts|skirt/.test(baseText)) return "A strong top to balance the silhouette.";
+    if (bottom && /tee|t-shirt|shirt|longsleeve|long sleeve|hoodie|sweatshirt|raglan|top/.test(baseText)) return "Build the fit with a complementary bottom.";
+    if (accessory) return vibe === "bold" ? "A finishing detail that makes the whole look feel intentional." : "An easy finishing touch for a complete look.";
+    if (vibe === "layered") return "Adds depth and dimension to your layers.";
+    if (vibe === "bold" || occasion === "going-out") return "Adds another statement to your MONOWEAR fit.";
+    return "An easy piece to rotate into your everyday wardrobe.";
+  }
+  function fitChatProductCard(p, vibe, occasion) {
+    const q = new URLSearchParams();
+    if (p.slug) q.set("slug", p.slug);
+    q.set("id", String(p.id));
+    return '<a class="mono-fit-product" href="/product.html?' + q.toString() + '">' +
+      '<div class="mono-fit-product-image">' + imageMarkup(p) + '</div>' +
+      '<div class="mono-fit-product-details"><strong>' + esc(p.name || "MONOWEAR piece") + '</strong><span>' + money(p.price) + '</span><small>' + esc(fitReason(product, p, vibe, occasion)) + '</small></div>' +
+      '</a>';
   }
   function renderFitMatcher() {
     const mount = $("fitMatcher");
     if (!mount || !product) return;
-    const candidates = products.filter(p => Number(p.id) !== Number(product.id) && Number(p.stock) > 0);
-    const baseText = [product.name, product.category, product.description].join(" ").toLowerCase();
-    const ranked = candidates.map(p => {
-      const text = [p.name, p.category, p.description].join(" ").toLowerCase();
-      let score = 0;
-      const baseWords = baseText.split(/[^a-z0-9]+/).filter(w => w.length > 3);
-      const otherWords = new Set(text.split(/[^a-z0-9]+/).filter(w => w.length > 3));
-      score += baseWords.filter(w => otherWords.has(w)).length * 2;
-      const baseTop = /tee|t-shirt|shirt|longsleeve|long sleeve|hoodie|sweatshirt|raglan|top/.test(baseText);
-      const baseBottom = /trouser|pant|jean|denim|shorts|skirt/.test(baseText);
-      const otherTop = /tee|t-shirt|shirt|longsleeve|long sleeve|hoodie|sweatshirt|raglan|top/.test(text);
-      const otherBottom = /trouser|pant|jean|denim|shorts|skirt/.test(text);
-      const accessory = /cap|hat|bag|beanie|belt|sock/.test(text);
-      if ((baseTop && otherBottom) || (baseBottom && otherTop)) score += 7;
-      if (accessory) score += 3;
-      if (String(p.category || "").toLowerCase() !== String(product.category || "").toLowerCase()) score += 1;
-      if (String(p.category || "").toLowerCase() === String(product.category || "").toLowerCase()) score += 2;
-      return { product:p, score };
-    }).sort((a,b)=>b.score-a.score).slice(0,3);
-    if (!ranked.length) {
-      mount.innerHTML = '<p class="fit-matcher-empty">More pieces are coming soon. Check back to complete your fit.</p>';
-      return;
-    }
-    mount.innerHTML = '<div class="fit-matcher-heading"><div><p class="eyebrow">MONO FIT MATCHER</p><h2>Complete <i>the fit.</i></h2><p>Pieces selected to work with your choice.</p></div><span class="fit-matcher-mark">STYLE / MATCH</span></div><div class="fit-matcher-grid">' +
-      ranked.map(({product:p}) => '<a class="fit-matcher-card" href="/product.html?'+(p.slug?'slug='+encodeURIComponent(p.slug)+'&':'')+'id='+encodeURIComponent(p.id)+'"><div class="fit-matcher-image">'+imageMarkup(p)+'</div><div class="fit-matcher-copy"><span>'+esc(p.name)+'</span><strong>'+money(p.price)+'</strong><small>'+esc(fitReason(product,p))+'</small></div></a>').join("") +
-      '</div>';
+    mount.innerHTML =
+      '<button class="mono-fit-launcher" id="monoFitLauncher" type="button" aria-expanded="false" aria-controls="monoFitPanel">' +
+        '<span class="mono-fit-launcher-mark">M</span><span class="mono-fit-launcher-copy"><strong>MONO FIT MATCHER</strong><small>Need help styling this piece?</small></span><span class="mono-fit-launcher-arrow">↗</span>' +
+      '</button>' +
+      '<section class="mono-fit-panel" id="monoFitPanel" role="dialog" aria-modal="false" aria-label="MONOWEAR style concierge" hidden>' +
+        '<header class="mono-fit-panel-head"><div class="mono-fit-avatar">M</div><div><strong>MONO FIT MATCHER</strong><small>STYLE CONCIERGE · ONLINE</small></div><button id="monoFitClose" class="mono-fit-close" type="button" aria-label="Close style chat">×</button></header>' +
+        '<div class="mono-fit-context"><span>STYLING</span><strong>' + esc(product.name || "Your selected piece") + '</strong><small>' + money(product.price) + '</small></div>' +
+        '<div class="mono-fit-messages" id="monoFitMessages" aria-live="polite"></div>' +
+        '<div class="mono-fit-options" id="monoFitOptions"></div>' +
+        '<form class="mono-fit-input-row" id="monoFitForm"><input id="monoFitInput" type="text" maxlength="180" placeholder="Tell MONO what you have in mind…" aria-label="Ask the style concierge"><button type="submit" aria-label="Send message">↑</button></form>' +
+        '<p class="mono-fit-disclaimer">Personalised using available MONOWEAR pieces. No AI service or paid API required.</p>' +
+      '</section>';
+    const launcher = $("monoFitLauncher"), panel = $("monoFitPanel");
+    const messages = $("monoFitMessages"), options = $("monoFitOptions");
+    let occasion = "", vibe = "", stage = "occasion";
+    const addMessage = (text, who) => {
+      const bubble = document.createElement("div");
+      bubble.className = "mono-fit-message " + (who === "user" ? "is-user" : "is-assistant");
+      bubble.textContent = text;
+      messages.appendChild(bubble);
+      messages.scrollTop = messages.scrollHeight;
+    };
+    const setOptions = (items) => {
+      options.innerHTML = "";
+      items.forEach(item => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "mono-fit-option";
+        button.textContent = item.label;
+        button.addEventListener("click", () => item.action());
+        options.appendChild(button);
+      });
+    };
+    const showOccasion = () => {
+      stage = "occasion";
+      addMessage("Let's build a fit around this piece. Where are you wearing it?", "assistant");
+      setOptions([
+        {label:"Everyday", action:()=>chooseOccasion("everyday","Everyday")},
+        {label:"Going out", action:()=>chooseOccasion("going-out","Going out")},
+        {label:"Make a statement", action:()=>chooseOccasion("statement","Make a statement")}
+      ]);
+    };
+    const chooseOccasion = (value, label) => {
+      occasion = value;
+      addMessage(label, "user");
+      stage = "vibe";
+      addMessage("Got you. What direction should the fit take?", "assistant");
+      setOptions([
+        {label:"Clean & minimal", action:()=>chooseVibe("minimal","Clean & minimal")},
+        {label:"Layered streetwear", action:()=>chooseVibe("layered","Layered streetwear")},
+        {label:"Bold & expressive", action:()=>chooseVibe("bold","Bold & expressive")},
+        {label:"Surprise me", action:()=>chooseVibe("surprise","Surprise me")}
+      ]);
+    };
+    const recommend = (freeText) => {
+      const baseText = [product.name, product.category, product.description].join(" ").toLowerCase();
+      const candidates = products.filter(p => Number(p.id) !== Number(product.id) && Number(p.stock) > 0);
+      const words = text => new Set(String(text || "").toLowerCase().split(/[^a-z0-9]+/).filter(w=>w.length>3));
+      const baseWords = words(baseText);
+      const ranked = candidates.map(p => {
+        const text = [p.name,p.category,p.description].join(" ").toLowerCase();
+        let score = 0;
+        const pWords = words(text);
+        baseWords.forEach(w => { if(pWords.has(w)) score += 2; });
+        const baseTop = /tee|t-shirt|shirt|longsleeve|long sleeve|hoodie|sweatshirt|raglan|top/.test(baseText);
+        const baseBottom = /trouser|pant|jean|denim|shorts|skirt/.test(baseText);
+        const pTop = /tee|t-shirt|shirt|longsleeve|long sleeve|hoodie|sweatshirt|raglan|top/.test(text);
+        const pBottom = /trouser|pant|jean|denim|shorts|skirt/.test(text);
+        const accessory = /cap|hat|bag|beanie|belt|sock/.test(text);
+        if ((baseTop && pBottom) || (baseBottom && pTop)) score += 9;
+        if (accessory) score += vibe === "minimal" ? 2 : 4;
+        if (vibe === "layered" && /hoodie|shirt|jacket|longsleeve|long sleeve|overshirt/.test(text)) score += 5;
+        if (vibe === "bold" && /graphic|print|distress|archive|statement|pink|red|blue/.test(text)) score += 4;
+        if (vibe === "minimal" && /black|white|cream|neutral|basic|mono/.test(text)) score += 4;
+        if (occasion === "going-out" && /denim|jean|graphic|statement|archive/.test(text)) score += 3;
+        if (occasion === "everyday" && /tee|cap|shorts|hoodie|sweatshirt/.test(text)) score += 2;
+        if (String(p.category||"").toLowerCase() === String(product.category||"").toLowerCase()) score += 1;
+        if (freeText) {
+          const queryWords = words(freeText);
+          queryWords.forEach(w => { if(pWords.has(w)) score += 5; });
+          if (/cheap|budget|affordable|less|lower price/.test(freeText.toLowerCase()) && Number(p.price) < Number(product.price)) score += 4;
+        }
+        return {product:p,score};
+      }).sort((a,b)=>b.score-a.score || Number(a.product.price)-Number(b.product.price)).slice(0,3);
+      addMessage(ranked.length ? "Here are a few pieces I'd pair with your selection. Tap any piece to explore it." : "I couldn't find another in-stock piece to pair with this one just yet. Check back as the collection grows.", "assistant");
+      if (ranked.length) {
+        const cards = document.createElement("div");
+        cards.className = "mono-fit-results";
+        cards.innerHTML = ranked.map(item => fitChatProductCard(item.product, vibe, occasion)).join("");
+        messages.appendChild(cards);
+        messages.scrollTop = messages.scrollHeight;
+      }
+      stage = "done";
+      setOptions([
+        {label:"Try another vibe", action:restart},
+        {label:"Keep browsing", action:closeChat}
+      ]);
+    };
+    const chooseVibe = (value, label) => {
+      vibe = value;
+      addMessage(label, "user");
+      addMessage(value === "surprise" ? "I'll mix complementary shapes and finishing pieces." : "I'll look for pieces that fit that direction.", "assistant");
+      recommend("");
+    };
+    const restart = () => {
+      messages.innerHTML = "";
+      options.innerHTML = "";
+      occasion = ""; vibe = ""; stage = "occasion";
+      showOccasion();
+    };
+    const openChat = () => {
+      panel.hidden = false;
+      launcher.setAttribute("aria-expanded","true");
+      launcher.classList.add("is-active");
+      if (!messages.children.length) {
+        addMessage("Hey. I'm MONO — your style concierge.", "assistant");
+        addMessage("You're looking at " + (product.name || "a MONOWEAR piece") + ". Let's find pieces that work with it.", "assistant");
+        showOccasion();
+      }
+      $("monoFitInput").focus();
+    };
+    const closeChat = () => {
+      panel.hidden = true;
+      launcher.setAttribute("aria-expanded","false");
+      launcher.classList.remove("is-active");
+      launcher.focus();
+    };
+    launcher.addEventListener("click", () => panel.hidden ? openChat() : closeChat());
+    $("monoFitClose").addEventListener("click", closeChat);
+    $("monoFitForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const input = $("monoFitInput");
+      const message = input.value.trim();
+      if (!message) return;
+      input.value = "";
+      addMessage(message, "user");
+      const lower = message.toLowerCase();
+      if (/reset|start over|restart|another vibe/.test(lower)) return restart();
+      if (stage === "occasion") {
+        const detected = /night|date|party|club|going out|dinner|event/.test(lower) ? ["going-out","Going out"] :
+          /statement|stand out|bold|loud/.test(lower) ? ["statement","Make a statement"] : ["everyday","Everyday"];
+        occasion = detected[0];
+        addMessage("I'll keep that in mind. What style direction do you prefer?", "assistant");
+        stage = "vibe";
+        setOptions([
+          {label:"Clean & minimal", action:()=>chooseVibe("minimal","Clean & minimal")},
+          {label:"Layered streetwear", action:()=>chooseVibe("layered","Layered streetwear")},
+          {label:"Bold & expressive", action:()=>chooseVibe("bold","Bold & expressive")},
+          {label:"Surprise me", action:()=>chooseVibe("surprise","Surprise me")}
+        ]);
+      } else if (stage === "vibe") {
+        vibe = /layer|oversized|streetwear/.test(lower) ? "layered" : /bold|loud|statement|colour|color/.test(lower) ? "bold" : /surprise|anything/.test(lower) ? "surprise" : "minimal";
+        addMessage("I'll use that direction and your note to choose some pairings.", "assistant");
+        recommend(message);
+      } else {
+        addMessage("I can make another set of suggestions. Tell me a vibe or choose an option below.", "assistant");
+        setOptions([
+          {label:"Try another vibe", action:restart},
+          {label:"More minimal", action:()=>{vibe="minimal";recommend("");}},
+          {label:"More statement", action:()=>{vibe="bold";recommend("");}},
+          {label:"Keep browsing", action:closeChat}
+        ]);
+      }
+    });
   }
   function updateBagCount() {
     try { const bag=JSON.parse(localStorage.getItem("monowear-cart")||"[]"); $("productCartCount").textContent=String(bag.reduce((n,item)=>n+Math.max(0,Number(item.quantity)||0),0)); }
