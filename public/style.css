@@ -332,43 +332,43 @@ body:has(#checkoutDialog[open]) {
 /* MONOWEAR THEME PALETTES — controlled from the private Studio */
 html[data-theme="dark"] body,
 html[data-theme="emerald"] body,
-html[data-theme="gold"] body { background:var(--bg); color:var(--ink); }
+html[data-theme="gold"] body, html[data-theme="blue-gold"] body { background:var(--bg); color:var(--ink); }
 html[data-theme="dark"] .site-header,
 html[data-theme="dark"] footer,
 html[data-theme="dark"] .newsletter,
 html[data-theme="emerald"] .site-header,
 html[data-theme="emerald"] footer,
 html[data-theme="emerald"] .newsletter,
-html[data-theme="gold"] .site-header,
-html[data-theme="gold"] footer,
-html[data-theme="gold"] .newsletter { background:var(--bg); color:var(--ink); border-color:var(--line); }
+html[data-theme="gold"] .site-header, html[data-theme="blue-gold"] .site-header,
+html[data-theme="gold"] footer, html[data-theme="blue-gold"] footer,
+html[data-theme="gold"] .newsletter, html[data-theme="blue-gold"] .newsletter { background:var(--bg); color:var(--ink); border-color:var(--line); }
 html[data-theme="dark"] .manifesto,
 html[data-theme="emerald"] .manifesto,
-html[data-theme="gold"] .manifesto { background:var(--surface-soft); color:var(--ink); }
+html[data-theme="gold"] .manifesto, html[data-theme="blue-gold"] .manifesto { background:var(--surface-soft); color:var(--ink); }
 html[data-theme="dark"] .manifesto .eyebrow,
 html[data-theme="dark"] .manifesto>p:not(.eyebrow),
 html[data-theme="emerald"] .manifesto .eyebrow,
 html[data-theme="emerald"] .manifesto>p:not(.eyebrow),
 html[data-theme="gold"] .manifesto .eyebrow,
-html[data-theme="gold"] .manifesto>p:not(.eyebrow) { color:var(--muted); }
+html[data-theme="gold"] .manifesto>p:not(.eyebrow), html[data-theme="blue-gold"] .manifesto>p:not(.eyebrow) { color:var(--muted); }
 html[data-theme="dark"] .ticker,
 html[data-theme="dark"] .announcement,
 html[data-theme="emerald"] .ticker,
 html[data-theme="emerald"] .announcement,
 html[data-theme="gold"] .ticker,
-html[data-theme="gold"] .announcement { background:var(--accent); color:#111; }
+html[data-theme="gold"] .announcement, html[data-theme="blue-gold"] .announcement { background:var(--accent); color:#111; }
 html[data-theme="dark"] .product-image,
 html[data-theme="emerald"] .product-image,
-html[data-theme="gold"] .product-image { background:var(--surface-soft); }
+html[data-theme="gold"] .product-image, html[data-theme="blue-gold"] .product-image { background:var(--surface-soft); }
 html[data-theme="dark"] .button-outline,
 html[data-theme="emerald"] .button-outline,
-html[data-theme="gold"] .button-outline { color:var(--ink); border-color:var(--line); }
+html[data-theme="gold"] .button-outline, html[data-theme="blue-gold"] .button-outline { color:var(--ink); border-color:var(--line); }
 html[data-theme="dark"] .add-button,
 html[data-theme="emerald"] .add-button,
-html[data-theme="gold"] .add-button { background:var(--accent); border-color:var(--accent); color:#111; }
+html[data-theme="gold"] .add-button, html[data-theme="blue-gold"] .add-button { background:var(--accent); border-color:var(--accent); color:#111; }
 html[data-theme="dark"] .cart-toggle span,
 html[data-theme="emerald"] .cart-toggle span,
-html[data-theme="gold"] .cart-toggle span { background:var(--accent); color:#111; }
+html[data-theme="gold"] .cart-toggle span, html[data-theme="blue-gold"] .cart-toggle span { background:var(--accent); color:#111; }
 html[data-theme="white"] body { background:#fff; color:#171815; }
 html[data-theme="white"] .manifesto { background:#f0f0e9; color:#171815; }
 html[data-theme="white"] .announcement,
@@ -512,8 +512,8 @@ html[data-theme="dark"] .product-pagination .pagination-arrow,
 html[data-theme="dark"] .product-pagination .pagination-number:not(.is-active),
 html[data-theme="emerald"] .product-pagination .pagination-arrow,
 html[data-theme="emerald"] .product-pagination .pagination-number:not(.is-active),
-html[data-theme="gold"] .product-pagination .pagination-arrow,
-html[data-theme="gold"] .product-pagination .pagination-number:not(.is-active) {
+html[data-theme="gold"] .product-pagination .pagination-arrow, html[data-theme="blue-gold"] .product-pagination .pagination-arrow,
+html[data-theme="gold"] .product-pagination .pagination-number:not(.is-active), html[data-theme="blue-gold"] .product-pagination .pagination-number:not(.is-active) {
   background:var(--surface-soft);
   color:var(--muted);
 }
