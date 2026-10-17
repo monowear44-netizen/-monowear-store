@@ -1,8 +1,8 @@
 {
   "id": "/studio",
-  "name": "MONOWEAR Studio",
-  "short_name": "MONOWEAR",
-  "description": "MONOWEAR store management and order alerts.",
+  "name": "Studio",
+  "short_name": "Studio",
+  "description": "Store management and order alerts.",
   "start_url": "/studio",
   "scope": "/",
   "display": "standalone",
