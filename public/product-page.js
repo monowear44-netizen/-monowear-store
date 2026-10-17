@@ -125,7 +125,7 @@
       '</section>';
     const launcher = $("monoFitLauncher"), panel = $("monoFitPanel");
     const messages = $("monoFitMessages"), options = $("monoFitOptions");
-    let occasion = "", vibe = "", stage = "occasion";
+    let occasion = "", vibe = "", stage = "occasion", notes = "";
     const addMessage = (text, who) => {
       const bubble = document.createElement("div");
       bubble.className = "mono-fit-message " + (who === "user" ? "is-user" : "is-assistant");
@@ -191,7 +191,13 @@
         if (freeText) {
           const queryWords = words(freeText);
           queryWords.forEach(w => { if(pWords.has(w)) score += 5; });
-          if (/cheap|budget|affordable|less|lower price/.test(freeText.toLowerCase()) && Number(p.price) < Number(product.price)) score += 4;
+          if (/cheap|budget|affordable|less|lower price|under|below|less than/.test(freeText.toLowerCase()) && Number(p.price) < Number(product.price)) score += 4;
+          const budgetMatch = String(freeText).match(/(?:under|below|less than|max(?:imum)?|within|budget|₦|ngn)\s*₦?\s*([\d,]+)\s*(k)?/i) || String(freeText).match(/([\d,]+)\s*k\b/i);
+          if (budgetMatch) {
+            const rawAmount = Number(String(budgetMatch[1]).replace(/,/g, ""));
+            const budget = rawAmount * (String(budgetMatch[2] || "").toLowerCase() === "k" ? 1000 : 1);
+            if (Number.isFinite(budget) && budget > 0) score += Number(p.price) <= budget ? 35 : -25;
+          }
         }
         return {product:p,score};
       }).sort((a,b)=>b.score-a.score || Number(a.product.price)-Number(b.product.price)).slice(0,3);
@@ -213,12 +219,12 @@
       vibe = value;
       addMessage(label, "user");
       addMessage(value === "surprise" ? "I'll mix complementary shapes and finishing pieces." : "I'll look for pieces that fit that direction.", "assistant");
-      recommend("");
+      recommend(notes);
     };
     const restart = () => {
       messages.innerHTML = "";
       options.innerHTML = "";
-      occasion = ""; vibe = ""; stage = "occasion";
+      occasion = ""; vibe = ""; stage = "occasion"; notes = "";
       showOccasion();
     };
     const openChat = () => {
@@ -250,6 +256,7 @@
       const lower = message.toLowerCase();
       if (/reset|start over|restart|another vibe/.test(lower)) return restart();
       if (stage === "occasion") {
+        notes = message;
         const detected = /night|date|party|club|going out|dinner|event/.test(lower) ? ["going-out","Going out"] :
           /statement|stand out|bold|loud/.test(lower) ? ["statement","Make a statement"] : ["everyday","Everyday"];
         occasion = detected[0];
@@ -263,24 +270,29 @@
         ]);
       } else if (stage === "vibe") {
         vibe = /layer|oversized|streetwear/.test(lower) ? "layered" : /bold|loud|statement|colour|color/.test(lower) ? "bold" : /surprise|anything/.test(lower) ? "surprise" : "minimal";
+        notes = [notes, message].filter(Boolean).join(" ");
         addMessage("I'll use that direction and your note to choose some pairings.", "assistant");
-        recommend(message);
+        recommend(notes);
       } else {
-        if (/cheap|budget|afford|lower price|less expensive|less costly/.test(lower)) {
-          addMessage("I'll prioritise lower-priced pieces from the available collection.", "assistant");
-          recommend(message);
+        if (/cheap|budget|afford|lower price|less expensive|less costly|under\s*\d|below\s*\d|₦|ngn|\d+\s*k\b/.test(lower)) {
+          notes = [notes, message].filter(Boolean).join(" ");
+          addMessage("I'll prioritise pieces that fit your budget where the collection allows.", "assistant");
+          recommend(notes);
         } else if (/minimal|clean|simple/.test(lower)) {
           vibe = "minimal";
+          notes = [notes, message].filter(Boolean).join(" ");
           addMessage("I'll keep the next pairing clean and minimal.", "assistant");
-          recommend(message);
+          recommend(notes);
         } else if (/layer|oversized|streetwear/.test(lower)) {
           vibe = "layered";
+          notes = [notes, message].filter(Boolean).join(" ");
           addMessage("I'll focus on layering and streetwear proportions.", "assistant");
-          recommend(message);
+          recommend(notes);
         } else if (/bold|statement|colour|color|loud/.test(lower)) {
           vibe = "bold";
+          notes = [notes, message].filter(Boolean).join(" ");
           addMessage("I'll look for a bolder combination.", "assistant");
-          recommend(message);
+          recommend(notes);
         } else {
           addMessage("I can adjust the recommendations by price or style. Choose a direction or tell me what you want to change.", "assistant");
           setOptions([
