@@ -187,8 +187,13 @@
         });
       }
       await request("/api/admin/push/subscribe", { method: "POST", body: JSON.stringify({ subscription: subscription.toJSON() }) });
-      // Only send the test/connected notification for the first successful setup.
-      await request("/api/admin/push/test", { method: "POST", body: "{}" });
+      // The connection notification is a one-time confirmation per installed browser.
+      // If setup was already recorded, keep the existing subscription without another alert.
+      let setupAlreadyRecorded = false;
+      try { setupAlreadyRecorded = localStorage.getItem(NOTIFICATION_SETUP_KEY) === "1"; } catch {}
+      if (!setupAlreadyRecorded) {
+        await request("/api/admin/push/test", { method: "POST", body: "{}" });
+      }
       notificationsEnabledOnThisDevice = true;
       notificationButton.dataset.enabled = "true";
       try { localStorage.setItem(NOTIFICATION_SETUP_KEY, "1"); } catch {}
