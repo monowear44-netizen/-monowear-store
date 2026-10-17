@@ -6,6 +6,7 @@
     white: { bg:"#ffffff", ink:"#171815", muted:"#77786f", line:"#deded8", accent:"#c6ff4b", panel:"#f7f7f3", soft:"#ededE7", sidebar:"#f0efe9" },
     emerald: { bg:"#073f32", ink:"#f2f5ef", muted:"#b8d0c5", line:"#286b59", accent:"#57d6a0", panel:"#0c4d3d", soft:"#145a48", sidebar:"#052f26" },
     gold: { bg:"#171510", ink:"#f6f0df", muted:"#c1b58f", line:"#51452a", accent:"#d5b15a", panel:"#211d14", soft:"#302817", sidebar:"#100f0b" },
+    "blue-gold": { bg:"#071426", ink:"#F5F1E6", muted:"#B7C4D8", line:"#304765", accent:"#D8B65C", panel:"#0D2038", soft:"#162D4B", sidebar:"#050E1D" },
     wine: { bg:"#2b0b16", ink:"#f8edf0", muted:"#c6a6b0", line:"#603044", accent:"#d87994", panel:"#3a101f", soft:"#481629", sidebar:"#210710" },
     gothic: { bg:"#0b0b0f", ink:"#e9e5ef", muted:"#aaa2b8", line:"#37313f", accent:"#b7a2d8", panel:"#15131a", soft:"#211d28", sidebar:"#08070b" },
     afterglow: { bg:"#100e13", ink:"#f5f0f5", muted:"#a69aaa", line:"#342b3a", accent:"#e9a5c7", panel:"#19161e", soft:"#211c27", sidebar:"#100e13" },
@@ -16,7 +17,7 @@
     const theme = String(settings.design_theme || "dark").toLowerCase();
     const p = palettes[theme] || palettes.dark;
     const validColor = (value, fallback) => /^#[0-9a-f]{6}$/i.test(String(value || "")) ? value : fallback;
-    const fixedPreset = theme === "helpway" || theme === "helpway-gradient" || theme === "afterglow";
+    const fixedPreset = theme === "helpway" || theme === "helpway-gradient" || theme === "afterglow" || theme === "blue-gold";
     const bg = fixedPreset ? p.bg : validColor(settings.design_background, p.bg);
     const ink = fixedPreset ? p.ink : validColor(settings.design_text, p.ink);
     const accent = fixedPreset ? p.accent : validColor(settings.design_accent, p.accent);
