@@ -67,7 +67,21 @@
     <p class="eyebrow">MONOWEAR / STUDIO</p>
     <h1 id="pageTitle">Overview</h1>
   </div>
-  <div class="studio-app-actions"><button id="studioInstallButton" class="secondary" type="button" hidden>INSTALL APP</button><button id="studioNotificationsButton" class="primary" type="button">ENABLE NOTIFICATIONS</button><span id="loggedEmail" class="muted"></span></div>
+  <div class="studio-app-actions">
+    <button id="studioInstallButton" class="secondary" type="button" hidden>INSTALL APP</button>
+    <div class="studio-notification-wrap">
+      <button id="studioBellButton" class="studio-bell-button" type="button" aria-label="Open notifications" aria-expanded="false" aria-controls="studioNotificationPanel">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
+        <span id="studioBellDot" class="studio-bell-dot" hidden></span>
+      </button>
+      <section id="studioNotificationPanel" class="studio-notification-panel" hidden aria-label="Notifications">
+        <div class="studio-notification-head"><div><p class="eyebrow">MONOWEAR / ALERTS</p><h2>Notifications</h2></div><button id="studioCloseNotifications" type="button" class="quiet" aria-label="Close notifications">✕</button></div>
+        <div id="studioNotificationList" class="studio-notification-list"><p class="muted">Checking store activity…</p></div>
+        <div class="studio-notification-footer"><button id="studioNotificationsButton" class="secondary" type="button">ENABLE DEVICE ALERTS</button></div>
+      </section>
+    </div>
+    <span id="loggedEmail" class="muted"></span>
+  </div>
 </header>
 <!-- LOGIN SCREEN -->
 <section id="loginScreen" class="login-wrap">
@@ -106,6 +120,11 @@
   <!-- OVERVIEW -->
   <section class="tab-panel" id="tab-overview">
     <div class="stats-grid overview-primary-grid">
+      <div class="stat sales-hero">
+        <span>TOTAL SALES</span>
+        <strong id="statRevenue">—</strong>
+        <small>Revenue from paid orders</small>
+      </div>
       <div class="stat">
         <span>PRODUCTS</span>
         <strong id="statProducts">—</strong>
@@ -115,24 +134,16 @@
         <strong id="statOrders">—</strong>
       </div>
       <div class="stat">
-        <span>NEEDS ATTENTION (STOCK ISSUES)</span>
+        <span>STOCK ALERTS</span>
         <strong id="statPending">—</strong>
       </div>
-      <div class="stat">
-        <span>TOTAL SALES</span>
-        <strong id="statRevenue">—</strong>
-      </div>
       <div class="stat traffic-stat">
-        <span>WEBSITE TRAFFIC</span>
-        <label class="traffic-period-label" for="trafficPeriod">PERIOD</label>
-        <select id="trafficPeriod" aria-label="Website traffic period">
-          <option value="today">Today</option>
-          <option value="7d">7 days</option>
-          <option value="14d">2 weeks</option>
-          <option value="28d">4 weeks</option>
-          <option value="6m">6 months</option>
-          <option value="1y">1 year</option>
-        </select>
+        <div class="traffic-heading"><span>WEBSITE TRAFFIC</span>
+          <label class="traffic-period-label" for="trafficPeriod">PERIOD</label>
+          <select id="trafficPeriod" aria-label="Website traffic period">
+            <option value="today">Today</option><option value="7d">7 days</option><option value="14d">2 weeks</option><option value="28d">4 weeks</option><option value="6m">6 months</option><option value="1y">1 year</option>
+          </select>
+        </div>
         <div class="traffic-numbers">
           <div><strong id="statVisitors">—</strong><small>People who visited</small></div>
           <div><strong id="statPageViews">—</strong><small>Page views</small></div>
@@ -141,48 +152,9 @@
         <div class="traffic-privacy-note">Visitor totals only. MONOWEAR does not show which products individual visitors viewed.</div>
       </div>
     </div>
-    <div class="stats-grid stats-row-2">
-      <div class="stat">
-        <span>PAID ORDERS</span>
-        <strong id="statPaidOrders">—</strong>
-      </div>
-      <div class="stat">
-        <span>LOW STOCK (5 OR LESS)</span>
-        <strong id="statLowStock">—</strong>
-      </div>
-    </div>
-    <div class="panel" id="monitoringPanel">
-      <p class="eyebrow">STORE OPERATIONS</p>
-      <h2>Store health &amp; recovery</h2>
-      <p class="muted">Check payment and email issues, then download a private backup of your database and uploaded media.</p>
-      <div id="monitoringSummary" class="monitoring-summary"><p class="muted">Load the latest store checks.</p></div>
-      <div class="toolbar">
-        <button class="secondary" type="button" id="refreshMonitoring">CHECK STORE HEALTH ↻</button>
-        <a class="primary" id="downloadStoreBackup" href="/api/admin/backup">DOWNLOAD FULL BACKUP ↓</a>
-      </div>
-      <p class="muted" id="backupMessage">Backups contain customer/order data. Keep the file private.</p>
-    </div>
-    <div class="panel welcome">
-      <p class="eyebrow">YOUR BRAND. YOUR CONTROL.</p>
-      <h2>Keep the store moving.</h2>
-      <p class="muted">
-        Update products, manage stock, change campaign images
-        and track orders from one studio.
-      </p>
-      <button
-        class="primary"
-        type="button"
-        onclick="switchTab('products')"
-      >
-        MANAGE PRODUCTS ↗
-      </button>
-      <button
-        class="secondary"
-        type="button"
-        onclick="switchTab('appearance')"
-      >
-        EDIT STOREFRONT ↗
-      </button>
+    <div class="overview-quick-links">
+      <button class="secondary" type="button" onclick="switchTab('orders')">VIEW ORDERS ↗</button>
+      <button class="secondary" type="button" onclick="switchTab('products')">MANAGE PRODUCTS ↗</button>
     </div>
   </section>
   <!-- PRODUCTS -->
