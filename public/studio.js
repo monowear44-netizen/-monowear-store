@@ -1142,6 +1142,61 @@ $("settingsForm").addEventListener("submit", async (event) => {
 let currentWaitlist = [];
 let currentNewsletter = [];
 
+function setCampaignMessage(id, message, isError = false) {
+  const element = $(id);
+  if (!element) return;
+  element.textContent = message;
+  element.classList.toggle("error", Boolean(isError));
+}
+function resetCampaignConfirmation() {
+  if ($("emailCampaignConfirm")) $("emailCampaignConfirm").value = "";
+  if ($("emailCampaignReviewed")) $("emailCampaignReviewed").checked = false;
+}
+$("generateCampaignDraft")?.addEventListener("click", async () => {
+  const request = $("emailCampaignRequest")?.value.trim();
+  if (!request) return setCampaignMessage("campaignDraftMessage","Describe the announcement first.",true);
+  const button=$("generateCampaignDraft"); button.disabled=true; button.textContent="WRITING…";
+  setCampaignMessage("campaignDraftMessage","MONOWEAR AI is writing your draft. No email will be sent.");
+  try {
+    const draft=await api("/api/admin/email-draft",{method:"POST",body:JSON.stringify({request,tone:$("emailCampaignTone")?.value||"cinematic, confident, concise"})});
+    $("emailCampaignSubject").value=draft.subject||"";
+    $("emailCampaignPreview").value=draft.preview||"";
+    $("emailCampaignBody").value=draft.body||"";
+    $("emailCampaignCtaLabel").value=draft.cta_label||"";
+    $("emailCampaignCtaUrl").value=draft.cta_url||"";
+    resetCampaignConfirmation();
+    setCampaignMessage("campaignDraftMessage","Draft ready. Edit it freely, then review the audience before sending.");
+    setCampaignMessage("campaignSendMessage","");
+  } catch(error) { setCampaignMessage("campaignDraftMessage",error.message,true); }
+  finally { button.disabled=false; button.textContent="WRITE EMAIL WITH AI ✦"; }
+});
+$("clearCampaignDraft")?.addEventListener("click",()=>{
+  ["emailCampaignSubject","emailCampaignPreview","emailCampaignBody","emailCampaignCtaLabel","emailCampaignCtaUrl","emailCampaignConfirm"].forEach(id=>{if($(id))$(id).value="";});
+  if($("emailCampaignReviewed"))$("emailCampaignReviewed").checked=false;
+  setCampaignMessage("campaignDraftMessage","Draft cleared."); setCampaignMessage("campaignSendMessage","");
+});
+["emailCampaignSubject","emailCampaignPreview","emailCampaignBody","emailCampaignCtaLabel","emailCampaignCtaUrl"].forEach(id=>$(id)?.addEventListener("input",resetCampaignConfirmation));
+$("sendCampaignEmail")?.addEventListener("click",async()=>{
+  const subject=$("emailCampaignSubject")?.value.trim()||"", body=$("emailCampaignBody")?.value.trim()||"", confirmText=$("emailCampaignConfirm")?.value.trim()||"";
+  if(!subject||!body)return setCampaignMessage("campaignSendMessage","Add an email subject and body first.",true);
+  if(!$("emailCampaignReviewed")?.checked)return setCampaignMessage("campaignSendMessage","Tick the review box after checking the final email and audience.",true);
+  if(confirmText!=="SEND")return setCampaignMessage("campaignSendMessage","Type SEND exactly to authorize delivery.",true);
+  const audienceCount=currentNewsletter.filter(item=>!item.unsubscribed_at).length;
+  if(!audienceCount)return setCampaignMessage("campaignSendMessage","No active general-list subscribers are loaded. Refresh the audience first.",true);
+  if(audienceCount>100)return setCampaignMessage("campaignSendMessage","This campaign is over the current 100-recipient safety limit. Contact support before a larger send.",true);
+  const confirmed=window.confirm("FINAL CONFIRMATION\n\nSend “"+subject+"” to "+audienceCount+" active general-list subscriber(s) through Resend?\n\nThis cannot be undone. Product-specific waitlists are excluded.");
+  if(!confirmed)return;
+  const button=$("sendCampaignEmail");button.disabled=true;button.textContent="SENDING…";
+  setCampaignMessage("campaignSendMessage","Sending through Resend. Keep Studio open until the result appears.");
+  try {
+    const result=await api("/api/admin/email-campaign",{method:"POST",body:JSON.stringify({subject,preview:$("emailCampaignPreview")?.value||"",body,cta_label:$("emailCampaignCtaLabel")?.value||"",cta_url:$("emailCampaignCtaUrl")?.value||"",confirm_text:confirmText})});
+    setCampaignMessage("campaignSendMessage","Campaign finished: "+result.sent+" sent, "+result.failed+" failed out of "+result.attempted+" attempted.",result.failed>0);
+    if(result.failures?.length)setCampaignMessage("campaignDraftMessage","Some deliveries failed: "+result.failures.map(item=>item.email+" ("+item.error+")").join("; "),true);
+    resetCampaignConfirmation(); await loadAudience();
+  } catch(error) { setCampaignMessage("campaignSendMessage",error.message,true); }
+  finally { button.disabled=false;button.textContent="SEND CAMPAIGN THROUGH RESEND ↗"; }
+});
+
 function audienceDate(value) {
   if (!value) return "—";
   const parsed = new Date(String(value).replace(" ", "T") + (String(value).includes("Z") ? "" : "Z"));
