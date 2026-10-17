@@ -309,76 +309,118 @@ function studioNotificationSoundEnabled() {
   try { return localStorage.getItem(STUDIO_NOTIFICATION_SOUND_KEY) !== "off"; } catch { return true; }
 }
 
-function playStudioNotificationSound() {
-  if (!studioNotificationSoundEnabled()) return;
+async function playStudioNotificationSound(force = false) {
+  if (!force && !studioNotificationSoundEnabled()) return;
   try {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) return;
+    if (!AudioContextClass) {
+      toast("This browser does not support Studio sound.");
+      return;
+    }
     studioNotificationSoundContext = studioNotificationSoundContext || new AudioContextClass();
     const context = studioNotificationSoundContext;
-    if (context.state === "suspended") context.resume().catch(() => {});
-    const now = context.currentTime + 0.025;
+    if (context.state !== "running") await context.resume();
+    if (context.state !== "running") {
+      toast("Tap Test sound again after allowing audio in your browser.");
+      return;
+    }
 
-    // A short cash-register "ka-ching" style test sound, synthesized locally.
-    // Bright metallic register bell, followed by a quick low drawer/cash clack.
-    [[1318.5, 0, 0.34, 0.105], [1760, 0.018, 0.27, 0.065], [2637, 0.012, 0.19, 0.028]].forEach(([frequency, offset, duration, volume]) => {
+    const now = context.currentTime + 0.035;
+
+    // Layered cash-register style "ka-ching": bright inharmonic bell partials,
+    // a short rising double chime, and a soft register/drawer clack.
+    const bells = [
+      [1568, 0.000, 0.42, 0.105],
+      [2093, 0.014, 0.36, 0.075],
+      [2637, 0.028, 0.29, 0.046],
+      [3136, 0.018, 0.24, 0.024],
+      [1174.7, 0.095, 0.32, 0.052],
+      [1760, 0.102, 0.28, 0.042],
+      [2349.3, 0.108, 0.22, 0.023]
+    ];
+    bells.forEach(([frequency, offset, duration, volume]) => {
       const oscillator = context.createOscillator();
       const gain = context.createGain();
       const filter = context.createBiquadFilter();
-      oscillator.type = "triangle";
+      oscillator.type = "sine";
       oscillator.frequency.setValueAtTime(frequency, now + offset);
       filter.type = "highpass";
-      filter.frequency.setValueAtTime(650, now + offset);
+      filter.frequency.setValueAtTime(480, now + offset);
+      filter.Q.setValueAtTime(0.7, now + offset);
       gain.gain.setValueAtTime(0.0001, now + offset);
-      gain.gain.exponentialRampToValueAtTime(volume, now + offset + 0.008);
+      gain.gain.exponentialRampToValueAtTime(volume, now + offset + 0.006);
+      gain.gain.exponentialRampToValueAtTime(volume * 0.34, now + offset + 0.055);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + duration);
       oscillator.connect(filter);
       filter.connect(gain);
       gain.connect(context.destination);
       oscillator.start(now + offset);
-      oscillator.stop(now + offset + duration + 0.01);
+      oscillator.stop(now + offset + duration + 0.015);
     });
 
-    const clack = context.createOscillator();
+    // Brief low, filtered clack to suggest the cash drawer closing.
+    const clack = context.createBufferSource();
+    const buffer = context.createBuffer(1, Math.floor(context.sampleRate * 0.075), context.sampleRate);
+    const channel = buffer.getChannelData(0);
+    for (let i = 0; i < channel.length; i++) {
+      const envelope = Math.pow(1 - i / channel.length, 7);
+      channel[i] = (Math.random() * 2 - 1) * envelope;
+    }
+    clack.buffer = buffer;
+    const lowpass = context.createBiquadFilter();
+    lowpass.type = "lowpass";
+    lowpass.frequency.setValueAtTime(900, now + 0.13);
     const clackGain = context.createGain();
-    clack.type = "square";
-    clack.frequency.setValueAtTime(185, now + 0.105);
-    clack.frequency.exponentialRampToValueAtTime(72, now + 0.19);
-    clackGain.gain.setValueAtTime(0.0001, now + 0.105);
-    clackGain.gain.exponentialRampToValueAtTime(0.055, now + 0.115);
-    clackGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
-    clack.connect(clackGain);
+    clackGain.gain.setValueAtTime(0.0001, now + 0.13);
+    clackGain.gain.exponentialRampToValueAtTime(0.12, now + 0.136);
+    clackGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.205);
+    clack.connect(lowpass);
+    lowpass.connect(clackGain);
     clackGain.connect(context.destination);
-    clack.start(now + 0.105);
-    clack.stop(now + 0.23);
+    clack.start(now + 0.13);
+    clack.stop(now + 0.215);
   } catch (error) {
-    // Sound is an enhancement; notifications must still work if audio is unavailable.
     console.debug("Studio notification sound unavailable:", error.message);
+    if (force) toast("Sound could not play. Tap Test sound once more.");
   }
 }
 
 function ensureStudioNotificationSoundControl() {
   const footer = $("studioNotificationPanel")?.querySelector(".studio-notification-footer");
-  if (!footer || $("studioNotificationSoundToggle")) return;
-  const button = document.createElement("button");
-  button.id = "studioNotificationSoundToggle";
-  button.type = "button";
-  button.className = "quiet";
-  button.style.marginRight = "8px";
-  const update = () => {
-    const enabled = studioNotificationSoundEnabled();
-    button.textContent = enabled ? "Sound: ON ♪" : "Sound: OFF";
-    button.setAttribute("aria-pressed", String(enabled));
-    button.title = enabled ? "Turn Studio notification sounds off" : "Turn Studio notification sounds on";
-  };
-  button.addEventListener("click", () => {
-    const enabled = !studioNotificationSoundEnabled();
-    try { localStorage.setItem(STUDIO_NOTIFICATION_SOUND_KEY, enabled ? "on" : "off"); } catch {}
+  if (!footer) return;
+
+  if (!$("studioNotificationSoundToggle")) {
+    const button = document.createElement("button");
+    button.id = "studioNotificationSoundToggle";
+    button.type = "button";
+    button.className = "quiet";
+    button.style.marginRight = "8px";
+    const update = () => {
+      const enabled = studioNotificationSoundEnabled();
+      button.textContent = enabled ? "Sound: ON ♪" : "Sound: OFF";
+      button.setAttribute("aria-pressed", String(enabled));
+      button.title = enabled ? "Turn Studio notification sounds off" : "Turn Studio notification sounds on";
+    };
+    button.addEventListener("click", () => {
+      const enabled = !studioNotificationSoundEnabled();
+      try { localStorage.setItem(STUDIO_NOTIFICATION_SOUND_KEY, enabled ? "on" : "off"); } catch {}
+      update();
+      if (enabled) playStudioNotificationSound(true);
+    });
+    footer.insertBefore(button, footer.firstChild);
     update();
-    if (enabled) playStudioNotificationSound();
-  });
-  footer.insertBefore(button, footer.firstChild);
-  update();
+  }
+
+  if (!$("studioNotificationSoundTest")) {
+    const test = document.createElement("button");
+    test.id = "studioNotificationSoundTest";
+    test.type = "button";
+    test.className = "secondary";
+    test.textContent = "Test sound";
+    test.title = "Play a sample cash-register notification sound";
+    test.addEventListener("click", () => playStudioNotificationSound(true));
+    footer.appendChild(test);
+  }
 }
 
 function getDismissedStudioNotifications() {
