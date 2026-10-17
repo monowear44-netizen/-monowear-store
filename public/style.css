@@ -952,3 +952,12 @@ html[data-theme="gold"] .waitlist-section{
   .waitlist-section .newsletter-form-row input{flex-basis:125px!important;width:125px!important;max-width:125px!important}
   .waitlist-section .newsletter-form-row .button{padding:0 7px!important;font-size:6.5px!important}
 }
+
+
+/* Compact storefront story section: keep the manifesto subtle, not a full-page block. */
+.manifesto{padding:34px 7% 30px!important}
+.manifesto h2{font-size:clamp(25px,3.4vw,42px)!important;line-height:1.05!important;margin:10px 0!important}
+.manifesto>p:not(.eyebrow){max-width:470px!important;font-size:12px!important;line-height:1.55!important}
+.manifesto-signature{margin-top:16px!important;font-size:9px!important;letter-spacing:.1em!important}
+.manifesto .eyebrow{font-size:9px!important;margin:0!important}
+@media(max-width:700px){.manifesto{padding:27px 6% 24px!important}.manifesto h2{font-size:clamp(24px,6vw,32px)!important}.manifesto>p:not(.eyebrow){font-size:11px!important}.manifesto-signature{margin-top:12px!important}}
