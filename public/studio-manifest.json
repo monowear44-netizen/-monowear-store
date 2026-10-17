@@ -1,0 +1,20 @@
+{
+  "id": "/studio",
+  "name": "MONOWEAR Studio",
+  "short_name": "MONOWEAR",
+  "description": "MONOWEAR store management and order alerts.",
+  "start_url": "/studio",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#efeee8",
+  "theme_color": "#151613",
+  "icons": [
+    {
+      "src": "/studio-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
