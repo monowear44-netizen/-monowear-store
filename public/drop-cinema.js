@@ -40,14 +40,15 @@
     const date = new Date(dateString + "T00:00:00+01:00");
     return Number.isNaN(date.getTime()) ? null : date;
   };
+  const previewMode = new URLSearchParams(window.location.search).get("cinemaPreview") === "1";
   const applyCampaignWindow = (settings = {}) => {
     const preorderDate = String(settings.drop_preorder_date || "2026-10-21");
     const launchDate = String(settings.drop_launch_date || "2026-11-10");
     const startsAt = dateAtMidnightWAT(preorderDate);
     const endsAt = dateAtMidnightWAT(launchDate);
     const now = Date.now();
-    const isCampaignWindow = startsAt && endsAt && endsAt > startsAt &&
-      now >= startsAt.getTime() && now < endsAt.getTime();
+    const isCampaignWindow = previewMode || (startsAt && endsAt && endsAt > startsAt &&
+      now >= startsAt.getTime() && now < endsAt.getTime());
     hero.classList.toggle("drop-cinema-active", Boolean(isCampaignWindow));
     if (isCampaignWindow) {
       hero.setAttribute("data-campaign-animation", "help-is-on-the-way");
