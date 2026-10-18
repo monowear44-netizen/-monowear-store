@@ -1,0 +1,152 @@
+/* MONOWEAR — HELP IS ON THE WAY cinematic preorder header */
+.hero.drop-cinema-active {
+  isolation: isolate;
+  background-color: #090b0d;
+}
+.drop-cinema-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(ellipse at 76% 43%, rgba(125, 28, 43, .38), transparent 34%),
+    radial-gradient(ellipse at 62% 90%, rgba(173, 117, 80, .13), transparent 42%),
+    linear-gradient(110deg, #08090b 0%, #151014 49%, #080b10 100%);
+  transition: opacity 1.2s ease;
+}
+.drop-cinema-active .drop-cinema-layer { opacity: 1; }
+.drop-cinema-layer::before,
+.drop-cinema-layer::after {
+  content: "";
+  position: absolute;
+  inset: -22%;
+  pointer-events: none;
+}
+.drop-cinema-layer::before {
+  background:
+    radial-gradient(ellipse at 20% 65%, rgba(110, 119, 133, .16), transparent 35%),
+    radial-gradient(ellipse at 78% 70%, rgba(130, 48, 60, .22), transparent 34%),
+    radial-gradient(ellipse at 52% 20%, rgba(220, 195, 171, .08), transparent 28%);
+  filter: blur(28px);
+  animation: mwCinemaSmoke 19s ease-in-out infinite alternate;
+}
+.drop-cinema-layer::after {
+  inset: 0;
+  opacity: .2;
+  background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,255,255,.035) 4px, transparent 5px);
+  mix-blend-mode: screen;
+}
+.drop-cinema-light {
+  position: absolute;
+  top: -28%;
+  left: 72%;
+  width: clamp(120px, 24vw, 360px);
+  height: 155%;
+  transform: rotate(24deg);
+  transform-origin: top center;
+  background: linear-gradient(90deg, transparent, rgba(220, 197, 178, .055), rgba(220, 197, 178, .12), transparent);
+  filter: blur(13px);
+  animation: mwCinemaLight 8s ease-in-out infinite alternate;
+}
+.drop-cinema-wordmark {
+  position: absolute;
+  right: 7%;
+  top: 15%;
+  color: rgba(255,255,255,.055);
+  font: 800 clamp(58px, 12vw, 170px)/.8 Manrope, Arial, sans-serif;
+  letter-spacing: -.105em;
+  white-space: nowrap;
+  transform: translateX(3%);
+  animation: mwCinemaDrift 16s ease-in-out infinite alternate;
+}
+.drop-cinema-caption {
+  position: absolute;
+  right: 9%;
+  bottom: 76px;
+  color: rgba(246,238,232,.65);
+  font: 10px 'DM Mono', monospace;
+  letter-spacing: .22em;
+  text-align: right;
+  text-transform: uppercase;
+}
+.drop-cinema-caption span {
+  display: block;
+  margin-top: 9px;
+  color: rgba(211, 161, 147, .75);
+  letter-spacing: .16em;
+}
+.drop-cinema-embers {
+  position: absolute;
+  inset: 0;
+}
+.drop-cinema-ember {
+  position: absolute;
+  bottom: -12px;
+  left: var(--x);
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  opacity: 0;
+  background: #d6a58e;
+  box-shadow: 0 0 12px 2px rgba(177, 75, 63, .36);
+  animation: mwCinemaEmber var(--duration) linear var(--delay) infinite;
+}
+.drop-cinema-active .hero-copy {
+  animation: mwCinemaCopyIn 1.1s cubic-bezier(.2,.7,.2,1) both;
+}
+.drop-cinema-active #heroTitle {
+  animation: mwCinemaTitleIn 1.35s cubic-bezier(.16,1,.3,1) both;
+}
+.drop-cinema-active .hero .eyebrow {
+  animation: mwCinemaEyebrow 1.2s ease both;
+}
+.drop-cinema-active .hero-index {
+  z-index: 2;
+}
+@keyframes mwCinemaSmoke {
+  0% { transform: translate3d(-3%, 2%, 0) scale(1); }
+  100% { transform: translate3d(4%, -3%, 0) scale(1.12); }
+}
+@keyframes mwCinemaLight {
+  0% { opacity: .28; transform: translateX(-35px) rotate(24deg); }
+  100% { opacity: .85; transform: translateX(45px) rotate(18deg); }
+}
+@keyframes mwCinemaDrift {
+  0% { transform: translateX(3%) translateY(0); }
+  100% { transform: translateX(-2%) translateY(9px); }
+}
+@keyframes mwCinemaEmber {
+  0% { transform: translate3d(0, 0, 0) scale(.5); opacity: 0; }
+  12% { opacity: .65; }
+  78% { opacity: .32; }
+  100% { transform: translate3d(var(--drift), -115vh, 0) scale(1.15); opacity: 0; }
+}
+@keyframes mwCinemaCopyIn {
+  from { opacity: 0; transform: translateY(22px); filter: blur(5px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+@keyframes mwCinemaTitleIn {
+  from { opacity: 0; transform: translateY(18px); letter-spacing: -.07em; filter: blur(7px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+@keyframes mwCinemaEyebrow {
+  from { opacity: 0; letter-spacing: .32em; }
+  to { opacity: 1; letter-spacing: .17em; }
+}
+@media (max-width: 700px) {
+  .drop-cinema-wordmark { top: 14%; right: 3%; font-size: clamp(56px, 15vw, 100px); }
+  .drop-cinema-light { left: 60%; opacity: .55; }
+  .drop-cinema-caption { right: 7%; bottom: 65px; font-size: 8px; }
+  .drop-cinema-ember { box-shadow: 0 0 8px 1px rgba(177, 75, 63, .3); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .drop-cinema-layer::before, .drop-cinema-light, .drop-cinema-wordmark,
+  .drop-cinema-ember, .drop-cinema-active .hero-copy,
+  .drop-cinema-active #heroTitle, .drop-cinema-active .hero .eyebrow {
+    animation: none !important;
+  }
+  .drop-cinema-active .hero-copy, .drop-cinema-active #heroTitle,
+  .drop-cinema-active .hero .eyebrow { opacity: 1; transform: none; filter: none; }
+}
