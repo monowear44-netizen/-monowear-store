@@ -99,7 +99,7 @@
 .drop-cinema-active #heroTitle {
   animation: mwCinemaTitleIn 1.35s cubic-bezier(.16,1,.3,1) both;
 }
-.drop-cinema-active .hero .eyebrow {
+.hero.drop-cinema-active .hero-copy > .eyebrow {
   animation: mwCinemaEyebrow 1.2s ease both;
 }
 .drop-cinema-active .hero-index {
@@ -144,7 +144,7 @@
 @media (prefers-reduced-motion: reduce) {
   .drop-cinema-layer::before, .drop-cinema-light, .drop-cinema-wordmark,
   .drop-cinema-ember, .drop-cinema-active .hero-copy,
-  .drop-cinema-active #heroTitle, .drop-cinema-active .hero .eyebrow {
+  .drop-cinema-active #heroTitle, .hero.drop-cinema-active .hero-copy > .eyebrow {
     animation: none !important;
   }
   .drop-cinema-active .hero-copy, .drop-cinema-active #heroTitle,
