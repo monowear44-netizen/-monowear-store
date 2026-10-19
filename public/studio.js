@@ -97,12 +97,27 @@ function toast(message) {
   }, 3500);
 }
 
-function showApp(email) {
+const studioLoaderStartedAt = Date.now();
+
+async function hideStudioLoader() {
+  const loader = $("studioLoader");
+  if (!loader) return;
+  const minimumVisibleTime = 850;
+  const elapsed = Date.now() - studioLoaderStartedAt;
+  if (elapsed < minimumVisibleTime) {
+    await new Promise((resolve) => setTimeout(resolve, minimumVisibleTime - elapsed));
+  }
+  loader.classList.add("is-leaving");
+  window.setTimeout(() => loader.remove(), 500);
+}
+
+async function showApp(email) {
   $("loginScreen").hidden = true;
   $("appScreen").hidden = false;
   $("loggedEmail").textContent = email || "";
 
-  loadAll();
+  await loadAll();
+  await hideStudioLoader();
 }
 
 function showLogin() {
@@ -143,12 +158,14 @@ async function checkAuth() {
     const result = await api("/api/admin/me");
 
     if (result.authenticated) {
-      showApp(result.admin?.email || result.email || "");
+      await showApp(result.admin?.email || result.email || "");
     } else {
       showLogin();
+      await hideStudioLoader();
     }
   } catch {
     showLogin();
+    await hideStudioLoader();
   }
 }
 
@@ -165,7 +182,7 @@ $("loginForm").addEventListener("submit", async (event) => {
       )
     });
 
-    showApp(result.admin?.email || result.email || "");
+    await showApp(result.admin?.email || result.email || "");
   } catch (error) {
     showError("loginError", error.message);
   }
