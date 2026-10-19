@@ -8,7 +8,28 @@
   <link rel="stylesheet" href="/studio.css">
   <link rel="stylesheet" href="/studio-extra.css">
 </head>
-<body>
+<body>\n  <div id="studioLoader" role="status" aria-live="polite" aria-label="Loading MONOWEAR Studio">
+    <div class="studio-loader-content">
+      <div class="studio-loader-mark">MONOWEAR<span>®</span></div>
+      <div class="studio-loader-line"><span></span></div>
+      <p class="studio-loader-title">ENTERING THE STUDIO</p>
+      <p class="studio-loader-subtitle">Preparing your control room…</p>
+    </div>
+  </div>
+  <style>
+    #studioLoader{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:#080908;color:#f5f5f0;opacity:1;visibility:visible;transition:opacity .45s ease,visibility .45s ease}
+    #studioLoader.is-leaving{opacity:0;visibility:hidden;pointer-events:none}
+    .studio-loader-content{width:min(320px,82vw);text-align:center}
+    .studio-loader-mark{font-size:clamp(25px,6vw,34px);font-weight:800;letter-spacing:.17em}
+    .studio-loader-mark span{font-size:10px;vertical-align:top;margin-left:3px}
+    .studio-loader-line{height:2px;background:#242824;margin:30px 0 22px;overflow:hidden}
+    .studio-loader-line span{display:block;width:38%;height:100%;background:#75a879;animation:studioLoading 1.15s ease-in-out infinite}
+    .studio-loader-title{font-size:10px;letter-spacing:.23em;font-weight:700;margin:0 0 9px}
+    .studio-loader-subtitle{font-size:12px;letter-spacing:.04em;color:#969b95;margin:0}
+    @keyframes studioLoading{0%{transform:translateX(-110%)}100%{transform:translateX(370%)}}
+    @media(prefers-reduced-motion:reduce){#studioLoader{transition:none}.studio-loader-line span{animation-duration:2.5s}}
+  </style>
+
   <!-- SIDEBAR -->
   <aside class="sidebar">
 <a href="/" class="logo">
