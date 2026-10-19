@@ -216,3 +216,45 @@
 @media(prefers-reduced-motion:reduce) {
   .drop-cinema-frame,.drop-cinema-scan,.drop-cinema-wordmark,.drop-cinema-active .hero-copy::after {animation:none!important;opacity:1}
 }
+
+
+/* Compact drop-product slideshow; the storefront hero remains the background. */
+.drop-cinema-layer { background: transparent !important; }
+.drop-cinema-layer::before { background: none !important; }
+.drop-cinema-layer::after { background: none !important; opacity: 0 !important; }
+.drop-cinema-products {
+  position:absolute; z-index:2; right:9%; bottom:74px;
+  width:clamp(112px, 14vw, 168px); min-height:0;
+  display:flex; flex-direction:column; align-items:flex-end; gap:6px;
+  color:rgba(246,238,232,.78); text-decoration:none; text-align:right;
+}
+.drop-cinema-products[hidden] { display:none !important; }
+.drop-cinema-product-image {
+  width:100%; height:clamp(88px, 10vw, 126px); overflow:hidden;
+  display:grid; place-items:center; background:transparent;
+}
+.drop-cinema-product-image img {
+  display:block; width:100%; height:100%; object-fit:contain;
+  filter:drop-shadow(0 9px 14px rgba(0,0,0,.26));
+  opacity:0; transform:translateY(5px) scale(.97);
+}
+.drop-cinema-products.is-changing .drop-cinema-product-image img {
+  animation:mwProductSlideIn .65s cubic-bezier(.2,.7,.2,1) forwards;
+}
+.drop-cinema-product-name {
+  max-width:100%; font:9px 'DM Mono',monospace; letter-spacing:.12em;
+  text-transform:uppercase; line-height:1.5;
+}
+.drop-cinema-product-index {
+  font:8px 'DM Mono',monospace; letter-spacing:.16em; color:rgba(218,177,151,.72);
+}
+@keyframes mwProductSlideIn { to {opacity:1; transform:translateY(0) scale(1)} }
+@media(max-width:700px) {
+  .drop-cinema-products {right:7%; bottom:64px; width:clamp(96px,28vw,124px); gap:4px}
+  .drop-cinema-product-image {height:clamp(78px,23vw,102px)}
+  .drop-cinema-product-name {font-size:8px; letter-spacing:.08em}
+  .drop-cinema-product-index {font-size:7px}
+}
+@media(prefers-reduced-motion:reduce) {
+  .drop-cinema-products.is-changing .drop-cinema-product-image img {animation:none;opacity:1;transform:none}
+}
