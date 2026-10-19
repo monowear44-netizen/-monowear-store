@@ -97,17 +97,26 @@ function toast(message) {
   }, 3500);
 }
 
-function showApp(email) {
+function hideStudioLoader() {
+  const loader = $("studioLoader");
+  if (!loader) return;
+  loader.classList.add("is-leaving");
+  window.setTimeout(() => loader.remove(), 500);
+}
+
+async function showApp(email) {
   $("loginScreen").hidden = true;
   $("appScreen").hidden = false;
   $("loggedEmail").textContent = email || "";
 
-  loadAll();
+  await loadAll();
+  hideStudioLoader();
 }
 
 function showLogin() {
   $("loginScreen").hidden = false;
   $("appScreen").hidden = true;
+  hideStudioLoader();
 }
 
 function setPreview(previewId, url, placeholderId) {
