@@ -97,11 +97,22 @@ function toast(message) {
   }, 3500);
 }
 
+const studioLoaderStartedAt = Date.now();
+
 function hideStudioLoader() {
   const loader = $("studioLoader");
   if (!loader) return;
-  loader.classList.add("is-leaving");
-  window.setTimeout(() => loader.remove(), 500);
+
+  // Keep the branded intro visible briefly so it doesn't disappear instantly
+  // while the authentication check is completing.
+  const minimumDisplayMs = 1400;
+  const remaining = Math.max(0, minimumDisplayMs - (Date.now() - studioLoaderStartedAt));
+
+  window.setTimeout(() => {
+    if (!loader.isConnected) return;
+    loader.classList.add("is-leaving");
+    window.setTimeout(() => loader.remove(), 500);
+  }, remaining);
 }
 
 async function showApp(email) {
