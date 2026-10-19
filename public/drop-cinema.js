@@ -8,12 +8,27 @@
   const layer = document.createElement("div");
   layer.className = "drop-cinema-layer";
   layer.setAttribute("aria-hidden", "true");
+  const titleNode = document.getElementById("heroTitle");
+  const subtitleNode = document.getElementById("heroSubtitle");
+  const campaignTitle = (titleNode?.innerText || "HELP IS ON THE WAY.")
+    .replace(/\\s+/g, " ").trim();
+  const campaignWords = campaignTitle.split(" ").filter(Boolean);
+  const wordmarkLines = campaignWords.length > 3
+    ? [campaignWords.slice(0, 2).join(" "), campaignWords.slice(2, 4).join(" "), campaignWords.slice(4).join(" ")]
+    : [campaignWords.slice(0, 1).join(" "), campaignWords.slice(1, 3).join(" "), campaignWords.slice(3).join(" ")];
+  const campaignSubtitle = (subtitleNode?.innerText || "PRESSURE. PERSISTENCE. A WAY THROUGH.")
+    .replace(/\\s+/g, " ").trim();
   layer.innerHTML = [
     '<div class="drop-cinema-light"></div>',
-    '<div class="drop-cinema-wordmark">HELP<br>IS ON<br>THE WAY.</div>',
+    '<div class="drop-cinema-scan"></div>',
+    '<div class="drop-cinema-frame"></div>',
+    '<div class="drop-cinema-wordmark"></div>',
     '<div class="drop-cinema-embers"></div>',
-    '<div class="drop-cinema-caption">MONOWEAR / DROP 001<span>PRESSURE. PERSISTENCE. A WAY THROUGH.</span></div>'
+    '<div class="drop-cinema-caption">MONOWEAR / CAMPAIGN<span></span></div>'
   ].join("");
+  layer.querySelector(".drop-cinema-wordmark").innerHTML = wordmarkLines
+    .filter(Boolean).map((line) => line.replace(/[&<>"]/g, "")).join("<br>");
+  layer.querySelector(".drop-cinema-caption span").textContent = campaignSubtitle;
   const grain = hero.querySelector(".hero-grain");
   if (grain) grain.insertAdjacentElement("afterend", layer);
   else hero.prepend(layer);
@@ -45,13 +60,24 @@
     const preorderDate = String(settings.drop_preorder_date || "2026-10-21");
     const launchDate = String(settings.drop_launch_date || "2026-11-10");
     const startsAt = dateAtMidnightWAT(preorderDate);
-    const endsAt = dateAtMidnightWAT(launchDate);
+    const launchAt = dateAtMidnightWAT(launchDate);
+    // Keep the campaign cinema running through the entire month containing drop day.
+    // It clears automatically at midnight WAT on the first day of the following month.
+    let endsAt = null;
+    if (launchAt) {
+      const nextMonth = new Date(launchAt.getTime());
+      nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1);
+      const year = nextMonth.getUTCFullYear();
+      const month = String(nextMonth.getUTCMonth() + 1).padStart(2, "0");
+      endsAt = dateAtMidnightWAT(`${year}-${month}-01`);
+    }
     const now = Date.now();
-    const isCampaignWindow = previewMode || (startsAt && endsAt && endsAt > startsAt &&
+    const isCampaignWindow = previewMode || (startsAt && launchAt && endsAt &&
+      launchAt >= startsAt && endsAt > startsAt &&
       now >= startsAt.getTime() && now < endsAt.getTime());
     hero.classList.toggle("drop-cinema-active", Boolean(isCampaignWindow));
     if (isCampaignWindow) {
-      hero.setAttribute("data-campaign-animation", "help-is-on-the-way");
+      hero.setAttribute("data-campaign-animation", "current-drop");
     } else {
       hero.removeAttribute("data-campaign-animation");
     }
