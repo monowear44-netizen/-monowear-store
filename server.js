@@ -3045,15 +3045,27 @@ function markOrderFailed(reference, message = "Payment was not completed.") {
 // not live GIG Logistics quotes.
 // ============================================================
 const MONOWEAR_HOME_DELIVERY_FEES = {
-  "ogun": 5000,
-  "imo": 5000,
-  "abia": 7000,
-  "enugu": 8000,
-  "anambra": 8000,
-  "edo": 8000,
-  "rivers": 8000,
-  "delta": 8000,
-  "lagos": 12000
+  "ogun": 9000,
+  "imo": 9000,
+  "abia": 9000,
+  "enugu": 9000,
+  "anambra": 9000,
+  "edo": 9000,
+  "rivers": 9000,
+  "delta": 9000,
+  "lagos": 9000
+};
+
+const MONOWEAR_CENTRE_PICKUP_FEES = {
+  "ogun": 4000,
+  "imo": 4000,
+  "abia": 6000,
+  "enugu": 7000,
+  "anambra": 7000,
+  "edo": 7000,
+  "rivers": 7000,
+  "delta": 7000,
+  "lagos": 8000
 };
 
 function normalizeShippingState(value) {
@@ -3125,14 +3137,17 @@ function getFixedShippingQuote(stateValue, items = []) {
     });
   }
 
-  // Destination-centre pickup is available at the same flat fee in every state.
+  // Centre-pickup fees are destination-specific and lower than home delivery
+  // for the states with owner-confirmed pricing. Other states retain the prior
+  // flat pickup fee until a destination-specific rate is supplied.
+  const pickupAmount = MONOWEAR_CENTRE_PICKUP_FEES[state] ?? 10000;
   rates.push({
     courier_id: "monowear-fixed",
     service_code: state + "-pickup",
-    courier_name: "Pickup at destination centre (all states)",
+    courier_name: "Pickup at destination centre",
     service_type: "pickup",
-    amount: 10000,
-    per_item_amount: 10000,
+    amount: pickupAmount,
+    per_item_amount: pickupAmount,
     item_count: itemCount,
     delivery_time: "5–10 days after dispatch; pickup-centre details confirmed after dispatch",
     request_token: "fixed-" + state + "-pickup"
