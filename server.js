@@ -3040,56 +3040,24 @@ function markOrderFailed(reference, message = "Payment was not completed.") {
 
 // ============================================================
 // MONOWEAR FIXED SHIPPING FEES
-// Origin: Ijebu Ode, Ogun State. Customer pays one fee per order.
-// These are MONOWEAR's provisional customer-facing fees, not live
-// GIG Logistics quotes. Confirm current carrier rates before relying
-// on them as exact courier costs.
+// Origin: Ijebu Ode, Ogun State. Fees are flat per order, not per item.
+// These are customer-facing MONOWEAR rates supplied by the store owner,
+// not live GIG Logistics quotes.
 // ============================================================
-const MONOWEAR_FIXED_SHIPPING_FEES = {
-  "ogun": 3000,
-  "lagos": 4000,
-  "oyo": 4500,
-  "osun": 4500,
-  "ondo": 4500,
-  "ekiti": 5000,
-  "kwara": 5500,
-  "edo": 6000,
-  "delta": 6000,
-  "kogi": 6000,
-  "federal capital territory": 6500,
-  "fct": 6500,
-  "abuja": 6500,
-  "abia": 6500,
-  "anambra": 6500,
-  "ebonyi": 6500,
-  "enugu": 6500,
-  "imo": 6500,
-  "benue": 6500,
-  "nasarawa": 6500,
-  "nassarawa": 6500,
-  "niger": 6500,
-  "plateau": 6500,
-  "kaduna": 7000,
-  "rivers": 7000,
-  "akwa ibom": 7000,
-  "cross river": 7000,
-  "bayelsa": 7000,
-  "bauchi": 7500,
-  "gombe": 7500,
-  "adamawa": 7500,
-  "jigawa": 7500,
-  "kano": 7500,
-  "taraba": 7500,
-  "katsina": 8000,
-  "kebbi": 8000,
-  "sokoto": 8000,
-  "zamfara": 8000,
-  "yobe": 8000,
-  "borno": 8500
+const MONOWEAR_HOME_DELIVERY_FEES = {
+  "ogun": 5000,
+  "imo": 5000,
+  "abia": 7000,
+  "enugu": 8000,
+  "anambra": 8000,
+  "edo": 8000,
+  "rivers": 8000,
+  "delta": 8000,
+  "lagos": 12000
 };
 
 function normalizeShippingState(value) {
-  const state = String(value || "").trim().toLowerCase().replace(/\s+/g, " ");
+  const state = String(value || "").trim().toLowerCase().replace(/\\s+/g, " ");
   const aliases = {
     "federal capital territory (fct)": "federal capital territory",
     "federal capital territory, abuja": "federal capital territory",
@@ -3138,41 +3106,54 @@ function normalizeShippingState(value) {
 
 function getFixedShippingQuote(stateValue, items = []) {
   const state = normalizeShippingState(stateValue);
-  const perItemAmount = MONOWEAR_FIXED_SHIPPING_FEES[state];
+  const homeDeliveryAmount = MONOWEAR_HOME_DELIVERY_FEES[state];
   const itemCount = Math.max(1, items.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0));
-  const amount = perItemAmount * itemCount;
-  if (!Number.isFinite(amount)) {
-    const error = new Error("We cannot calculate a fixed delivery fee for that state yet. Please contact MONOWEAR before paying.");
-    error.statusCode = 400;
-    throw error;
+  const destinationLabel = String(stateValue || "").trim();
+  const rates = [];
+
+  if (Number.isFinite(homeDeliveryAmount)) {
+    rates.push({
+      courier_id: "monowear-fixed",
+      service_code: state + "-home-delivery",
+      courier_name: state === "lagos" ? "Lagos home delivery" : "Home delivery",
+      service_type: "home delivery",
+      amount: homeDeliveryAmount,
+      per_item_amount: homeDeliveryAmount,
+      item_count: itemCount,
+      delivery_time: "5–10 days after dispatch",
+      request_token: "fixed-" + state + "-home-delivery"
+    });
   }
-  const rate = {
+
+  // Destination-centre pickup is available at the same flat fee in every state.
+  rates.push({
     courier_id: "monowear-fixed",
-    service_code: state,
-    courier_name: "MONOWEAR fixed delivery",
-    service_type: "standard delivery",
-    amount,
-    per_item_amount: perItemAmount,
+    service_code: state + "-pickup",
+    courier_name: "Pickup at destination centre (all states)",
+    service_type: "pickup",
+    amount: 10000,
+    per_item_amount: 10000,
     item_count: itemCount,
-    delivery_time: "Delivery estimate confirmed after dispatch",
-    request_token: "fixed-" + state.replace(/[^a-z0-9]+/g, "-")
-  };
+    delivery_time: "5–10 days after dispatch; pickup-centre details confirmed after dispatch",
+    request_token: "fixed-" + state + "-pickup"
+  });
+
   return {
-    amount,
-    per_item_amount: perItemAmount,
+    amount: rates[0].amount,
+    per_item_amount: rates[0].amount,
     item_count: itemCount,
     carrier: "MONOWEAR fixed delivery",
-    delivery_time: rate.delivery_time,
-    rates: [rate],
+    delivery_time: rates[0].delivery_time,
+    rates,
     origin: "Ijebu Ode, Ogun State",
-    destination: { state: String(stateValue || "").trim() },
+    destination: { state: destinationLabel },
     currency: "NGN",
     provider: "MONOWEAR fixed delivery",
-    request_token: rate.request_token
+    request_token: rates[0].request_token
   };
 }
 
-// Shipping is handled by MONOWEAR's fixed per-item fee schedule.
+
 
 app.post("/api/shipping/quote", checkoutLimiter, (req, res) => {
   try {
