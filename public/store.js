@@ -789,26 +789,32 @@ async function refreshShippingQuote() {
     const rates = Array.isArray(result.quote.rates) ? result.quote.rates : [];
     if (!rates.length) throw new Error("No fixed delivery fee is configured for this state.");
 
-    const rate = rates[0];
-    currentShippingQuoteAmount = Number(rate.amount);
-    currentShippingCourier = {
-      courier_id: String(rate.courier_id),
-      service_code: String(rate.service_code),
-      courier_name: String(rate.courier_name)
+    const applySelectedRate = () => {
+      const selected = rates[Number(optionsNode?.value || 0)] || rates[0];
+      currentShippingQuoteAmount = Number(selected.amount);
+      currentShippingCourier = {
+        courier_id: String(selected.courier_id),
+        service_code: String(selected.service_code),
+        courier_name: String(selected.courier_name)
+      };
+      currentShippingRequestToken = String(selected.request_token || "");
+      if (shippingNode) shippingNode.textContent = money(selected.amount) + " · " + selected.courier_name;
+      if (totalNode) totalNode.textContent = money(subtotal + Number(selected.amount || 0));
+      if (messageNode) messageNode.textContent = "Flat delivery fee per order for " + state + ". Choose home delivery or destination-centre pickup.";
     };
-    currentShippingRequestToken = String(rate.request_token || "");
 
     if (optionsNode) {
       optionsNode.innerHTML = "";
-      const option = document.createElement("option");
-      option.value = "0";
-      option.textContent = String(rate.courier_name || "Fixed delivery") + " — " + money(rate.amount);
-      option.selected = true;
-      optionsNode.appendChild(option);
+      rates.forEach((rate, index) => {
+        const option = document.createElement("option");
+        option.value = String(index);
+        option.textContent = String(rate.courier_name || "Fixed delivery") + " — " + money(rate.amount);
+        optionsNode.appendChild(option);
+      });
+      optionsNode.value = "0";
+      optionsNode.onchange = applySelectedRate;
     }
-    if (shippingNode) shippingNode.textContent = money(rate.amount) + " · Fixed delivery";
-    if (totalNode) totalNode.textContent = money(subtotal + Number(rate.amount || 0));
-    if (messageNode) messageNode.textContent = "Fixed MONOWEAR delivery fee for " + state + ". Fee is charged per clothing item.";
+    applySelectedRate();
   } catch (error) {
     if (requestId !== shippingQuoteRequestId) return;
     currentShippingQuoteAmount = null;
