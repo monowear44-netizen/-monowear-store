@@ -3180,9 +3180,25 @@ app.post("/api/shipping/quote", checkoutLimiter, (req, res) => {
     if (!String(body.city || "").trim() || !String(body.state || "").trim()) {
       return res.status(400).json({ error: "Enter the delivery city/LGA and state to calculate shipping." });
     }
-    const items = normalizeCheckoutItems(body.items || []);
-    if (!items.length) return res.status(400).json({ error: "Your cart is empty." });
-    const quote = getFixedShippingQuote(body.state, items);
+    // A delivery quote must not enforce product purchase rules. In particular,
+    // featured preorder items can be quoted before preorder day; the actual
+    // checkout endpoint still validates preorder dates, stock and publication.
+    const items = body.items;
+    if (!Array.isArray(items) || !items.length) {
+      return res.status(400).json({ error: "Your cart is empty." });
+    }
+    if (items.length > 50) {
+      return res.status(400).json({ error: "Too many different products in one order." });
+    }
+    const quoteItems = [];
+    for (const item of items) {
+      const quantity = Number(item && item.quantity);
+      if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100) {
+        return res.status(400).json({ error: "Your cart contains an invalid product quantity." });
+      }
+      quoteItems.push({ quantity });
+    }
+    const quote = getFixedShippingQuote(body.state, quoteItems);
     return res.json({ success: true, quote });
   } catch (error) {
     return res.status(error.statusCode || 400).json({ error: error.message || "Could not calculate the fixed delivery fee." });
