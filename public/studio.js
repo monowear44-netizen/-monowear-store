@@ -371,6 +371,32 @@ function ensureStudioNotificationSoundControl() {
     update();
   }
 
+  if (!$("studioResendSaleAlert")) {
+    const resend = document.createElement("button");
+    resend.id = "studioResendSaleAlert";
+    resend.type = "button";
+    resend.className = "quiet";
+    resend.textContent = "Resend latest sale alert";
+    resend.title = "Send the latest manually recorded social-media sale alert again";
+    resend.addEventListener("click", async () => {
+      resend.disabled = true;
+      const previousText = resend.textContent;
+      resend.textContent = "Resending…";
+      try {
+        const result = await api("/api/admin/notifications/resend-latest-sale", { method: "POST", body: "{}" });
+        await refreshStudioNotifications();
+        toast("Sale order notification resent.");
+        playStudioNotificationSound(true);
+      } catch (error) {
+        toast(error.message || "Could not resend the sale notification.");
+      } finally {
+        resend.disabled = false;
+        resend.textContent = previousText;
+      }
+    });
+    footer.appendChild(resend);
+  }
+
   if (!$("studioNotificationSoundTest")) {
     const test = document.createElement("button");
     test.id = "studioNotificationSoundTest";
