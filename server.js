@@ -3686,6 +3686,54 @@ app.get("/api/admin/historical-records", requireAdmin, (req, res) => {
  } catch(error) { console.error("Historical records error:",error); res.status(500).json({error:"Could not load historical records."}); }
 });
 
+
+app.post("/api/admin/manual-sales", requireAdmin, (req, res) => {
+  try {
+    const productId = Number(req.body.product_id);
+    const quantity = Number(req.body.quantity);
+    const customerName = String(req.body.customer_name || "").trim();
+    const customerEmail = String(req.body.customer_email || "").trim();
+    const customerPhone = String(req.body.customer_phone || "").trim();
+    const source = String(req.body.source || "").trim();
+    const paymentStatus = String(req.body.payment_status || "paid").toLowerCase();
+    const saleAmount = Number(req.body.amount);
+    const note = String(req.body.note || "").trim();
+    if (!Number.isInteger(productId) || productId < 1) return res.status(400).json({ error: "Choose a product." });
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100) return res.status(400).json({ error: "Quantity must be between 1 and 100." });
+    if (!customerName) return res.status(400).json({ error: "Enter the customer's name or a customer label." });
+    if (!source) return res.status(400).json({ error: "Choose where the sale came from." });
+    if (!["paid", "pending"].includes(paymentStatus)) return res.status(400).json({ error: "Payment status must be paid or pending." });
+    if (!Number.isFinite(saleAmount) || saleAmount <= 0) return res.status(400).json({ error: "Enter a valid sale amount." });
+    const product = db.prepare("SELECT id, name, price, stock FROM products WHERE id = ?").get(productId);
+    if (!product) return res.status(404).json({ error: "Product not found." });
+    if (paymentStatus === "paid" && Number(product.stock) < quantity) return res.status(409).json({ error: `Not enough stock. Only ${Number(product.stock)} unit(s) remain.` });
+    const reference = `MONO-MANUAL-${Date.now()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+    const item = [{ product_id: product.id, id: product.id, name: product.name, price: saleAmount / quantity, quantity }];
+    const notes = [`Social sale source: ${source}`, note].filter(Boolean).join(" · ");
+    const saveSale = db.transaction(() => {
+      if (paymentStatus === "paid") {
+        const stockUpdate = db.prepare("UPDATE products SET stock = stock - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND stock >= ?").run(quantity, productId, quantity);
+        if (!stockUpdate.changes) throw new Error("Stock changed while recording the sale. Refresh products and try again.");
+      }
+      const inserted = db.prepare(`
+        INSERT INTO orders (
+          reference, customer_name, customer_email, customer_phone, shipping_address,
+          shipping_city, shipping_state, shipping_postcode, dispatch_location, items,
+          subtotal, shipping_fee, discount, total, payment_status, order_status,
+          payment_method, payment_reference, notes, record_type, paid_at
+        ) VALUES (?, ?, ?, ?, '', '', '', '', 'Social media', ?, ?, 0, 0, ?, ?, ?, 'manual', '', ?, 'real_order', CASE WHEN ? = 'paid' THEN CURRENT_TIMESTAMP ELSE NULL END)
+      `).run(reference, customerName, customerEmail, customerPhone, JSON.stringify(item), saleAmount, saleAmount, paymentStatus, paymentStatus === "paid" ? "processing" : "pending", notes, paymentStatus);
+      recordOrderEvent(Number(inserted.lastInsertRowid), paymentStatus, `Manually recorded social sale via ${source}.`);
+      return Number(inserted.lastInsertRowid);
+    });
+    const orderId = saveSale();
+    res.status(201).json({ success: true, id: orderId, reference, stockReduced: paymentStatus === "paid", message: paymentStatus === "paid" ? "Sale recorded and stock updated." : "Sale recorded as awaiting payment; stock was not reduced." });
+  } catch (error) {
+    console.error("Manual sale error:", error);
+    res.status(400).json({ error: error.message || "Could not record sale." });
+  }
+});
+
 app.get("/api/admin/orders", requireAdmin, (req, res) => {
   const orders = db.prepare(`
     SELECT orders.*,
