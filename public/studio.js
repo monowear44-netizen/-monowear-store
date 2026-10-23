@@ -1406,7 +1406,32 @@ function populateManualSaleProducts() {
     `<option value="${Number(product.id)}" data-price="${Number(product.price || 0)}" data-stock="${Number(product.stock || 0)}">${esc(product.name)} · ${money(product.price)} · stock ${Number(product.stock || 0)}</option>`
   ).join("");
   if (previous && currentProducts.some((product) => String(product.id) === previous)) select.value = previous;
+  renderManualSaleProductPicker();
   updateManualSaleAmount();
+}
+
+function renderManualSaleProductPicker() {
+  const picker = $("manualSaleProductPicker");
+  const select = $("manualSaleProduct");
+  if (!picker || !select) return;
+  const selectedId = select.value;
+  picker.innerHTML = currentProducts.map((product) => {
+    const image = product.image
+      ? `<img src="${esc(product.image)}" alt="${esc(product.name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.hidden=false">`
+      : "";
+    return `<button type="button" class="manual-sale-product-card ${String(product.id) === selectedId ? "is-selected" : ""}" data-manual-sale-product="${Number(product.id)}" aria-pressed="${String(product.id) === selectedId}">
+      ${image}<div class="manual-sale-no-photo" ${product.image ? "hidden" : ""}>MONOWEAR</div>
+      <strong>${esc(product.name)}</strong>
+      <small>${money(product.price)} · Stock ${Number(product.stock || 0)}</small>
+    </button>`;
+  }).join("") || '<p class="muted">No products available yet.</p>';
+  picker.querySelectorAll("[data-manual-sale-product]").forEach((card) => {
+    card.addEventListener("click", () => {
+      select.value = card.dataset.manualSaleProduct;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      renderManualSaleProductPicker();
+    });
+  });
 }
 function updateManualSaleAmount() {
   const option = $("manualSaleProduct")?.selectedOptions?.[0];
