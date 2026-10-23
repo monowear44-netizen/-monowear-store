@@ -4500,6 +4500,28 @@ app.get("/api/admin/notifications", requireAdmin, (req, res) => {
   res.json({ notifications, unread, pushConfigured: Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY), subscriptions: db.prepare("SELECT COUNT(*) AS count FROM push_subscriptions").get().count });
 });
 
+app.post("/api/admin/notifications/resend-latest-sale", requireAdmin, (req, res) => {
+  try {
+    const sale = db.prepare(`
+      SELECT reference, customer_name, total, notes, payment_status
+      FROM orders
+      WHERE payment_method = 'manual'
+        AND COALESCE(record_type, 'real_order') = 'real_order'
+        AND notes LIKE 'Social sale source:%'
+      ORDER BY id DESC LIMIT 1
+    `).get();
+    if (!sale) return res.status(404).json({ error: "No manually recorded social-media sale was found." });
+    const amount = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(Number(sale.total || 0));
+    const source = String(sale.notes || "").replace(/^Social sale source:\\s*/, "").split(" · ")[0] || "social media";
+    const title = sale.payment_status === "paid" ? "Cha-ching! Sale recorded" : "Sale recorded — payment pending";
+    const notification = recordAdminNotification("sale", title, `${sale.customer_name} · ${amount} · ${source} · Reference ${sale.reference} (resent)`, "/studio");
+    res.json({ success: true, notification });
+  } catch (error) {
+    console.error("Could not resend latest sale alert:", error);
+    res.status(500).json({ error: "Could not resend the sale alert. Please try again." });
+  }
+});
+
 app.post("/api/admin/notifications/:id/read", requireAdmin, (req, res) => {
   db.prepare("UPDATE admin_notifications SET read_at = CURRENT_TIMESTAMP WHERE id = ?").run(Number(req.params.id));
   res.json({ success: true });
