@@ -3689,7 +3689,7 @@ app.get("/api/admin/historical-records", requireAdmin, (req, res) => {
 
 app.post("/api/admin/manual-sales", requireAdmin, (req, res) => {
   try {
-    const productId = Number(req.body.product_id);
+    const productIds = [...new Set((Array.isArray(req.body.product_ids) ? req.body.product_ids : [req.body.product_id]).map(Number).filter((id) => Number.isInteger(id) && id > 0))];
     const quantity = Number(req.body.quantity);
     const customerName = String(req.body.customer_name || "").trim();
     const customerEmail = String(req.body.customer_email || "").trim();
@@ -3698,22 +3698,28 @@ app.post("/api/admin/manual-sales", requireAdmin, (req, res) => {
     const paymentStatus = String(req.body.payment_status || "paid").toLowerCase();
     const saleAmount = Number(req.body.amount);
     const note = String(req.body.note || "").trim();
-    if (!Number.isInteger(productId) || productId < 1) return res.status(400).json({ error: "Choose a product." });
+    if (!productIds.length) return res.status(400).json({ error: "Select at least one product." });
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100) return res.status(400).json({ error: "Quantity must be between 1 and 100." });
     if (!customerName) return res.status(400).json({ error: "Enter the customer's name or a customer label." });
     if (!source) return res.status(400).json({ error: "Choose where the sale came from." });
     if (!["paid", "pending"].includes(paymentStatus)) return res.status(400).json({ error: "Payment status must be paid or pending." });
     if (!Number.isFinite(saleAmount) || saleAmount <= 0) return res.status(400).json({ error: "Enter a valid sale amount." });
-    const product = db.prepare("SELECT id, name, price, stock FROM products WHERE id = ?").get(productId);
-    if (!product) return res.status(404).json({ error: "Product not found." });
-    if (paymentStatus === "paid" && Number(product.stock) < quantity) return res.status(409).json({ error: `Not enough stock. Only ${Number(product.stock)} unit(s) remain.` });
+    const products = productIds.map((id) => db.prepare("SELECT id, name, price, stock FROM products WHERE id = ?").get(id));
+    if (products.some((product) => !product)) return res.status(404).json({ error: "One or more selected products could not be found." });
+    if (paymentStatus === "paid") {
+      const insufficient = products.find((product) => Number(product.stock) < quantity);
+      if (insufficient) return res.status(409).json({ error: `Not enough stock for ${insufficient.name}. Only ${Number(insufficient.stock)} unit(s) remain.` });
+    }
     const reference = `MONO-MANUAL-${Date.now()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
-    const item = [{ product_id: product.id, id: product.id, name: product.name, price: saleAmount / quantity, quantity }];
+    const totalUnits = products.length * quantity;
+    const item = products.map((product) => ({ product_id: product.id, id: product.id, name: product.name, price: saleAmount / totalUnits, quantity }));
     const notes = [`Social sale source: ${source}`, note].filter(Boolean).join(" · ");
     const saveSale = db.transaction(() => {
       if (paymentStatus === "paid") {
-        const stockUpdate = db.prepare("UPDATE products SET stock = stock - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND stock >= ?").run(quantity, productId, quantity);
-        if (!stockUpdate.changes) throw new Error("Stock changed while recording the sale. Refresh products and try again.");
+        for (const product of products) {
+          const stockUpdate = db.prepare("UPDATE products SET stock = stock - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND stock >= ?").run(quantity, product.id, quantity);
+          if (!stockUpdate.changes) throw new Error(`Stock changed for ${product.name}. Refresh products and try again.`);
+        }
       }
       const inserted = db.prepare(`
         INSERT INTO orders (
