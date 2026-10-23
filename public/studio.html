@@ -955,6 +955,23 @@
         REFRESH ↻
       </button>
     </div>
+    <div class="panel" id="manualSalePanel" style="margin:18px 0;padding:18px">
+      <div class="toolbar">
+        <div><p class="eyebrow">OFFLINE / SOCIAL COMMERCE</p><h3>Record a sale</h3><p class="muted">Log sales made through social media or in person. Paid sales update revenue and reduce stock; pending sales do not reduce stock yet.</p></div>
+      </div>
+      <form id="manualSaleForm" class="form-grid">
+        <label>Product<select id="manualSaleProduct" name="product_id" required><option value="">Loading products…</option></select></label>
+        <label>Quantity<input id="manualSaleQuantity" name="quantity" type="number" min="1" step="1" value="1" required></label>
+        <label>Sale amount (₦)<input id="manualSaleAmount" name="amount" type="number" min="1" step="1" required></label>
+        <label>Customer name / label<input name="customer_name" placeholder="Customer name or Social Customer #1" required></label>
+        <label>Customer phone (optional)<input name="customer_phone" type="tel" placeholder="Phone number"></label>
+        <label>Customer email (optional)<input name="customer_email" type="email" placeholder="Email address"></label>
+        <label>Sale source<select name="source" required><option value="">Choose source</option><option>X (Twitter)</option><option>Instagram</option><option>WhatsApp</option><option>TikTok</option><option>Facebook</option><option>In person</option><option>Other</option></select></label>
+        <label>Payment status<select name="payment_status" id="manualSalePayment"><option value="paid">Paid / confirmed</option><option value="pending">Awaiting payment</option></select></label>
+        <label style="grid-column:1/-1">Notes (optional)<input name="note" placeholder="Size, colour, delivery details, etc."></label>
+        <div style="grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="primary" id="manualSaleSubmit" type="submit">RECORD SALE +</button><p id="manualSaleMessage" class="message" role="status" aria-live="polite"></p></div>
+      </form>
+    </div>
     <div class="filter-bar">
       <input
         id="orderSearch"
@@ -1156,7 +1173,7 @@
 ></div>
   </main>
   <!-- EXISTING STUDIO FUNCTIONALITY -->
-  <script src="/studio.js?v=studio-loader-fix-20261019b"></script>
+  <script src="/studio.js?v=manual-social-sales-20261023"></script>
   <script src="/studio-app.js?v=device-alerts-saved-sound-20261017"></script>
   <!-- IMAGE PREVIEWS AND VALIDATION -->
   <script>
