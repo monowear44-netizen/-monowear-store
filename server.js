@@ -733,14 +733,15 @@ try {
     ORDER BY id DESC LIMIT 1
   `).get();
   if (latestManualSale) {
-    const existingAlert = db.prepare(
+    const resendMarker = `%Reference ${latestManualSale.reference} (resent)%`;
+    const alreadyResent = db.prepare(
       "SELECT id FROM admin_notifications WHERE type = 'sale' AND body LIKE ? LIMIT 1"
-    ).get(`%${latestManualSale.reference}%`);
-    if (!existingAlert) {
+    ).get(resendMarker);
+    if (!alreadyResent) {
       const amount = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(Number(latestManualSale.total || 0));
       const source = String(latestManualSale.notes || '').replace(/^Social sale source:\\s*/, '').split(' · ')[0] || 'social media';
       const title = latestManualSale.payment_status === 'paid' ? 'Cha-ching! Sale recorded' : 'Sale recorded — payment pending';
-      recordAdminNotification('sale', title, `${latestManualSale.customer_name} · ${amount} · ${source} · Reference ${latestManualSale.reference}`, '/studio');
+      recordAdminNotification('sale', title, `${latestManualSale.customer_name} · ${amount} · ${source} · Reference ${latestManualSale.reference} (resent)`, '/studio');
     }
   }
 } catch (error) {
