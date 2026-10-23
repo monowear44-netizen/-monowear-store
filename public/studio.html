@@ -961,8 +961,10 @@
       </div>
       <form id="manualSaleForm" class="form-grid">
         <label>Product<select id="manualSaleProduct" name="product_id" required><option value="">Choose a product</option></select></label>
-        <div id="manualSaleProductPicker" class="manual-sale-product-picker" style="grid-column:1/-1" aria-label="Choose product by photo"></div>
+        <button id="toggleManualSaleProducts" class="secondary" type="button" aria-expanded="false" aria-controls="manualSaleProductPicker" style="justify-self:start;margin-top:-8px">SHOW PRODUCTS ＋</button>
+        <div id="manualSaleProductPicker" class="manual-sale-product-picker" style="grid-column:1/-1" aria-label="Choose product by photo" hidden></div>
         <style>
+          .manual-sale-product-picker[hidden]{display:none!important}
           .manual-sale-product-picker{display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;padding:2px 1px 8px;margin:0 0 4px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
           .manual-sale-product-card{appearance:none;flex:0 0 88px;width:88px;min-width:0;text-align:left;border:1px solid var(--border,#343834);border-radius:10px;padding:6px;background:var(--panel,#151815);color:inherit;cursor:pointer;scroll-snap-align:start}
           .manual-sale-product-card.is-selected{border:2px solid var(--accent,#b7c7a7);padding:5px;box-shadow:0 0 0 1px rgba(183,199,167,.12)}
