@@ -722,6 +722,31 @@ function recordAdminNotification(type, title, body, url = "/studio") {
   return notification;
 }
 
+// Backfill one unread alert for the most recently recorded social sale if it predates sale alerts.
+try {
+  const latestManualSale = db.prepare(`
+    SELECT reference, customer_name, total, notes, payment_status
+    FROM orders
+    WHERE payment_method = 'manual'
+      AND COALESCE(record_type, 'real_order') = 'real_order'
+      AND notes LIKE 'Social sale source:%'
+    ORDER BY id DESC LIMIT 1
+  `).get();
+  if (latestManualSale) {
+    const existingAlert = db.prepare(
+      "SELECT id FROM admin_notifications WHERE type = 'sale' AND body LIKE ? LIMIT 1"
+    ).get(`%${latestManualSale.reference}%`);
+    if (!existingAlert) {
+      const amount = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(Number(latestManualSale.total || 0));
+      const source = String(latestManualSale.notes || '').replace(/^Social sale source:\\s*/, '').split(' · ')[0] || 'social media';
+      const title = latestManualSale.payment_status === 'paid' ? 'Cha-ching! Sale recorded' : 'Sale recorded — payment pending';
+      recordAdminNotification('sale', title, `${latestManualSale.customer_name} · ${amount} · ${source} · Reference ${latestManualSale.reference}`, '/studio');
+    }
+  }
+} catch (error) {
+  console.error('Could not backfill latest manual-sale notification:', error.message);
+}
+
 async function sendPushToAdmins(notification) {
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) return;
   const subscriptions = db.prepare("SELECT id, subscription_json FROM push_subscriptions").all();
@@ -3733,6 +3758,9 @@ app.post("/api/admin/manual-sales", requireAdmin, (req, res) => {
       return Number(inserted.lastInsertRowid);
     });
     const orderId = saveSale();
+    const amountLabel = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(saleAmount);
+    const alertTitle = paymentStatus === "paid" ? "Cha-ching! Sale recorded" : "Sale recorded — payment pending";
+    recordAdminNotification("sale", alertTitle, `${customerName} · ${amountLabel} · ${source} · Reference ${reference}`, "/studio");
     res.status(201).json({ success: true, id: orderId, reference, stockReduced: paymentStatus === "paid", message: paymentStatus === "paid" ? "Sale recorded and stock updated." : "Sale recorded as awaiting payment; stock was not reduced." });
   } catch (error) {
     console.error("Manual sale error:", error);
