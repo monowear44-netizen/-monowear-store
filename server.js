@@ -740,7 +740,7 @@ try {
     if (!alreadyResent) {
       const amount = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(Number(latestManualSale.total || 0));
       const source = String(latestManualSale.notes || '').replace(/^Social sale source:\\s*/, '').split(' · ')[0] || 'social media';
-      const title = latestManualSale.payment_status === 'paid' ? 'Cha-ching! Sale recorded' : 'Sale recorded — payment pending';
+      const title = latestManualSale.payment_status === 'paid' ? 'Sale recorded' : 'Sale recorded — payment pending';
       recordAdminNotification('sale', title, `${latestManualSale.customer_name} · ${amount} · ${source} · Reference ${latestManualSale.reference} (resent)`, '/studio');
     }
   }
@@ -3760,7 +3760,7 @@ app.post("/api/admin/manual-sales", requireAdmin, (req, res) => {
     });
     const orderId = saveSale();
     const amountLabel = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(saleAmount);
-    const alertTitle = paymentStatus === "paid" ? "Cha-ching! Sale recorded" : "Sale recorded — payment pending";
+    const alertTitle = paymentStatus === "paid" ? "Sale recorded" : "Sale recorded — payment pending";
     recordAdminNotification("sale", alertTitle, `${customerName} · ${amountLabel} · ${source} · Reference ${reference}`, "/studio");
     res.status(201).json({ success: true, id: orderId, reference, stockReduced: paymentStatus === "paid", message: paymentStatus === "paid" ? "Sale recorded and stock updated." : "Sale recorded as awaiting payment; stock was not reduced." });
   } catch (error) {
@@ -4514,7 +4514,7 @@ app.post("/api/admin/notifications/resend-latest-sale", requireAdmin, (req, res)
     if (!sale) return res.status(404).json({ error: "No manually recorded social-media sale was found." });
     const amount = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(Number(sale.total || 0));
     const source = String(sale.notes || "").replace(/^Social sale source:\\s*/, "").split(" · ")[0] || "social media";
-    const title = sale.payment_status === "paid" ? "Cha-ching! Sale recorded" : "Sale recorded — payment pending";
+    const title = sale.payment_status === "paid" ? "Sale recorded" : "Sale recorded — payment pending";
     const notification = recordAdminNotification("sale", title, `${sale.customer_name} · ${amount} · ${source} · Reference ${sale.reference} (resent)`, "/studio");
     res.json({ success: true, notification });
   } catch (error) {
