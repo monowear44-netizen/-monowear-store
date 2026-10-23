@@ -319,6 +319,7 @@ const STUDIO_NOTIFICATIONS_DISMISSED_KEY = "monowearStudioNotificationsDismissed
 let studioNotificationItems = [];
 let studioNotificationSignature = "";
 const STUDIO_NOTIFICATION_SOUND_KEY = "monowearStudioNotificationSoundV1";
+const STUDIO_NOTIFICATION_SOUNDS_PLAYED_KEY = "monowearStudioNotificationSoundsPlayedV1";
 let studioNotificationSoundContext = null;
 let studioPreviousNotificationIds = null;
 
@@ -403,15 +404,41 @@ function notificationItem(id, title, detail, tab, kind = "attention") {
   return { id: String(id), title, detail, tab, kind };
 }
 
+function getStudioNotificationSoundsPlayed() {
+  try {
+    const value = JSON.parse(localStorage.getItem(STUDIO_NOTIFICATION_SOUNDS_PLAYED_KEY) || "{}");
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  } catch { return {}; }
+}
+
+function rememberStudioNotificationSoundsPlayed(ids) {
+  try {
+    const played = getStudioNotificationSoundsPlayed();
+    ids.forEach(id => { played[String(id)] = Date.now(); });
+    const entries = Object.entries(played).sort((a, b) => Number(b[1]) - Number(a[1])).slice(0, 300);
+    localStorage.setItem(STUDIO_NOTIFICATION_SOUNDS_PLAYED_KEY, JSON.stringify(Object.fromEntries(entries)));
+  } catch {}
+}
+
 function renderStudioNotifications() {
   const list = $("studioNotificationList");
   const dot = $("studioBellDot");
   if (!list) return;
   const signature = studioNotificationItems.map(item => item.id).sort().join("|");
+  const playedSounds = getStudioNotificationSoundsPlayed();
   if (studioPreviousNotificationIds !== null) {
     const previous = new Set(studioPreviousNotificationIds);
-    const hasNewNotification = studioNotificationItems.some(item => !previous.has(item.id));
-    if (hasNewNotification) playStudioNotificationSound();
+    const newItems = studioNotificationItems.filter(item => !previous.has(item.id));
+    if (newItems.length) {
+      playStudioNotificationSound();
+      rememberStudioNotificationSoundsPlayed(newItems.map(item => item.id));
+    }
+  } else {
+    const saleAlertsToPlay = studioNotificationItems.filter(item => item.kind === "sale" && !playedSounds[item.id]);
+    if (saleAlertsToPlay.length) {
+      playStudioNotificationSound();
+      rememberStudioNotificationSoundsPlayed(saleAlertsToPlay.map(item => item.id));
+    }
   }
   studioPreviousNotificationIds = studioNotificationItems.map(item => item.id);
   studioNotificationSignature = signature;
@@ -481,7 +508,8 @@ async function refreshStudioNotifications(summary = null) {
       if (title.toLowerCase() === "studio is connected") body = "";
       const url = String(notification.url || "/studio");
       const tab = url.includes("products") ? "products" : url.includes("orders") ? "orders" : url.includes("payments") ? "payments" : url.includes("audience") ? "audience" : "overview";
-      items.push(notificationItem("history:" + notification.id, title || body || "Store update", body && body !== title ? body : "Open Studio to review this update.", tab, "urgent"));
+      const kind = String(notification.type || "").toLowerCase() === "sale" ? "sale" : "urgent";
+      items.push(notificationItem("history:" + notification.id, title || body || "Store update", body && body !== title ? body : "Open Studio to review this update.", tab, kind));
     });
   } catch (error) {
     console.warn("Saved store notifications:", error.message);
@@ -1488,6 +1516,7 @@ $("manualSaleForm")?.addEventListener("submit", async (event) => {
     if ($("manualSaleQuantity")) $("manualSaleQuantity").value = "1";
     if ($("manualSaleAmount")) { $("manualSaleAmount").value = ""; $("manualSaleAmount").dataset.edited = ""; }
     await Promise.all([loadProducts(), loadOrders(), loadSummary()]);
+    await refreshStudioNotifications();
   } catch (error) { if (message) message.textContent = error.message; toast(error.message); }
   finally { button.disabled = false; }
 });
