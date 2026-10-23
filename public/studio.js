@@ -1398,16 +1398,17 @@ $("exportAudience")?.addEventListener("click", exportAudienceCsv);
 // ORDERS
 // ============================================================
 
+let manualSaleSelectedProductIds = new Set();
+
 function populateManualSaleProducts() {
   const select = $("manualSaleProduct");
   if (!select) return;
-  const previous = select.value;
-  select.innerHTML = '<option value="">Choose a product</option>' + currentProducts.map((product) =>
+  manualSaleSelectedProductIds = new Set([...manualSaleSelectedProductIds].filter((id) => currentProducts.some((p) => String(p.id) === String(id))));
+  select.innerHTML = '<option value="">Choose products</option>' + currentProducts.map((product) =>
     `<option value="${Number(product.id)}" data-price="${Number(product.price || 0)}" data-stock="${Number(product.stock || 0)}">${esc(product.name)} · ${money(product.price)} · stock ${Number(product.stock || 0)}</option>`
   ).join("");
-  if (previous && currentProducts.some((product) => String(product.id) === previous)) select.value = previous;
+  syncManualSaleProductSelection();
   renderManualSaleProductPicker();
-  updateManualSaleAmount();
 }
 
 const manualSaleProductsToggle = $("toggleManualSaleProducts");
@@ -1420,39 +1421,50 @@ manualSaleProductsToggle?.addEventListener("click", () => {
   manualSaleProductsToggle.textContent = willShow ? "HIDE PRODUCTS −" : "SHOW PRODUCTS ＋";
 });
 
+function syncManualSaleProductSelection() {
+  const select = $("manualSaleProduct");
+  if (select) select.value = manualSaleSelectedProductIds.size ? String([...manualSaleSelectedProductIds][0]) : "";
+  const summary = $("manualSaleSelectionSummary");
+  const chosen = currentProducts.filter((p) => manualSaleSelectedProductIds.has(String(p.id)));
+  if (summary) summary.textContent = chosen.length
+    ? chosen.map((p) => p.name).join(" · ") + " (" + chosen.length + " selected)"
+    : "No products selected";
+  updateManualSaleAmount();
+}
+
 function renderManualSaleProductPicker() {
   const picker = $("manualSaleProductPicker");
-  const select = $("manualSaleProduct");
-  if (!picker || !select) return;
-  const selectedId = select.value;
+  if (!picker) return;
   picker.innerHTML = currentProducts.map((product) => {
+    const selected = manualSaleSelectedProductIds.has(String(product.id));
     const image = product.image
       ? `<img src="${esc(product.image)}" alt="${esc(product.name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.hidden=false">`
       : "";
-    return `<button type="button" class="manual-sale-product-card ${String(product.id) === selectedId ? "is-selected" : ""}" data-manual-sale-product="${Number(product.id)}" aria-pressed="${String(product.id) === selectedId}">
+    return `<button type="button" class="manual-sale-product-card ${selected ? "is-selected" : ""}" data-manual-sale-product="${Number(product.id)}" aria-pressed="${selected}">
       ${image}<div class="manual-sale-no-photo" ${product.image ? "hidden" : ""}>MONOWEAR</div>
       <strong>${esc(product.name)}</strong>
       <small>${money(product.price)} · Stock ${Number(product.stock || 0)}</small>
+      <small>${selected ? "✓ SELECTED" : "＋ SELECT"}</small>
     </button>`;
   }).join("") || '<p class="muted">No products available yet.</p>';
   picker.querySelectorAll("[data-manual-sale-product]").forEach((card) => {
     card.addEventListener("click", () => {
-      select.value = card.dataset.manualSaleProduct;
-      select.dispatchEvent(new Event("change", { bubbles: true }));
+      const id = String(card.dataset.manualSaleProduct);
+      if (manualSaleSelectedProductIds.has(id)) manualSaleSelectedProductIds.delete(id);
+      else manualSaleSelectedProductIds.add(id);
+      syncManualSaleProductSelection();
       renderManualSaleProductPicker();
-      if (manualSaleProductsPicker) manualSaleProductsPicker.hidden = true;
-      if (manualSaleProductsToggle) {
-        manualSaleProductsToggle.setAttribute("aria-expanded", "false");
-        manualSaleProductsToggle.textContent = "SHOW PRODUCTS ＋";
-      }
     });
   });
 }
+
 function updateManualSaleAmount() {
-  const option = $("manualSaleProduct")?.selectedOptions?.[0];
   const amount = $("manualSaleAmount");
   const quantity = Math.max(1, Number($("manualSaleQuantity")?.value || 1));
-  if (amount && option && option.dataset.price && !amount.dataset.edited) amount.value = String(Math.round(Number(option.dataset.price) * quantity));
+  const chosen = currentProducts.filter((p) => manualSaleSelectedProductIds.has(String(p.id)));
+  if (amount && chosen.length && !amount.dataset.edited) {
+    amount.value = String(Math.round(chosen.reduce((sum, p) => sum + Number(p.price || 0), 0) * quantity));
+  }
 }
 $("manualSaleProduct")?.addEventListener("change", () => {
   const amount = $("manualSaleAmount"); if (amount) { amount.dataset.edited = ""; amount.value = ""; }
@@ -1467,12 +1479,12 @@ $("manualSaleForm")?.addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = event.currentTarget, button = $("manualSaleSubmit"), message = $("manualSaleMessage");
   const data = Object.fromEntries(new FormData(form).entries());
-  data.product_id = Number(data.product_id); data.quantity = Number(data.quantity); data.amount = Number(data.amount);
+  data.product_ids = [...manualSaleSelectedProductIds].map(Number); data.product_id = data.product_ids[0] || 0; data.quantity = Number(data.quantity); data.amount = Number(data.amount);
   button.disabled = true; if (message) message.textContent = "Recording sale…";
   try {
     const result = await api("/api/admin/manual-sales", { method: "POST", body: JSON.stringify(data) });
     if (message) message.textContent = result.message + " Reference: " + result.reference;
-    toast(result.message); form.reset();
+    toast(result.message); form.reset(); manualSaleSelectedProductIds.clear(); syncManualSaleProductSelection(); renderManualSaleProductPicker();
     if ($("manualSaleQuantity")) $("manualSaleQuantity").value = "1";
     if ($("manualSaleAmount")) { $("manualSaleAmount").value = ""; $("manualSaleAmount").dataset.edited = ""; }
     await Promise.all([loadProducts(), loadOrders(), loadSummary()]);
