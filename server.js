@@ -745,12 +745,12 @@ try {
     }
     const identityRefreshSent = db.prepare(
       "SELECT id FROM admin_notifications WHERE type = 'sale' AND body LIKE ? LIMIT 1"
-    ).get(`%Reference ${latestManualSale.reference} (studio identity refresh)%`);
+    ).get(`%Reference ${latestManualSale.reference} (sale alert resend 2026-10-24)%`);
     if (!identityRefreshSent) {
       const amount = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', maximumFractionDigits: 0 }).format(Number(latestManualSale.total || 0));
       const source = String(latestManualSale.notes || '').replace(/^Social sale source:\\s*/, '').split(' · ')[0] || 'social media';
       const title = latestManualSale.payment_status === 'paid' ? 'Sale recorded' : 'Sale recorded — payment pending';
-      recordAdminNotification('sale', title, `${latestManualSale.customer_name} · ${amount} · ${source} · Reference ${latestManualSale.reference} (studio identity refresh)`, '/studio');
+      recordAdminNotification('sale', title, `${latestManualSale.customer_name} · ${amount} · ${source} · Reference ${latestManualSale.reference} (sale alert resend 2026-10-24)`, '/studio');
     }
   }
 } catch (error) {
