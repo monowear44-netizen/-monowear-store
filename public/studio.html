@@ -957,12 +957,12 @@
     </div>
     <div class="panel" id="manualSalePanel" style="margin:18px 0;padding:18px">
       <div class="toolbar">
-        <div><p class="eyebrow">OFFLINE / SOCIAL COMMERCE</p><h3>Record a sale</h3><p class="muted">Log sales made through social media or in person. Paid sales update revenue and reduce stock; pending sales do not reduce stock yet.</p></div>
+        <div><p class="eyebrow">OFFLINE / SOCIAL COMMERCE</p><h3>Record a sale</h3><p class="muted">Log sales made through social media or in person. Select one or more products; quantity applies to each selected product. Paid sales update revenue and reduce stock.</p></div>
       </div>
       <form id="manualSaleForm" class="form-grid">
-        <label>Product<select id="manualSaleProduct" name="product_id" required><option value="">Choose a product</option></select></label>
+        <input id="manualSaleProduct" name="product_id" type="hidden" required><p id="manualSaleSelectionSummary" class="muted" style="margin:0">No products selected</p>
         <button id="toggleManualSaleProducts" class="secondary" type="button" aria-expanded="false" aria-controls="manualSaleProductPicker" style="justify-self:start;margin-top:-8px">SHOW PRODUCTS ＋</button>
-        <div id="manualSaleProductPicker" class="manual-sale-product-picker" style="grid-column:1/-1" aria-label="Choose product by photo" hidden></div>
+        <div id="manualSaleProductPicker" class="manual-sale-product-picker" style="grid-column:1/-1" aria-label="Choose multiple products by photo" hidden></div>
         <style>
           .manual-sale-product-picker[hidden]{display:none!important}
           .manual-sale-product-picker{display:flex;gap:8px;overflow-x:auto;overscroll-behavior-x:contain;padding:2px 1px 8px;margin:0 0 4px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
