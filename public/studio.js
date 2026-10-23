@@ -1410,6 +1410,16 @@ function populateManualSaleProducts() {
   updateManualSaleAmount();
 }
 
+const manualSaleProductsToggle = $("toggleManualSaleProducts");
+const manualSaleProductsPicker = $("manualSaleProductPicker");
+manualSaleProductsToggle?.addEventListener("click", () => {
+  if (!manualSaleProductsPicker) return;
+  const willShow = manualSaleProductsPicker.hidden;
+  manualSaleProductsPicker.hidden = !willShow;
+  manualSaleProductsToggle.setAttribute("aria-expanded", String(willShow));
+  manualSaleProductsToggle.textContent = willShow ? "HIDE PRODUCTS −" : "SHOW PRODUCTS ＋";
+});
+
 function renderManualSaleProductPicker() {
   const picker = $("manualSaleProductPicker");
   const select = $("manualSaleProduct");
@@ -1430,6 +1440,11 @@ function renderManualSaleProductPicker() {
       select.value = card.dataset.manualSaleProduct;
       select.dispatchEvent(new Event("change", { bubbles: true }));
       renderManualSaleProductPicker();
+      if (manualSaleProductsPicker) manualSaleProductsPicker.hidden = true;
+      if (manualSaleProductsToggle) {
+        manualSaleProductsToggle.setAttribute("aria-expanded", "false");
+        manualSaleProductsToggle.textContent = "SHOW PRODUCTS ＋";
+      }
     });
   });
 }
