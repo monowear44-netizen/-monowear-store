@@ -681,6 +681,7 @@ async function loadProducts() {
     }
 
     renderProducts();
+    populateManualSaleProducts();
   } catch (error) {
     toast("Products: " + error.message);
   }
@@ -1396,6 +1397,48 @@ $("exportAudience")?.addEventListener("click", exportAudienceCsv);
 // ============================================================
 // ORDERS
 // ============================================================
+
+function populateManualSaleProducts() {
+  const select = $("manualSaleProduct");
+  if (!select) return;
+  const previous = select.value;
+  select.innerHTML = '<option value="">Choose a product</option>' + currentProducts.map((product) =>
+    `<option value="${Number(product.id)}" data-price="${Number(product.price || 0)}" data-stock="${Number(product.stock || 0)}">${esc(product.name)} · ${money(product.price)} · stock ${Number(product.stock || 0)}</option>`
+  ).join("");
+  if (previous && currentProducts.some((product) => String(product.id) === previous)) select.value = previous;
+  updateManualSaleAmount();
+}
+function updateManualSaleAmount() {
+  const option = $("manualSaleProduct")?.selectedOptions?.[0];
+  const amount = $("manualSaleAmount");
+  const quantity = Math.max(1, Number($("manualSaleQuantity")?.value || 1));
+  if (amount && option && option.dataset.price && !amount.dataset.edited) amount.value = String(Math.round(Number(option.dataset.price) * quantity));
+}
+$("manualSaleProduct")?.addEventListener("change", () => {
+  const amount = $("manualSaleAmount"); if (amount) { amount.dataset.edited = ""; amount.value = ""; }
+  updateManualSaleAmount();
+});
+$("manualSaleQuantity")?.addEventListener("input", () => {
+  const amount = $("manualSaleAmount"); if (amount) { amount.dataset.edited = ""; amount.value = ""; }
+  updateManualSaleAmount();
+});
+$("manualSaleAmount")?.addEventListener("input", (event) => { event.currentTarget.dataset.edited = "1"; });
+$("manualSaleForm")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.currentTarget, button = $("manualSaleSubmit"), message = $("manualSaleMessage");
+  const data = Object.fromEntries(new FormData(form).entries());
+  data.product_id = Number(data.product_id); data.quantity = Number(data.quantity); data.amount = Number(data.amount);
+  button.disabled = true; if (message) message.textContent = "Recording sale…";
+  try {
+    const result = await api("/api/admin/manual-sales", { method: "POST", body: JSON.stringify(data) });
+    if (message) message.textContent = result.message + " Reference: " + result.reference;
+    toast(result.message); form.reset();
+    if ($("manualSaleQuantity")) $("manualSaleQuantity").value = "1";
+    if ($("manualSaleAmount")) { $("manualSaleAmount").value = ""; $("manualSaleAmount").dataset.edited = ""; }
+    await Promise.all([loadProducts(), loadOrders(), loadSummary()]);
+  } catch (error) { if (message) message.textContent = error.message; toast(error.message); }
+  finally { button.disabled = false; }
+});
 
 async function loadOrders() {
   try {
