@@ -253,6 +253,11 @@
     if (now < d.launchAt.getTime()) return {phase:"preorder",target:d.launchAt,label:"DROP GOES LIVE IN"};
     return {phase:"live",target:null,label:"DROP LIVE"};
   }
+  function isDropMonthOpen() {
+    const launch = dropDates().launchAt;
+    if (Number.isNaN(launch.getTime())) return false;
+    return Date.now() < new Date(launch.getFullYear(), launch.getMonth() + 1, 1).getTime();
+  }
   function countdownText(target) {
     const n=Math.max(0,Math.floor((new Date(target).getTime()-Date.now())/1000));
     return Math.floor(n/86400)+"D "+String(Math.floor(n%86400/3600)).padStart(2,"0")+"H "+String(Math.floor(n%3600/60)).padStart(2,"0")+"M "+String(n%60).padStart(2,"0")+"S";
@@ -281,8 +286,10 @@
       const colors = Array.isArray(product.colors) ? product.colors : [];
       const soldOut = stock <= 0;
       const phase = dropPhase();
-      const isFeatured = !!product.featured;
-      const preorderBlocked = isFeatured && phase.phase === "countdown";
+      const isFeatured = Boolean(Number(product.featured));
+      const isNewDrop = !isFeatured && Boolean(product.new_arrival) && isDropMonthOpen();
+      const isDropProduct = isFeatured || isNewDrop;
+      const preorderBlocked = isDropProduct && phase.phase === "countdown";
       const originalPrice = Number(product.compare_price || 0);
       const discounted = originalPrice > Number(product.price || 0);
       const sizeOptions = sizes.length
@@ -295,14 +302,14 @@
         <article class="product-card" data-product-id="${id}">
           <a class="product-image product-page-link" href="/product.html?slug=${encodeURIComponent(product.slug || "")}&id=${id}" aria-label="View product details">
             ${productImage(product, imageIndex < eagerCount)}
-            ${isFeatured ? '<span class="product-badge">PRE-ORDER / NEXT DROP</span>' : product.new_arrival ? '<span class="product-badge">NEW ARRIVAL</span>' : ""}
+            ${isFeatured ? '<span class="product-badge">FEATURED / NEXT DROP</span>' : isNewDrop ? '<span class="product-badge">NEW DROP</span>' : product.new_arrival ? '<span class="product-badge">NEW ARRIVAL</span>' : ""}
             ${soldOut && !preorderBlocked ? '<span class="sold-badge">SOLD OUT</span>' : ""}
           </a>
           <div class="product-meta">
             <h3><a class="product-name-link" href="/product.html?slug=${encodeURIComponent(product.slug || "")}&id=${id}">${escapeHTML(product.name || "MONOWEAR Piece")}</a></h3>
             <span class="price">${discounted ? '<del class="original-price">' + money(originalPrice) + '</del> ' : ''}${money(product.price)}</span>
           </div>
-          ${isFeatured ? `<div class="drop-countdown"><span data-drop-label>${phase.label}</span><strong data-drop-countdown>${phase.target ? countdownText(phase.target) : "AVAILABLE NOW"}</strong><small>${phase.phase === "countdown" ? "Pre-orders begin " + escapeHTML(dropDates().preorderDate) : phase.phase === "preorder" ? "Official drop " + escapeHTML(dropDates().launchDate) : "The drop is live"}</small></div>` : ""}
+          ${isDropProduct ? `<div class="drop-countdown"><span data-drop-label>${phase.label}</span><strong data-drop-countdown>${phase.target ? countdownText(phase.target) : "AVAILABLE NOW"}</strong><small>${phase.phase === "countdown" ? "Pre-orders begin " + escapeHTML(dropDates().preorderDate) : phase.phase === "preorder" ? "Official drop " + escapeHTML(dropDates().launchDate) : "The drop is live"}</small></div>` : ""}
           <div class="product-category">
             ${escapeHTML(product.category || "MONOWEAR")}
             ${stock > 0 ? ` · ${stock} available` : ""}
@@ -312,8 +319,8 @@
               ${sizeOptions}
             </select>
             ${colorOptions}
-            <button class="add-button" type="button" data-stock="${stock}" ${isFeatured ? 'data-featured-add="true"' : ""} ${soldOut || preorderBlocked ? "disabled" : ""} onclick="addToCart(${id})">
-              ${soldOut ? "SOLD OUT" : preorderBlocked ? "PRE-ORDER OPENS SOON" : isFeatured && phase.phase === "preorder" ? "PRE-ORDER +" : "ADD TO BAG +"}
+            <button class="add-button" type="button" data-stock="${stock}" ${isDropProduct ? 'data-featured-add="true"' : ""} ${soldOut || preorderBlocked ? "disabled" : ""} onclick="addToCart(${id})">
+              ${soldOut ? "SOLD OUT" : preorderBlocked ? "PRE-ORDER OPENS SOON" : isDropProduct && phase.phase === "preorder" ? "PRE-ORDER +" : "ADD TO BAG +"}
             </button>
           </div>
         </article>
@@ -365,7 +372,9 @@
     });
 
     const featured = visibleProducts.filter((product) => Boolean(Number(product.featured)));
-    const newArrivals = visibleProducts.filter((product) => !Boolean(Number(product.featured)) && Boolean(product.new_arrival));
+    const dropMonthOpen = isDropMonthOpen();
+    const newDrop = visibleProducts.filter((product) => !Boolean(Number(product.featured)) && Boolean(product.new_arrival) && dropMonthOpen);
+    const newArrivals = visibleProducts.filter((product) => !Boolean(Number(product.featured)) && Boolean(product.new_arrival) && !dropMonthOpen);
     const otherProducts = visibleProducts.filter((product) => !Boolean(Number(product.featured)) && !Boolean(product.new_arrival));
     const featuredSection = $("featuredProductsSection");
     if (featuredSection) featuredSection.hidden = featured.length === 0;
@@ -382,18 +391,28 @@
       return;
     }
 
+    const newDropMarkup = newDrop.length ? `
+      <section class="product-category-section new-arrivals-section new-drop-section" aria-labelledby="new-drop-heading">
+        <div class="product-subheading product-category-heading">
+          <p class="eyebrow">THE CURRENT DROP / COUNTDOWN + PRE-ORDER</p>
+          <h3 id="new-drop-heading">New <i>drop.</i></h3>
+        </div>
+        <div class="product-grid">${renderProductCards(newDrop)}</div>
+      </section>
+    ` : "";
     const arrivalsMarkup = newArrivals.length ? `
       <section class="product-category-section new-arrivals-section" aria-labelledby="new-arrivals-heading">
         <div class="product-subheading product-category-heading">
-          <p class="eyebrow">JUST DROPPED / FIRST 24 HOURS</p>
+          <p class="eyebrow">JUST DROPPED</p>
           <h3 id="new-arrivals-heading">New <i>arrivals.</i></h3>
         </div>
         <div class="product-grid">${renderProductCards(newArrivals)}</div>
       </section>
     ` : "";
+    const topSectionsMarkup = newDropMarkup + arrivalsMarkup;
 
     if (!otherProducts.length) {
-      sections.innerHTML = arrivalsMarkup;
+      sections.innerHTML = topSectionsMarkup;
       renderPagination(0);
       return;
     }
@@ -403,7 +422,7 @@
     const start = (productPage - 1) * PRODUCTS_PER_PAGE;
     const pageProducts = otherProducts.slice(start, start + PRODUCTS_PER_PAGE);
 
-    sections.innerHTML = arrivalsMarkup + `
+    sections.innerHTML = topSectionsMarkup + `
       <section class="product-category-section" aria-labelledby="all-pieces-heading">
         <div class="product-subheading product-category-heading">
           <p class="eyebrow">THE FULL SELECTION</p>
