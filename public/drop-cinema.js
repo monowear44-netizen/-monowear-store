@@ -24,7 +24,7 @@
     '<div class="wardrobe-focus-view" hidden>' +
       '<button class="wardrobe-focus-back" type="button" aria-label="Return to wardrobe">← ALL PIECES</button>' +
       '<div class="wardrobe-focus-stage"><div class="wardrobe-focus-main"><span class="wardrobe-focus-hook" aria-hidden="true"></span><img class="wardrobe-focus-image" alt="" /></div><div class="wardrobe-variant-rail" aria-label="Available colours"></div></div>' +
-      '<div class="wardrobe-focus-info"><div class="wardrobe-focus-copy"><p class="wardrobe-focus-kicker">MONOWEAR / SELECTED PIECE</p><h2 class="wardrobe-focus-name"></h2><p class="wardrobe-focus-description"></p><div class="wardrobe-focus-price"></div></div><a class="wardrobe-view-button" href="#">VIEW PRODUCT ↗</a></div>' +
+      '<div class="wardrobe-focus-info"><div class="wardrobe-focus-copy"><p class="wardrobe-focus-kicker">MONOWEAR / SELECTED PIECE</p><h2 class="wardrobe-focus-name"></h2><p class="wardrobe-focus-description"></p><div class="wardrobe-focus-price"></div><div class="wardrobe-rail-status"></div><div class="wardrobe-countdown" hidden></div></div><div class="wardrobe-focus-actions"><button type="button" class="wardrobe-add-to-bag">ADD TO BAG</button><a class="wardrobe-view-button" href="#">VIEW PRODUCT ↗</a></div></div>' +
       '<p class="wardrobe-transparency-note">BEST DISPLAYED WITH TRANSPARENT PNG PRODUCT IMAGES</p>' +
     '</div><div class="wardrobe-bottom-rule" aria-hidden="true"></div>';
 
@@ -59,6 +59,10 @@
   };
   const makeVariants = (p) => {
     const result = [];
+    if (Array.isArray(p.colors) && p.colors.some(entry => entry && typeof entry === "object" && (entry.src || entry.image || entry.url))) {
+      p.colors.forEach(entry => { const image = getImage(entry); if (image) result.push({ name: String(entry.name || entry.color || "Original"), image }); });
+      if (result.length) return result;
+    }
     const add = (name, raw) => {
       (Array.isArray(raw) ? raw : [raw]).forEach(entry => {
         const image = getImage(entry);
@@ -116,6 +120,20 @@
     layer.querySelector(".wardrobe-focus-name").textContent = selectedProduct.name || "MONOWEAR PIECE";
     layer.querySelector(".wardrobe-focus-description").textContent = selectedProduct.description || "";
     layer.querySelector(".wardrobe-focus-price").textContent = money(selectedProduct.price);
+    const status = String(selectedProduct.status || "");
+    const statusLabels = { featured: "FEATURED", "new-drop": "NEW DROP", "new-arrival": "NEW ARRIVAL" };
+    layer.querySelector(".wardrobe-rail-status").textContent = statusLabels[status] || "";
+    const countdown = layer.querySelector(".wardrobe-countdown");
+    const refreshCountdown = () => {
+      if (status !== "new-drop" || !selectedProduct.dropDate) { countdown.hidden = true; return; }
+      const remaining = new Date(selectedProduct.dropDate + "T00:00:00+01:00").getTime() - Date.now();
+      if (remaining <= 0) { countdown.hidden = true; return; }
+      const seconds = Math.floor(remaining / 1000), pad = n => String(n).padStart(2, "0");
+      countdown.textContent = "PRE-ORDER · " + Math.floor(seconds / 86400) + "D " + pad(Math.floor(seconds % 86400 / 3600)) + "H " + pad(Math.floor(seconds % 3600 / 60)) + "M " + pad(seconds % 60) + "S";
+      countdown.hidden = false;
+    };
+    refreshCountdown();
+    layer.querySelector(".wardrobe-add-to-bag").textContent = status === "new-drop" ? "PRE-ORDER +" : "ADD TO BAG";
     layer.querySelector(".wardrobe-view-button").href = productUrl(selectedProduct);
     variantRail.replaceChildren();
     if (selectedProduct.variants.length > 1) selectedProduct.variants.forEach((item, index) => {
@@ -127,6 +145,14 @@
     });
     variantRail.hidden = selectedProduct.variants.length < 2;
   };
+  layer.querySelector(".wardrobe-add-to-bag").addEventListener("click", () => {
+    if (!selectedProduct || !selectedProduct.id || typeof window.addToCart !== "function") { window.location.href = selectedProduct ? productUrl(selectedProduct) : "/"; return; }
+    const variant = selectedProduct.variants[selectedVariant] || selectedProduct.variants[0];
+    const productId = Number(selectedProduct.id);
+    const colorSelect = document.getElementById("color-" + productId);
+    if (colorSelect && variant && variant.name) colorSelect.value = variant.name;
+    window.addToCart(productId);
+  });
   const closeFocus = () => {
     selectedProduct = null; focusView.hidden = true; homeView.hidden = false; layer.classList.remove("is-focused");
     backButtons.forEach(b => b.hidden = true);
@@ -198,36 +224,34 @@
     featureSection.setAttribute("data-campaign-animation", "virtual-wardrobe");
   };
 
-  fetch("/api/store", { credentials: "same-origin", cache: "no-store" })
-    .then(r => r.ok ? r.json() : Promise.reject(new Error("Store unavailable")))
+  fetch("/api/wardrobe-rail", { credentials: "same-origin", cache: "no-store" })
+    .then(r => r.ok ? r.json() : Promise.reject(new Error("Wardrobe rail unavailable")))
     .then(async data => {
-      const all = Array.isArray(data.products) ? data.products.filter(p => p && p.published !== false && Number(p.published == null ? 1 : p.published) !== 0) : [];
-      const selectedLabel = String((data.settings || {}).wardrobe_section_label || "Featured / Next Drop");
-      const ordered = selectedLabel === "New Arrivals"
-        ? all.filter(p => Boolean(p.new_arrival))
-        : all.filter(p => Boolean(Number(p.featured)));
-      const ready = await Promise.all(ordered.map(async p => {
+      const RAIL = data.RAIL || { show: "all", background: "" };
+      if (RAIL.background) {
+        layer.style.backgroundImage = 'linear-gradient(rgba(242,242,240,.66),rgba(242,242,240,.66)),url("' + String(RAIL.background).replace(/["\\\\]/g, "") + '")';
+        layer.style.backgroundSize = "cover";
+        layer.style.backgroundPosition = "center";
+      } else layer.style.backgroundImage = "none";
+      const source = Array.isArray(data.products) ? data.products : [];
+      const ready = await Promise.all(source.map(async p => {
         const product = Object.assign({}, p, { variants: makeVariants(p) });
         product.variants = (await Promise.all(product.variants.map(async v => { try { await preload(v.image); return v; } catch { return null; } }))).filter(Boolean);
         return product.variants.length ? product : null;
       }));
-      const readyProducts = ready.filter(Boolean);
-      const settings = data.settings || {};
-      const label = String(settings.wardrobe_section_label || "Featured / Next Drop");
-      products = label === "New Arrivals"
-        ? readyProducts.filter(p => Boolean(p.new_arrival))
-        : readyProducts.filter(p => Boolean(Number(p.featured)));
+      products = ready.filter(Boolean);
       renderRail();
-      applySectionLabel(settings);
+      applySectionLabel({ wardrobe_section_label: "Featured / Next Drop" });
       if (!products.length) {
-        track.innerHTML = '<p class="wardrobe-empty">No ' + (label === "New Arrivals" ? "new arrivals" : label === "Next Drop" ? "next drop" : "featured pieces") + ' yet. Add and publish products in Studio.</p>';
+        track.innerHTML = '<p class="wardrobe-empty">Nothing on the rail right now. Mark products in Studio to display them here.</p>';
         layer.querySelector(".wardrobe-count").textContent = "00 PIECES";
       }
     })
-    .catch(() => {
+    .catch(error => {
       products = [];
       renderRail();
       applySectionLabel({});
       track.innerHTML = '<p class="wardrobe-empty">The featured rail is temporarily unavailable. Please refresh in a moment.</p>';
+      console.warn("MONOWEAR wardrobe rail:", error.message);
     });
 })();
