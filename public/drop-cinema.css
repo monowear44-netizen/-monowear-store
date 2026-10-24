@@ -1,25 +1,15 @@
-/* MONOWEAR — virtual wardrobe rail / campaign feature */
-.hero.drop-cinema-active {
-  min-height: min(760px, 88vh);
-  min-height: min(760px, 88svh);
-  padding: 0;
-  align-items: stretch;
-  background: #f1f1ee !important;
-  color: #191a18;
-  isolation: isolate;
-}
-.hero.drop-cinema-active::after,
-.hero.drop-cinema-active .hero-copy,
-.hero.drop-cinema-active .hero-index,
-.hero.drop-cinema-active > .hero-grain { display:none !important; }
+/* MONOWEAR — virtual wardrobe rail, confined to Featured pieces */
+.featured-wardrobe-active { position:relative; }
+.featured-wardrobe-active > .product-subheading { position:relative; z-index:3; }
+.featured-wardrobe-active > #featuredProductGrid { display:none !important; }
 .drop-cinema-layer,
-.drop-cinema-active .drop-cinema-layer {
-  position:absolute; inset:0; z-index:2; opacity:1; overflow:hidden;
-  background:#f1f1ee; color:#171815; pointer-events:auto;
+.featured-wardrobe-active .drop-cinema-layer {
+  position:relative; inset:auto; z-index:2; width:100%; min-height:600px; height:min(690px,78vh);
+  opacity:1; overflow:hidden; background:#f1f1ee; color:#171815; pointer-events:auto;
   font-family:Manrope,Arial,sans-serif;
 }
-.drop-cinema-active .wardrobe-experience { display:flex; flex-direction:column; }
-.wardrobe-experience { position:absolute; inset:0; min-height:0; display:flex; flex-direction:column; }
+.wardrobe-experience { display:flex; flex-direction:column; }
+.wardrobe-experience[hidden] { display:none !important; }
 .wardrobe-experience [hidden] { display:none !important; }
 .wardrobe-top {
   position:relative; z-index:5; flex:0 0 78px; min-height:78px;
@@ -86,7 +76,7 @@
 @keyframes wardrobeFocusIn { from{opacity:0} to{opacity:1} }
 @keyframes wardrobeImageSwap { from{opacity:.25;transform:translateY(8px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
 @media(max-width:700px) {
-  .hero.drop-cinema-active { min-height:clamp(620px,88svh,820px); }
+  .drop-cinema-layer, .featured-wardrobe-active .drop-cinema-layer { min-height:620px; height:min(700px,82svh); }
   .wardrobe-top { flex-basis:62px; min-height:62px; padding:0 16px; }
   .wardrobe-logo { font-size:10px; letter-spacing:.14em; }
   .wardrobe-logo-mark { width:20px; height:20px; }
