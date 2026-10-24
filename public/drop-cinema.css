@@ -115,3 +115,5 @@
   .wardrobe-piece,.wardrobe-focus-view,.wardrobe-focus-image.is-swapping { animation:none !important; }
   .wardrobe-piece:hover .wardrobe-hanger { animation:none !important; }
 }
+/* Featured / Next Drop empty state */
+.wardrobe-empty { align-self:center; margin:auto; padding:24px; color:#777970; font:10px 'DM Mono',monospace; letter-spacing:.08em; line-height:1.8; text-align:center; max-width:360px; }
