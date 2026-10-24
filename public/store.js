@@ -338,11 +338,54 @@
   function initShowcaseCarousels() {
     if (!document.getElementById("showcaseSideBag")) {
       const bag = document.createElement("aside");
-      bag.id = "showcaseSideBag"; bag.className = "showcase-side-bag";
-      bag.innerHTML = '<div class="showcase-side-bag-head"><span>YOUR BAG</span><strong id="showcaseBagCount">0 ITEMS</strong></div><div id="showcaseBagItems" class="showcase-side-bag-items"><p>Your bag is empty.</p></div><div class="showcase-side-bag-foot"><span>SUBTOTAL</span><strong id="showcaseBagTotal">₦0</strong><button type="button" id="showcaseBagOpen">VIEW BAG ↗</button></div>';
+      bag.id = "showcaseSideBag"; bag.className = "showcase-side-bag showcase-product-picker";
+      bag.innerHTML = '<div class="showcase-side-bag-head"><span>SHOP THE ANIMATION</span><small>Choose any moving piece</small></div><div id="showcaseBagItems" class="showcase-side-bag-items"><p>Loading animated pieces…</p></div><div class="showcase-side-bag-foot"><button type="button" id="showcaseBagOpen">OPEN YOUR BAG ↗</button></div>';
       document.body.appendChild(bag);
-      bag.querySelector("#showcaseBagOpen").addEventListener("click", () => { const toggle = document.querySelector(".cart-toggle"); if (toggle) toggle.click(); });
+      bag.querySelector("#showcaseBagOpen").addEventListener("click", () => { const toggle = document.querySelector(".cart-toggle") || document.querySelector("#cartToggle"); if (toggle) toggle.click(); });
+      bag.querySelector("#showcaseBagItems").addEventListener("click", (event) => {
+        const button = event.target.closest("[data-picker-add]");
+        if (!button) return;
+        const id = Number(button.dataset.pickerAdd);
+        const card = document.querySelector('.product-card[data-product-id="' + id + '"]');
+        if (!card) return;
+        const size = bag.querySelector('[data-picker-size="' + id + '"]');
+        const colour = bag.querySelector('[data-picker-colour="' + id + '"]');
+        const cardSize = card.querySelector("#size-" + id);
+        const cardColour = card.querySelector("#color-" + id);
+        if (size && cardSize) cardSize.value = size.value;
+        if (colour && cardColour) {
+          cardColour.value = colour.value;
+          cardColour.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        window.addToCart(id);
+      });
     }
+    const pickerItems = new Map();
+    document.querySelectorAll(".product-showcase-carousel .product-card").forEach((card) => {
+      const id = Number(card.dataset.productId);
+      if (!id || pickerItems.has(id)) return;
+      const image = card.querySelector(".product-image img");
+      const name = card.querySelector(".product-name-link")?.textContent?.trim() || "MONOWEAR Piece";
+      const price = card.querySelector(".price")?.textContent?.trim() || "";
+      const sizeSelect = card.querySelector("#size-" + id);
+      const colourSelect = card.querySelector("#color-" + id);
+      const soldOut = !card.querySelector(".add-button") || card.querySelector(".add-button").disabled;
+      pickerItems.set(id, { id, name, price, image: image?.getAttribute("src") || "", sizes: sizeSelect ? Array.from(sizeSelect.options).map(o => o.value) : ["One size"], colours: colourSelect ? Array.from(colourSelect.options).map(o => o.value) : [], soldOut });
+    });
+    const picker = document.getElementById("showcaseBagItems");
+    if (picker) picker.innerHTML = pickerItems.size ? Array.from(pickerItems.values()).map(item =>
+      '<article class="showcase-picker-item" data-picker-product="' + item.id + '">' +
+      '<div class="showcase-picker-image">' + (item.image ? '<img src="' + escapeHTML(item.image) + '" alt="" loading="eager" decoding="async">' : '<span>MONO</span>') + '</div>' +
+      '<div class="showcase-picker-info"><strong>' + escapeHTML(item.name) + '</strong><span>' + escapeHTML(item.price) + '</span>' +
+      '<div class="showcase-picker-options">' +
+      '<select aria-label="Size for ' + escapeHTML(item.name) + '" data-picker-size="' + item.id + '"' + (item.soldOut ? ' disabled' : '') + '>' + item.sizes.map(v => '<option value="' + escapeHTML(v) + '">' + escapeHTML(v) + '</option>').join("") + '</select>' +
+      (item.colours.length ? '<select aria-label="Colour for ' + escapeHTML(item.name) + '" data-picker-colour="' + item.id + '"' + (item.soldOut ? ' disabled' : '') + '>' + item.colours.map(v => '<option value="' + escapeHTML(v) + '">' + escapeHTML(v) + '</option>').join("") + '</select>' : '') +
+      '</div><button type="button" data-picker-add="' + item.id + '"' + (item.soldOut ? ' disabled' : '') + '>' + (item.soldOut ? 'SOLD OUT' : 'ADD TO BAG +') + '</button></div></article>'
+    ).join("") : "<p>No animated pieces are available right now.</p>";
+    document.querySelectorAll(".product-showcase-carousel .product-card img").forEach((image) => {
+      image.loading = "eager";
+      image.decoding = "async";
+    });
     document.querySelectorAll(".product-showcase-carousel").forEach((carousel) => {
       const previousTimer = showcaseTimers.get(carousel);
       if (previousTimer) window.clearInterval(previousTimer);
@@ -575,10 +618,8 @@
     );
     setText("cartTotal", money(cartTotal));
     setText("cart-total", money(cartTotal));
-    setText("showcaseBagCount", count + " ITEM" + (count === 1 ? "" : "S"));
-    setText("showcaseBagTotal", money(cartTotal));
-    const showcaseBagItems = $("showcaseBagItems");
-    if (showcaseBagItems) showcaseBagItems.innerHTML = cart.length ? cart.map((item) => '<div class="showcase-bag-item"><div class="showcase-bag-thumb">' + (item.image ? '<img src="' + escapeHTML(item.image) + '" alt="" loading="lazy">' : "MONO") + '</div><div><strong>' + escapeHTML(item.name || "MONOWEAR piece") + '</strong><small>' + escapeHTML(item.color || "") + (item.size ? " · " + escapeHTML(item.size) : "") + '</small><small>QTY ' + Math.max(1, Number(item.quantity) || 1) + " · " + money(item.price) + '</small></div></div>').join("") : "<p>Your bag is empty.</p>";
+    // The showcase side panel is a product picker, not a duplicate cart.
+    // Keep its animated-product choices intact when the actual cart changes.
     const cartItems = $("cartItems");
     if (cartItems) {
       if (!cart.length) {
