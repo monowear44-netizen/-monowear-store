@@ -117,3 +117,53 @@
 }
 /* Featured / Next Drop empty state */
 .wardrobe-empty { align-self:center; margin:auto; padding:24px; color:#777970; font:10px 'DM Mono',monospace; letter-spacing:.08em; line-height:1.8; text-align:center; max-width:360px; }
+
+
+/* WARDROBE RAIL — inherit the storefront theme as the single source of truth. */
+.drop-cinema-layer {
+  --fg: var(--ink);
+  --mut: var(--muted);
+  --g: var(--accent);
+  background-color: var(--bg) !important;
+  color: var(--fg) !important;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.drop-cinema-layer .wardrobe-top { border-color: var(--line); }
+.drop-cinema-layer .wardrobe-logo,
+.drop-cinema-layer .wardrobe-back,
+.drop-cinema-layer .wardrobe-focus-back,
+.drop-cinema-layer .wardrobe-piece { color: var(--fg); }
+.drop-cinema-layer .wardrobe-logo-mark,
+.drop-cinema-layer .wardrobe-bottom-rule { background: var(--g); }
+.drop-cinema-layer .wardrobe-top-note,
+.drop-cinema-layer .wardrobe-intro,
+.drop-cinema-layer .wardrobe-bottom-meta,
+.drop-cinema-layer .wardrobe-piece-color,
+.drop-cinema-layer .wardrobe-focus-kicker,
+.drop-cinema-layer .wardrobe-focus-description,
+.drop-cinema-layer .wardrobe-transparency-note { color: var(--muted); }
+.drop-cinema-layer .wardrobe-intro span:first-child { color: var(--fg); }
+.drop-cinema-layer .wardrobe-rail-line { background: var(--line); }
+.drop-cinema-layer .wardrobe-focus-info { border-color: var(--line); }
+.drop-cinema-layer .wardrobe-focus-price { color: var(--fg); }
+.drop-cinema-layer .wardrobe-rail-status,
+.drop-cinema-layer .wardrobe-countdown { color: var(--g); }
+.drop-cinema-layer .wardrobe-add-to-bag {
+  background: var(--fg); color: var(--bg); border: 1px solid var(--fg);
+  padding: 13px 18px; font: 600 10px 'DM Mono',monospace; letter-spacing: .12em;
+}
+.drop-cinema-layer .wardrobe-add-to-bag:hover { background: var(--g); color: #111; border-color: var(--g); }
+.drop-cinema-layer .wardrobe-view-button { color: var(--fg); border-color: var(--line); }
+.drop-cinema-layer .wardrobe-focus-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.wardrobe-rail-admin-preview {
+  width: min(100%, 440px); height: 180px; margin: 10px 0;
+  background-size: cover; background-position: center; border: 1px solid var(--line);
+}
+@media (max-width: 700px) {
+  .drop-cinema-layer { width: 100%; max-width: 100%; }
+  .drop-cinema-layer .wardrobe-focus-actions { justify-content:center; gap:8px; }
+  .drop-cinema-layer .wardrobe-add-to-bag,
+  .drop-cinema-layer .wardrobe-view-button { min-height:42px; padding:12px 13px; font-size:9px; }
+  .drop-cinema-layer .wardrobe-focus-info { max-width:100%; }
+}
