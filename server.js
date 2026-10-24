@@ -4541,6 +4541,8 @@ app.post("/api/admin/notifications/:id/read", requireAdmin, (req, res) => {
 // ADMIN STUDIO PAGE
 // ============================================================
 
+app.get("/admin", (req, res) => res.redirect(302, "/studio"));
+
 app.get("/studio", (req, res) => {
   const studioFile = path.join(__dirname, "public", "studio.html");
 
