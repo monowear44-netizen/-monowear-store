@@ -229,7 +229,7 @@
     .then(async data => {
       const RAIL = data.RAIL || { show: "all", background: "" };
       if (RAIL.background) {
-        layer.style.backgroundImage = 'linear-gradient(rgba(242,242,240,.66),rgba(242,242,240,.66)),url("' + String(RAIL.background).replace(/["\\\\]/g, "") + '")';
+        layer.style.backgroundImage = 'linear-gradient(color-mix(in srgb,var(--bg) 66%,transparent),color-mix(in srgb,var(--bg) 66%,transparent)),url("' + String(RAIL.background).replace(/["\\\\]/g, "") + '")';
         layer.style.backgroundSize = "cover";
         layer.style.backgroundPosition = "center";
       } else layer.style.backgroundImage = "none";
