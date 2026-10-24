@@ -169,7 +169,7 @@
         window.setInterval(() => {
           slideIndex = (slideIndex + 1) % slideItems.length;
           renderProductSlide();
-        }, 2400);
+        }, 5000);
       }
     })
     .catch(() => { productShowcase.hidden = true; });
