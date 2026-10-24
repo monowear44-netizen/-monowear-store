@@ -177,3 +177,8 @@
   .drop-cinema-layer .wardrobe-top-note { max-width:none; }
   .drop-cinema-layer .wardrobe-bag-count { font-size:7px; }
 }
+
+.drop-cinema-layer .wardrobe-piece-status {
+  display:inline-block; margin-top:7px; padding:4px 6px; background:var(--g);
+  color:#111; font:700 7px 'DM Mono',monospace; letter-spacing:.1em; text-transform:uppercase;
+}
