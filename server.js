@@ -93,6 +93,9 @@ db.exec(`
     sizes TEXT DEFAULT '[]',
     colors TEXT DEFAULT '[]',
     color_images TEXT DEFAULT '{}',
+    rail_status TEXT NOT NULL DEFAULT '',
+    rail_drop_date TEXT NOT NULL DEFAULT '',
+    rail_type TEXT NOT NULL DEFAULT 'top',
     stock INTEGER NOT NULL DEFAULT 0,
     published INTEGER NOT NULL DEFAULT 0,
     featured INTEGER NOT NULL DEFAULT 0,
@@ -206,6 +209,14 @@ db.exec(`
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
 `);
+
+// Safe, idempotent migrations for existing persistent SQLite databases.
+{
+ const cols = new Set(db.prepare('PRAGMA table_info(products)').all().map(column => column.name));
+ if (!cols.has('rail_status')) db.exec("ALTER TABLE products ADD COLUMN rail_status TEXT NOT NULL DEFAULT ''");
+ if (!cols.has('rail_drop_date')) db.exec("ALTER TABLE products ADD COLUMN rail_drop_date TEXT NOT NULL DEFAULT ''");
+ if (!cols.has('rail_type')) db.exec("ALTER TABLE products ADD COLUMN rail_type TEXT NOT NULL DEFAULT 'top'");
+}
 
 // Private first-party website analytics. Store only a random visitor token,
 // page path and timestamp; do not store IP addresses or raw user-agent strings.
@@ -423,6 +434,7 @@ const defaults = {
   drop_preorder_date: "2026-10-21",
   drop_launch_date: "2026-11-10",
   wardrobe_section_label: "Featured / Next Drop",
+  wardrobe_rail: JSON.stringify({ show: "all", background: "" }),
   x: "https://x.com/monowear44",
   contact_email: process.env.CONTACT_EMAIL || "",
   maintenance_mode: "false",
@@ -945,7 +957,10 @@ function safeProduct(product) {
     images: parseJSON(product.images, []),
     sizes: parseJSON(product.sizes, []),
     colors: parseJSON(product.colors, []),
-    color_images: parseJSON(product.color_images, {})
+    color_images: parseJSON(product.color_images, {}),
+    rail_status: String(product.rail_status || ""),
+    rail_drop_date: String(product.rail_drop_date || ""),
+    rail_type: ["top", "jean", "cap"].includes(product.rail_type) ? product.rail_type : "top"
   };
 }
 
@@ -1832,6 +1847,47 @@ app.get("/api/store", (req, res) => {
     });
   }
 });
+// PUBLIC WARDROBE RAIL API
+function effectiveRailStatus(product, now = new Date()) {
+  const status = String(product.rail_status || "");
+  if (status === "featured") return "featured";
+  if (status !== "new-drop" && status !== "new-arrival") return "";
+  const date = String(product.rail_drop_date || "");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return "";
+  const drop = new Date(date + "T00:00:00+01:00");
+  const end = new Date(Number(date.slice(0, 4)), Number(date.slice(5, 7)), 1);
+  if (now.getTime() >= end.getTime()) return "";
+  return drop.getTime() > now.getTime() ? "new-drop" : "new-arrival";
+}
+function readWardrobeRailSettings() {
+  const saved = parseJSON(getSetting("wardrobe_rail", ""), {});
+  return { show: ["all", "featured", "new-drop", "new-arrival"].includes(saved.show) ? saved.show : "all", background: String(saved.background || "") };
+}
+app.get("/api/wardrobe-rail", (req, res) => {
+  try {
+    const rows = db.prepare("SELECT * FROM products WHERE published = 1 ORDER BY sort_order ASC, id DESC").all();
+    const rail = readWardrobeRailSettings();
+    const products = rows.map(row => {
+      const p = safeProduct(row), colors = [], map = p.color_images && typeof p.color_images === "object" ? p.color_images : {};
+      for (const [name, raw] of Object.entries(map)) (Array.isArray(raw) ? raw : [raw]).forEach(src => { if (typeof src === "string" && src.trim()) colors.push({ name, src }); });
+      if (!colors.length && Array.isArray(p.images)) p.images.forEach((src, i) => { if (typeof src === "string" && src.trim()) colors.push({ name: p.colors[i] || (i ? "Colour " + (i + 1) : "Original"), src }); });
+      if (!colors.length && p.image) colors.push({ name: "Original", src: p.image });
+      return { id:p.id, name:p.name, slug:p.slug, price:p.price, type:p.rail_type || "top", colors, status:effectiveRailStatus(p), dropDate:p.rail_drop_date || "", description:p.description || "", stock:p.stock, published:p.published };
+    }).filter(p => p.status && p.colors.length);
+    res.set("Cache-Control", "no-store");
+    res.json({ products: products.filter(p => rail.show === "all" || p.status === rail.show), RAIL: rail });
+  } catch (error) { console.error("Wardrobe rail API error:", error); res.status(500).json({ error: "Could not load wardrobe rail." }); }
+});
+app.get("/api/admin/wardrobe-rail", requireAdmin, (req, res) => res.json(readWardrobeRailSettings()));
+app.put("/api/admin/wardrobe-rail", requireAdmin, (req, res) => {
+  const body = req.body || {}, show = ["all", "featured", "new-drop", "new-arrival"].includes(body.show) ? body.show : "all";
+  const background = String(body.background || "").trim();
+  if (background && !(/^\/uploads\/[a-zA-Z0-9._-]+$/.test(background) || /^https:\/\/[^"'\s]+$/i.test(background))) return res.status(400).json({ error: "Use a valid uploaded image or HTTPS image URL." });
+  const value = JSON.stringify({ show, background });
+  db.prepare("INSERT INTO settings (key, value) VALUES ('wardrobe_rail', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(value);
+  res.set("Cache-Control", "no-store"); res.json({ success: true, RAIL: { show, background } });
+});
+
 // ============================================================
 // PUBLIC PRODUCTS
 // ============================================================
@@ -2039,6 +2095,9 @@ function normalizeProductInput(body) {
     color_images: JSON.stringify(
       body.color_images && typeof body.color_images === "object" && !Array.isArray(body.color_images) ? body.color_images : {}
     ),
+    rail_status: ["featured", "new-drop", "new-arrival", ""].includes(String(body.rail_status || "")) ? String(body.rail_status || "") : "",
+    rail_drop_date: /^\\d{4}-\\d{2}-\\d{2}$/.test(String(body.rail_drop_date || "")) ? String(body.rail_drop_date) : "",
+    rail_type: ["top", "jean", "cap"].includes(String(body.rail_type || "")) ? String(body.rail_type) : "top",
     stock,
     published: body.published ? 1 : 0,
     featured: body.featured ? 1 : 0,
@@ -2063,11 +2122,13 @@ app.post("/api/admin/products", requireAdmin, (req, res) => {
       INSERT INTO products (
         name, slug, description, price, compare_price,
         image, images, category, sizes, colors, color_images,
+        rail_status, rail_drop_date, rail_type,
         stock, published, featured, sort_order
       )
       VALUES (
         @name, @slug, @description, @price, @compare_price,
         @image, @images, @category, @sizes, @colors, @color_images,
+        @rail_status, @rail_drop_date, @rail_type,
         @stock, @published, @featured, @sort_order
       )
     `).run(product);
@@ -2128,6 +2189,9 @@ app.put("/api/admin/products/:id", requireAdmin, (req, res) => {
         sizes = @sizes,
         colors = @colors,
         color_images = @color_images,
+        rail_status = @rail_status,
+        rail_drop_date = @rail_drop_date,
+        rail_type = @rail_type,
         stock = @stock,
         published = @published,
         featured = @featured,
