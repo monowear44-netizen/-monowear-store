@@ -2096,7 +2096,7 @@ function normalizeProductInput(body) {
       body.color_images && typeof body.color_images === "object" && !Array.isArray(body.color_images) ? body.color_images : {}
     ),
     rail_status: ["featured", "new-drop", "new-arrival", ""].includes(String(body.rail_status || "")) ? String(body.rail_status || "") : "",
-    rail_drop_date: /^\\d{4}-\\d{2}-\\d{2}$/.test(String(body.rail_drop_date || "")) ? String(body.rail_drop_date) : "",
+    rail_drop_date: /^\d{4}-\d{2}-\d{2}$/.test(String(body.rail_drop_date || "")) ? String(body.rail_drop_date) : "",
     rail_type: ["top", "jean", "cap"].includes(String(body.rail_type || "")) ? String(body.rail_type) : "top",
     stock,
     published: body.published ? 1 : 0,
