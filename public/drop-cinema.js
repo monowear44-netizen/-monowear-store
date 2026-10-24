@@ -9,7 +9,7 @@
 
   const layer = document.createElement("section");
   layer.className = "drop-cinema-layer wardrobe-experience";
-  layer.setAttribute("aria-label", "MONOWEAR virtual wardrobe");
+  layer.setAttribute("aria-label", "MONOWEAR featured products rail");
   layer.innerHTML =
     '<header class="wardrobe-top">' +
       '<button class="wardrobe-back" type="button" aria-label="Back to all clothes" hidden>← BACK</button>' +
@@ -17,7 +17,7 @@
       '<span class="wardrobe-top-note">INDEPENDENT BY DESIGN</span>' +
     '</header>' +
     '<div class="wardrobe-home-view">' +
-      '<div class="wardrobe-intro"><span>THE WARDROBE</span><span>SELECT A PIECE TO EXPLORE ↗</span></div>' +
+      '<div class="wardrobe-intro"><span class="wardrobe-section-label">FEATURED / NEXT DROP</span><span>SELECT A PIECE TO EXPLORE ↗</span></div>' +
       '<div class="wardrobe-rail-wrap"><div class="wardrobe-rail-line" aria-hidden="true"></div><div class="wardrobe-track" tabindex="0" role="list" aria-label="Clothing rail. Swipe or scroll to browse."></div></div>' +
       '<div class="wardrobe-bottom-meta"><span>LIVE THE NAME. WEAR THE MEANING.</span><span class="wardrobe-count">00 PIECES</span></div>' +
     '</div>' +
@@ -180,42 +180,54 @@
   layer.hidden = true;
   subheading.insertAdjacentElement("afterend", layer);
 
-  const dateAtMidnightWAT = value => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return null;
-    const date = new Date(value + "T00:00:00+01:00");
-    return Number.isNaN(date.getTime()) ? null : date;
-  };
-  const previewMode = new URLSearchParams(location.search).get("cinemaPreview") === "1";
-  const applyCampaignWindow = settings => {
+  const applySectionLabel = settings => {
     settings = settings || {};
-    const preorder = dateAtMidnightWAT(String(settings.drop_preorder_date || "2026-10-21"));
-    const launch = dateAtMidnightWAT(String(settings.drop_launch_date || "2026-11-10"));
-    let end = null;
-    if (launch) {
-      const next = new Date(launch.getTime()); next.setUTCMonth(next.getUTCMonth() + 1);
-      end = dateAtMidnightWAT(next.getUTCFullYear() + "-" + String(next.getUTCMonth() + 1).padStart(2, "0") + "-01");
-    }
-    const active = previewMode || (preorder && launch && end && launch >= preorder && Date.now() >= preorder.getTime() && Date.now() < end.getTime());
-    featureSection.classList.toggle("featured-wardrobe-active", Boolean(active));
-    layer.hidden = !active;
-    featuredGrid.hidden = Boolean(active);
-    if (active) featureSection.setAttribute("data-campaign-animation", "virtual-wardrobe"); else featureSection.removeAttribute("data-campaign-animation");
+    const allowed = ["Featured", "Next Drop", "New Arrivals", "Featured / Next Drop"];
+    const savedLabel = String(settings.wardrobe_section_label || "Featured / Next Drop").trim();
+    const label = allowed.includes(savedLabel) ? savedLabel : "Featured / Next Drop";
+    const displayLabel = label === "Featured" ? "FEATURED" : label === "Next Drop" ? "NEXT DROP" : label === "New Arrivals" ? "NEW ARRIVALS" : "FEATURED / NEXT DROP";
+    const introLabel = layer.querySelector(".wardrobe-section-label");
+    if (introLabel) introLabel.textContent = displayLabel;
+    const eyebrow = subheading.querySelector(".eyebrow");
+    const title = subheading.querySelector("h3");
+    if (eyebrow) eyebrow.textContent = "CURRENT SPOTLIGHT";
+    if (title) title.innerHTML = label === "New Arrivals" ? "New <i>arrivals.</i>" : label === "Next Drop" ? "Next <i>drop.</i>" : label === "Featured" ? "Featured <i>pieces.</i>" : "Featured / <i>Next Drop.</i>";
+    featureSection.classList.add("featured-wardrobe-active");
+    layer.hidden = false;
+    featuredGrid.hidden = true;
+    featureSection.setAttribute("data-campaign-animation", "virtual-wardrobe");
   };
 
   fetch("/api/store", { credentials: "same-origin", cache: "no-store" })
     .then(r => r.ok ? r.json() : Promise.reject(new Error("Store unavailable")))
     .then(async data => {
       const all = Array.isArray(data.products) ? data.products.filter(p => p && p.published !== false && Number(p.published == null ? 1 : p.published) !== 0) : [];
-      const featured = all.filter(p => Boolean(Number(p.featured)));
-      const ordered = featured.concat(all.filter(p => !featured.includes(p)));
+      const label = String((data.settings || {}).wardrobe_section_label || "Featured / Next Drop");
+      const ordered = label === "New Arrivals"
+        ? all.filter(p => Boolean(p.new_arrival))
+        : all.filter(p => Boolean(Number(p.featured)));
       const ready = await Promise.all(ordered.map(async p => {
         const product = Object.assign({}, p, { variants: makeVariants(p) });
         product.variants = (await Promise.all(product.variants.map(async v => { try { await preload(v.image); return v; } catch { return null; } }))).filter(Boolean);
         return product.variants.length ? product : null;
       }));
-      products = ready.filter(Boolean);
-      if (!products.length) products = fallback;
-      renderRail(); applyCampaignWindow(data.settings || {});
+      const readyProducts = ready.filter(Boolean);
+      const settings = data.settings || {};
+      const label = String(settings.wardrobe_section_label || "Featured / Next Drop");
+      products = label === "New Arrivals"
+        ? readyProducts.filter(p => Boolean(p.new_arrival))
+        : readyProducts.filter(p => Boolean(Number(p.featured)));
+      renderRail();
+      applySectionLabel(settings);
+      if (!products.length) {
+        track.innerHTML = '<p class="wardrobe-empty">No ' + (label === "New Arrivals" ? "new arrivals" : label === "Next Drop" ? "next drop" : "featured pieces") + ' yet. Add and publish products in Studio.</p>';
+        layer.querySelector(".wardrobe-count").textContent = "00 PIECES";
+      }
     })
-    .catch(() => { products = fallback; renderRail(); applyCampaignWindow({}); });
+    .catch(() => {
+      products = [];
+      renderRail();
+      applySectionLabel({});
+      track.innerHTML = '<p class="wardrobe-empty">The featured rail is temporarily unavailable. Please refresh in a moment.</p>';
+    });
 })();
