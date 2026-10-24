@@ -33,10 +33,33 @@
   const productImage = layer.querySelector(".drop-cinema-product-image img");
   const productName = layer.querySelector(".drop-cinema-product-name");
   const productIndex = layer.querySelector(".drop-cinema-product-index");
+  productImage.addEventListener("error", () => {
+    // Skip only the failed file; keep the rest of the campaign images rotating.
+    productShowcase.classList.add("image-unavailable");
+    if (slideItems.length > 1) {
+      window.setTimeout(() => {
+        slideIndex = (slideIndex + 1) % slideItems.length;
+        renderProductSlide();
+      }, 250);
+    }
+  });
+  productImage.addEventListener("load", () => productShowcase.classList.remove("image-unavailable"));
   const safeImageUrl = (value) => {
-    const raw = String(value || "").trim();
-    if (/^https:\/\//i.test(raw) || /^\/uploads\/[a-zA-Z0-9._-]+$/.test(raw)) return raw;
-    if (/^uploads\/[a-zA-Z0-9._-]+$/.test(raw)) return "/" + raw;
+    let raw = String(value || "").trim();
+    if (!raw) return "";
+    // Database entries can contain JSON-quoted paths from older imports.
+    if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))) {
+      raw = raw.slice(1, -1).trim();
+    }
+    if (/^(data:image\/|blob:)/i.test(raw)) return raw;
+    if (/^https?:\/\//i.test(raw)) return raw;
+    if (raw.startsWith("//")) return window.location.protocol + raw;
+    // Support absolute upload paths, nested paths, query strings, and older relative URLs.
+    if (/^(?:\.?\.?\/)?uploads\//i.test(raw)) {
+      raw = raw.replace(/^(?:\.\/|\.\.\/)+/g, "");
+      return "/" + raw.replace(/^\/+/, "");
+    }
+    if (raw.startsWith("/")) return raw;
     return "";
   };
   const parseImageData = (value) => {
@@ -45,6 +68,7 @@
       if (!trimmed) return [];
       try {
         const parsed = JSON.parse(trimmed);
+        if (typeof parsed === "string") return [parsed];
         return Array.isArray(parsed) ? parsed : (parsed && typeof parsed === "object" ? Object.entries(parsed).map(([color, image]) => ({ color, image })) : [trimmed]);
       } catch { return [trimmed]; }
     }
@@ -55,22 +79,36 @@
   const imageEntriesForProduct = (product) => {
     const entries = [];
     const add = (value, color = "") => {
-      const entry = value && typeof value === "object" ? value : { url: value };
-      const image = safeImageUrl(entry.url || entry.src || entry.path || entry.image || entry.filename || entry.file || entry.image_url || entry.imageUrl);
-      if (image) entries.push({ image, color: String(entry.color || entry.colour || entry.name || color || "").trim() });
+      if (value == null) return;
+      if (Array.isArray(value)) {
+        value.forEach((item) => add(item, color));
+        return;
+      }
+      if (typeof value === "object") {
+        const label = String(value.color || value.colour || value.name || color || "").trim();
+        // Imported/admin image objects have used several field names over time.
+        const candidate = value.url || value.src || value.path || value.image_url || value.imageUrl ||
+          value.filename || value.file || value.image || value.value || value.location;
+        if (candidate && candidate !== value) {
+          add(candidate, label);
+          return;
+        }
+        // Handle maps such as { Green: "/uploads/green.jpg" } and nested image objects.
+        Object.entries(value).forEach(([key, item]) => {
+          const nextColor = label || (typeof item === "string" ? key : color);
+          add(item, nextColor);
+        });
+        return;
+      }
+      const image = safeImageUrl(value);
+      if (image) entries.push({ image, color: String(color || "").trim() });
     };
-    // Keep the main image, every gallery image, and every explicitly uploaded colour image.
+
     add(product && (product.image || product.image_url || product.imageUrl), "");
     parseImageData(product && product.images).forEach((entry) => add(entry));
-    parseImageData(product && product.color_images).forEach((entry) => {
-      if (entry && typeof entry === "object" && (entry.image || entry.url || entry.src || entry.path || entry.filename || entry.file)) {
-        add(entry, entry.color || entry.colour || "");
-      } else if (entry && typeof entry === "object") {
-        add(entry.image || entry.url || entry.src || entry.path, entry.color || entry.colour || "");
-      } else {
-        add(entry);
-      }
-    });
+    const colorMap = product && product.color_images;
+    parseImageData(colorMap).forEach((entry) => add(entry));
+
     const seen = new Set();
     return entries.filter((entry) => {
       if (seen.has(entry.image)) return false;
