@@ -285,3 +285,10 @@
   .drop-cinema-products {right:7%;bottom:64px;width:27%;gap:4px}
   .drop-cinema-product-image {height:clamp(72px,22vw,98px)}
 }
+
+
+/* The drop countdown belongs in the cinema panel, not on top of carousel products. */
+.product-showcase-carousel .drop-countdown { display:none !important; }
+.drop-cinema-products.is-changing .drop-cinema-product-image img {
+  animation-duration:.35s;
+}
