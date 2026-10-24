@@ -189,7 +189,7 @@
     .then((data) => {
       const all = Array.isArray(data.products) ? data.products.filter((p) => p && p.published !== false) : [];
       const featured = all.filter((p) => Boolean(Number(p.featured)));
-      const products = featured.length ? featured : all;
+      const products = [...featured, ...all.filter((product) => !featured.includes(product)];
       slideItems = products.flatMap((product) => imageEntriesForProduct(product).map(({ image, color }) => ({
         image,
         name: String(product.name || "MONOWEAR piece") + (color ? " · " + color : ""),
