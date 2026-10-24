@@ -286,8 +286,10 @@
       const colors = Array.isArray(product.colors) ? product.colors : [];
       const soldOut = stock <= 0;
       const phase = dropPhase();
-      const isFeatured = Boolean(Number(product.featured));
-      const isNewDrop = !isFeatured && Boolean(product.new_arrival) && isDropMonthOpen();
+      const isConfiguredFeatured = Boolean(Number(product.featured));
+      const dropMonthOpen = isDropMonthOpen();
+      const isFeatured = isConfiguredFeatured && !(phase.phase === "live" && dropMonthOpen);
+      const isNewDrop = dropMonthOpen && ((isConfiguredFeatured && phase.phase === "live") || (!isConfiguredFeatured && Boolean(product.new_arrival)));
       const isDropProduct = isFeatured || isNewDrop;
       const preorderBlocked = isDropProduct && phase.phase === "countdown";
       const originalPrice = Number(product.compare_price || 0);
@@ -371,11 +373,12 @@
       return matchesCategory && searchableText.includes(query);
     });
 
-    const featured = visibleProducts.filter((product) => Boolean(Number(product.featured)));
+    const phase = dropPhase();
     const dropMonthOpen = isDropMonthOpen();
-    const newDrop = visibleProducts.filter((product) => !Boolean(Number(product.featured)) && Boolean(product.new_arrival) && dropMonthOpen);
-    const newArrivals = visibleProducts.filter((product) => !Boolean(Number(product.featured)) && Boolean(product.new_arrival) && !dropMonthOpen);
-    const otherProducts = visibleProducts.filter((product) => !Boolean(Number(product.featured)) && !Boolean(product.new_arrival));
+    const featured = visibleProducts.filter((product) => Boolean(Number(product.featured)) && !(phase.phase === "live" && dropMonthOpen));
+    const newDrop = visibleProducts.filter((product) => dropMonthOpen && ((Boolean(Number(product.featured)) && phase.phase === "live") || (!Boolean(Number(product.featured)) && Boolean(product.new_arrival))));
+    const newArrivals = visibleProducts.filter((product) => !dropMonthOpen && !Boolean(Number(product.featured)) && Boolean(product.new_arrival));
+    const otherProducts = visibleProducts.filter((product) => !featured.includes(product) && !newDrop.includes(product) && !newArrivals.includes(product));
     const featuredSection = $("featuredProductsSection");
     if (featuredSection) featuredSection.hidden = featured.length === 0;
     // Fetch the first three featured images immediately so the first visible row
