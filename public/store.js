@@ -447,6 +447,29 @@
     }
     renderCart();
   }
+  function renderCheckoutOrderSummary() {
+    const itemsNode = $("checkoutOrderItems");
+    const countNode = $("checkoutItemCount");
+    if (!itemsNode) return;
+    const count = cart.reduce((total, item) => total + Math.max(0, Number(item.quantity) || 0), 0);
+    if (countNode) countNode.textContent = count + (count === 1 ? " item" : " items");
+    if (!cart.length) {
+      itemsNode.innerHTML = '<p class="tiny muted">Your bag is empty.</p>';
+      return;
+    }
+    itemsNode.innerHTML = cart.map((item) => {
+      const quantity = Math.max(1, Number(item.quantity) || 1);
+      const details = [
+        "Size: " + escapeHTML(item.size || "One size"),
+        item.color ? "Colour: " + escapeHTML(item.color) : ""
+      ].filter(Boolean).join(" · ");
+      return `<div class="checkout-order-item">
+        <div class="checkout-order-image">${item.image ? `<img src="${escapeHTML(item.image)}" alt="" loading="lazy">` : '<span>MONO</span>'}</div>
+        <div class="checkout-order-details"><strong>${escapeHTML(item.name || "MONOWEAR Piece")}</strong><small>${details}</small><small>Qty: ${quantity}</small></div>
+        <strong class="checkout-order-line-total">${money((Number(item.price) || 0) * quantity)}</strong>
+      </div>`;
+    }).join("");
+  }
   function renderCart() {
     const count = cart.reduce(
       (total, item) => total + Math.max(0, Number(item.quantity) || 0),
@@ -690,6 +713,7 @@
         (total, item) => total + Number(item.price || 0) * Number(item.quantity || 1),
         0
       );
+      renderCheckoutOrderSummary();
       const checkoutSubtotal = $("checkoutSubtotal");
       const checkoutTotal = $("checkoutTotal");
       const checkoutShipping = $("checkoutShipping");
