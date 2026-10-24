@@ -336,6 +336,13 @@
   ========================================================= */
   const showcaseTimers = new WeakMap();
   function initShowcaseCarousels() {
+    if (!document.getElementById("showcaseSideBag")) {
+      const bag = document.createElement("aside");
+      bag.id = "showcaseSideBag"; bag.className = "showcase-side-bag";
+      bag.innerHTML = '<div class="showcase-side-bag-head"><span>YOUR BAG</span><strong id="showcaseBagCount">0 ITEMS</strong></div><div id="showcaseBagItems" class="showcase-side-bag-items"><p>Your bag is empty.</p></div><div class="showcase-side-bag-foot"><span>SUBTOTAL</span><strong id="showcaseBagTotal">₦0</strong><button type="button" id="showcaseBagOpen">VIEW BAG ↗</button></div>';
+      document.body.appendChild(bag);
+      bag.querySelector("#showcaseBagOpen").addEventListener("click", () => { const toggle = document.querySelector(".cart-toggle"); if (toggle) toggle.click(); });
+    }
     document.querySelectorAll(".product-showcase-carousel").forEach((carousel) => {
       const previousTimer = showcaseTimers.get(carousel);
       if (previousTimer) window.clearInterval(previousTimer);
@@ -353,11 +360,22 @@
         carousel.scrollTo({ left: Math.max(0, left), behavior: animate ? "smooth" : "auto" });
       };
       activate(0, false);
+      cards.forEach((card) => {
+        const colour = card.querySelector(".color-select");
+        if (!colour || colour.options.length < 2) return;
+        let colourIndex = colour.selectedIndex || 0;
+        window.setInterval(() => {
+          if (document.hidden || carousel.matches(":hover") || carousel.contains(document.activeElement)) return;
+          colourIndex = (colourIndex + 1) % colour.options.length;
+          colour.selectedIndex = colourIndex;
+          colour.dispatchEvent(new Event("change", { bubbles: true }));
+        }, 1400);
+      });
       if (cards.length > 1) {
         const timer = window.setInterval(() => {
           if (document.hidden || carousel.matches(":hover") || carousel.contains(document.activeElement)) return;
           activate(activeIndex + 1);
-        }, 3400);
+        }, 1750);
         showcaseTimers.set(carousel, timer);
       }
       carousel.addEventListener("click", (event) => {
@@ -557,6 +575,10 @@
     );
     setText("cartTotal", money(cartTotal));
     setText("cart-total", money(cartTotal));
+    setText("showcaseBagCount", count + " ITEM" + (count === 1 ? "" : "S"));
+    setText("showcaseBagTotal", money(cartTotal));
+    const showcaseBagItems = $("showcaseBagItems");
+    if (showcaseBagItems) showcaseBagItems.innerHTML = cart.length ? cart.map((item) => '<div class="showcase-bag-item"><div class="showcase-bag-thumb">' + (item.image ? '<img src="' + escapeHTML(item.image) + '" alt="" loading="lazy">' : "MONO") + '</div><div><strong>' + escapeHTML(item.name || "MONOWEAR piece") + '</strong><small>' + escapeHTML(item.color || "") + (item.size ? " · " + escapeHTML(item.size) : "") + '</small><small>QTY ' + Math.max(1, Number(item.quantity) || 1) + " · " + money(item.price) + '</small></div></div>').join("") : "<p>Your bag is empty.</p>";
     const cartItems = $("cartItems");
     if (cartItems) {
       if (!cart.length) {
