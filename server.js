@@ -422,6 +422,7 @@ const defaults = {
   announcement: "HELP IS ON THE WAY — COMING SOON",
   drop_preorder_date: "2026-10-21",
   drop_launch_date: "2026-11-10",
+  wardrobe_section_label: "Featured / Next Drop",
   x: "https://x.com/monowear44",
   contact_email: process.env.CONTACT_EMAIL || "",
   maintenance_mode: "false",
