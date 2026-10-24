@@ -218,10 +218,7 @@
 }
 
 
-/* Compact drop-product slideshow; the storefront hero remains the background. */
-.drop-cinema-layer { background: transparent !important; }
-.drop-cinema-layer::before { background: none !important; }
-.drop-cinema-layer::after { background: none !important; opacity: 0 !important; }
+/* Compact drop-product slideshow; preserve the cinematic atmospheric layer above. */
 .drop-cinema-products {
   position:absolute; z-index:2; right:9%; bottom:74px;
   width:clamp(112px, 14vw, 168px); min-height:0;
