@@ -226,6 +226,7 @@ function switchTab(tab) {
     overview: "Overview",
     products: "Products",
     appearance: "Store editor",
+    "wardrobe-rail": "Wardrobe rail",
     orders: "Orders",
     abandoned: "Abandoned carts",
     completed: "Completed & shipped",
