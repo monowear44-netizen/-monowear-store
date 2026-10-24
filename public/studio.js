@@ -210,6 +210,9 @@ document.querySelectorAll(".nav").forEach((button) => {
 
 function switchTab(tab) {
   window.monowearActiveTab = tab;
+  // Keep manual social-sale entry available only in the main Orders view.
+  const manualSalePanel = $("manualSalePanel");
+  if (manualSalePanel) manualSalePanel.hidden = tab !== "orders";
   const panelTab = (tab === "abandoned" || tab === "completed") ? "orders" : tab;
   document.querySelectorAll(".nav").forEach((button) => {
     button.classList.toggle("active", button.dataset.tab === tab);
