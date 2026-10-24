@@ -119,7 +119,22 @@
   let slideItems = [];
   let slideIndex = 0;
   let slideRenderToken = 0;
-  const renderProductSlide = () => {
+  let slideTimer = null;
+  const imagePreloads = new Map();
+  const preloadImage = (url) => {
+    if (imagePreloads.has(url)) return imagePreloads.get(url);
+    const promise = new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new Error("Campaign image failed to load"));
+      image.src = url;
+      if (image.complete && image.naturalWidth > 0) resolve(image);
+    });
+    imagePreloads.set(url, promise);
+    return promise;
+  };
+  const renderProductSlide = async () => {
+    if (slideTimer) window.clearTimeout(slideTimer);
     if (!slideItems.length) {
       productShowcase.hidden = true;
       return;
@@ -127,22 +142,30 @@
     const index = slideIndex % slideItems.length;
     const slide = slideItems[index];
     const token = ++slideRenderToken;
-    // Preload each image before changing its name/index, so slow files never
-    // leave the previous product photo paired with the next product's name.
-    const preload = new Image();
-    preload.onload = () => {
+    try {
+      // Load first, then update image + text together. A slow image can no
+      // longer be cancelled by the next timer tick or paired with the wrong name.
+      const loadedImage = await preloadImage(slide.image);
       if (token !== slideRenderToken) return;
       productShowcase.classList.remove("is-changing");
-      productImage.src = slide.image;
+      productImage.src = loadedImage.src;
       productImage.alt = slide.name;
       productName.textContent = slide.name;
       productIndex.textContent = String(index + 1).padStart(2, "0") + " / " + String(slideItems.length).padStart(2, "0");
       productShowcase.href = slide.href;
       productShowcase.hidden = false;
+      productShowcase.classList.remove("image-unavailable");
       void productShowcase.offsetWidth;
       productShowcase.classList.add("is-changing");
-    };
-    preload.onerror = () => {
+      // Start the five-second display window only after this image is visible.
+      // Warm the next image during that window to avoid a blank/slow transition.
+      const nextIndex = (index + 1) % slideItems.length;
+      if (slideItems.length > 1) preloadImage(slideItems[nextIndex].image).catch(() => {});
+      slideTimer = window.setTimeout(() => {
+        slideIndex = nextIndex;
+        renderProductSlide();
+      }, 5000);
+    } catch {
       if (token !== slideRenderToken) return;
       if (slideItems.length > 1) {
         slideIndex = (index + 1) % slideItems.length;
@@ -150,8 +173,7 @@
       } else {
         productShowcase.hidden = true;
       }
-    };
-    preload.src = slide.image;
+    }
   };
   fetch("/api/store", { credentials: "same-origin", cache: "no-store" })
     .then((response) => response.ok ? response.json() : Promise.reject(new Error("Store unavailable")))
@@ -165,12 +187,6 @@
         href: "/product.html?slug=" + encodeURIComponent(product.slug || "") + "&id=" + encodeURIComponent(String(product.id || ""))
       })));
       renderProductSlide();
-      if (slideItems.length > 1) {
-        window.setInterval(() => {
-          slideIndex = (slideIndex + 1) % slideItems.length;
-          renderProductSlide();
-        }, 5000);
-      }
     })
     .catch(() => { productShowcase.hidden = true; });
   const grain = hero.querySelector(".hero-grain");
