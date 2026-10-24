@@ -369,7 +369,7 @@
       const price = card.querySelector(".price")?.textContent?.trim() || "";
       const sizeSelect = card.querySelector("#size-" + id);
       const colourSelect = card.querySelector("#color-" + id);
-      const soldOut = !card.querySelector(".add-button") || card.querySelector(".add-button").disabled;
+      const soldOut = !card.querySelector(".add-button") || Number(card.querySelector(".add-button").dataset.stock || 0) <= 0;
       pickerItems.set(id, { id, name, price, image: image?.getAttribute("src") || "", sizes: sizeSelect ? Array.from(sizeSelect.options).map(o => o.value) : ["One size"], colours: colourSelect ? Array.from(colourSelect.options).map(o => o.value) : [], soldOut });
     });
     const picker = document.getElementById("showcaseBagItems");
