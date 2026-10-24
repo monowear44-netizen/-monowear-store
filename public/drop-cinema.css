@@ -455,3 +455,81 @@
 @media(prefers-reduced-motion:reduce) {
   .drop-cinema-hanger {transition:none}
 }
+
+
+/* FINAL PLACEMENT FIX: the wardrobe replaces the old right-side hero animation area.
+   Keep the cinematic background and left-side campaign copy; do not pin the rack to the bottom. */
+.drop-cinema-active .drop-cinema-wordmark,
+.drop-cinema-active .drop-cinema-light,
+.drop-cinema-active .drop-cinema-scan,
+.drop-cinema-active .drop-cinema-embers {
+  display:none !important;
+}
+.drop-cinema-active .drop-cinema-rack {
+  top:12%;
+  right:5%;
+  bottom:112px;
+  left:43%;
+  width:auto;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-width:0;
+}
+.drop-cinema-active .drop-cinema-rack-heading {
+  flex:0 0 auto;
+  margin-bottom:10px;
+}
+.drop-cinema-active .drop-cinema-rail {
+  top:36px;
+}
+.drop-cinema-active .drop-cinema-track {
+  flex:1 1 auto;
+  min-height:0;
+  max-height:100%;
+  align-items:stretch;
+  gap:clamp(10px,1.5vw,22px);
+  padding:12px 5px 12px;
+  scrollbar-width:thin;
+}
+.drop-cinema-active .drop-cinema-hanger {
+  flex-basis:clamp(92px,10vw,138px);
+  justify-content:flex-start;
+}
+.drop-cinema-active .drop-cinema-hanger-image {
+  height:clamp(145px,22vh,220px);
+}
+.drop-cinema-active .drop-cinema-hanger-image img {
+  mix-blend-mode:normal;
+  object-fit:contain;
+}
+@media(max-width:700px) {
+  .drop-cinema-active .drop-cinema-rack {
+    top:27%;
+    left:5%;
+    right:5%;
+    bottom:100px;
+    width:auto;
+  }
+  .drop-cinema-active .drop-cinema-rack-heading {
+    font-size:7px;
+    letter-spacing:.09em;
+  }
+  .drop-cinema-active .drop-cinema-track {
+    min-height:0;
+    gap:8px;
+    padding:10px 2px;
+  }
+  .drop-cinema-active .drop-cinema-hanger {
+    flex-basis:clamp(82px,24vw,112px);
+  }
+  .drop-cinema-active .drop-cinema-hanger-image {
+    height:clamp(105px,24vh,155px);
+  }
+  .drop-cinema-active .drop-cinema-countdown {
+    left:7%;
+    bottom:24px;
+    width:86%;
+    max-width:none;
+  }
+}
