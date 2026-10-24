@@ -40,7 +40,7 @@
   fileInput.addEventListener("change", async () => {
     const file = fileInput.files && fileInput.files[0];
     if (!file) return;
-    if (!/^image\\/(png|jpeg|webp)$/i.test(file.type)) {
+    if (!/^image\/(png|jpeg|webp)$/i.test(file.type)) {
       say("Choose a PNG, JPG or WEBP image.", true);
       fileInput.value = "";
       return;
