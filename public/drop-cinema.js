@@ -166,7 +166,7 @@
       productShowcase.classList.remove("image-unavailable");
       void productShowcase.offsetWidth;
       productShowcase.classList.add("is-changing");
-      // Start the five-second display window only after this image is visible.
+      // Start the 3.5-second display window only after this image is visible.
       // Warm the next image during that window to avoid a blank/slow transition.
       const nextIndex = (index + 1) % slideItems.length;
       if (slideItems.length > 1) preloadImage(slideItems[nextIndex].image).catch(() => {});
