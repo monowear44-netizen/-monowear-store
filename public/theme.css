@@ -411,3 +411,53 @@ html[data-theme="helpway-gradient"] .button-outline,
 html[data-theme="helpway-gradient"] .secondary,
 html[data-theme="helpway-gradient"] .quiet,
 html[data-theme="helpway-gradient"] .small-button { color:#EAF1FF!important; border-color:#385487!important; }
+
+
+/* Keep the waitlist/newsletter in sync with the active site theme.
+   The earlier version hard-coded white text, a black overlay and a white CTA. */
+html[data-theme] .waitlist-section {
+  background-color: var(--panel) !important;
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+}
+html[data-theme] .waitlist-section::before {
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--bg) 88%, transparent),
+    color-mix(in srgb, var(--panel) 72%, transparent)
+  );
+}
+html[data-theme] .waitlist-section .eyebrow,
+html[data-theme] .waitlist-section label,
+html[data-theme] .waitlist-section h2,
+html[data-theme] .waitlist-section .newsletter-copy > p:last-child,
+html[data-theme] .waitlist-section #newsletterMessage {
+  color: var(--ink) !important;
+}
+html[data-theme] .waitlist-section .newsletter-copy > p:last-child {
+  opacity: .82;
+}
+html[data-theme] .waitlist-section input[type="email"] {
+  background: color-mix(in srgb, var(--bg) 72%, transparent) !important;
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+}
+html[data-theme] .waitlist-section input[type="email"]::placeholder {
+  color: var(--muted) !important;
+}
+html[data-theme] .waitlist-section .button {
+  background: var(--accent) !important;
+  color: var(--ink) !important;
+  border-color: var(--accent) !important;
+}
+html[data-theme] .waitlist-section .button:hover,
+html[data-theme] .waitlist-section #newsletterLink:hover {
+  filter: brightness(1.08);
+}
+html[data-theme] .waitlist-section #newsletterLink {
+  color: var(--ink) !important;
+  border-color: var(--line) !important;
+}
+html[data-theme] .waitlist-section #newsletterMessage[data-state="success"] {
+  color: var(--accent) !important;
+}
