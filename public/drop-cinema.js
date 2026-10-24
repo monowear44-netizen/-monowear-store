@@ -167,7 +167,7 @@
     const productId = Number(selectedProduct.id);
     const colorSelect = document.getElementById("color-" + productId);
     if (colorSelect && variant && variant.name) colorSelect.value = variant.name;
-    window.addToCart(productId);
+    window.addToCart(productId, { preorder: selectedProduct.status === "new-drop", color: variant && variant.name || "", image: variant && variant.image || "" });
   });
   const closeFocus = () => {
     clearInterval(window.monowearWardrobeCountdown);
