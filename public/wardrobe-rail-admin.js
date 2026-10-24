@@ -13,6 +13,12 @@
     savedBackground = String(url || "");
     field.value = savedBackground;
     preview.hidden = !savedBackground;
+    preview.style.width = "min(100%, 440px)";
+    preview.style.height = "180px";
+    preview.style.margin = "10px 0";
+    preview.style.backgroundSize = "cover";
+    preview.style.backgroundPosition = "center";
+    preview.style.border = "1px solid var(--line)";
     preview.style.backgroundImage = savedBackground ? 'linear-gradient(#0002,#0004),url("' + savedBackground.replace(/["\\\\]/g, "") + '")' : "none";
     remove.disabled = !savedBackground;
   };
