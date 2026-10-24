@@ -691,9 +691,9 @@
 
   window.setInterval(updateDropCountdowns, 1000);
 
-  window.addToCart = function (productId) {
+  window.addToCart = function (productId, options = {}) {
     const targetProduct = products.find((item) => Number(item.id) === Number(productId));
-    if (targetProduct && targetProduct.featured && dropPhase().phase === "countdown") {
+    if (!options.preorder && targetProduct && targetProduct.featured && dropPhase().phase === "countdown") {
       alert("Pre-orders for this drop open on " + dropDates().preorderDate + ".");
       return;
     }
@@ -711,7 +711,7 @@
     const sizeSelect = $(`size-${productId}`);
     const selectedSize = sizeSelect ? sizeSelect.value : "One size";
     const colorSelect = $(`color-${productId}`);
-    const selectedColor = colorSelect ? colorSelect.value : "";
+    const selectedColor = colorSelect ? (colorSelect.value || options.color || "") : (options.color || "");
     const existingItem = cart.find(
       (item) =>
         Number(item.id) === Number(productId) &&
@@ -730,7 +730,7 @@
         id: Number(product.id),
         name: product.name || "MONOWEAR Piece",
         price: Number(product.price) || 0,
-        image: productImageForColor(product, selectedColor) || product.image || "",
+        image: options.image || productImageForColor(product, selectedColor) || product.image || "",
         size: selectedSize,
         color: selectedColor,
         quantity: 1
