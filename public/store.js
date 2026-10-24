@@ -331,6 +331,50 @@
   }
 
   /* =========================================================
+     EDITORIAL PRODUCT CAROUSELS
+     Reused automatically by featured pieces, current drops and arrivals.
+  ========================================================= */
+  const showcaseTimers = new WeakMap();
+  function initShowcaseCarousels() {
+    document.querySelectorAll(".product-showcase-carousel").forEach((carousel) => {
+      const previousTimer = showcaseTimers.get(carousel);
+      if (previousTimer) window.clearInterval(previousTimer);
+      const cards = Array.from(carousel.querySelectorAll(".product-card"));
+      if (!cards.length) return;
+      let activeIndex = 0;
+      const activate = (index, animate = true) => {
+        activeIndex = (index + cards.length) % cards.length;
+        cards.forEach((card, i) => {
+          card.classList.toggle("showcase-active", i === activeIndex);
+          card.setAttribute("aria-current", i === activeIndex ? "true" : "false");
+        });
+        const card = cards[activeIndex];
+        const left = card.offsetLeft - (carousel.clientWidth - card.offsetWidth) / 2;
+        carousel.scrollTo({ left: Math.max(0, left), behavior: animate ? "smooth" : "auto" });
+      };
+      activate(0, false);
+      if (cards.length > 1) {
+        const timer = window.setInterval(() => {
+          if (document.hidden || carousel.matches(":hover") || carousel.contains(document.activeElement)) return;
+          activate(activeIndex + 1);
+        }, 3400);
+        showcaseTimers.set(carousel, timer);
+      }
+      carousel.addEventListener("click", (event) => {
+        const card = event.target.closest(".product-card");
+        if (!card) return;
+        const index = cards.indexOf(card);
+        if (index >= 0 && index !== activeIndex) activate(index);
+      });
+      carousel.addEventListener("keydown", (event) => {
+        if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+        event.preventDefault();
+        activate(activeIndex + (event.key === "ArrowRight" ? 1 : -1));
+      });
+    });
+  }
+
+  /* =========================================================
      PRODUCT DISPLAY + REAL PAGINATION
      Featured pieces stay first. Other products are paged below.
   ========================================================= */
@@ -383,7 +427,9 @@
     if (featuredSection) featuredSection.hidden = featured.length === 0;
     // Fetch the first three featured images immediately so the first visible row
     // does not wait for native lazy-loading heuristics. Images farther down remain lazy.
+    featuredGrid.classList.add("product-showcase-carousel");
     featuredGrid.innerHTML = featured.length ? renderProductCards(featured, 3) : "";
+    initShowcaseCarousels();
 
     if (!visibleProducts.length) {
       const empty = products.length
@@ -391,6 +437,7 @@
         : '<div class="empty-state"><p>THE COLLECTION IS BEING UPDATED.</p><p>Check back soon for the latest MONOWEAR pieces.</p></div>';
       sections.innerHTML = empty;
       renderPagination(0);
+      initShowcaseCarousels();
       return;
     }
 
@@ -400,7 +447,7 @@
           <p class="eyebrow">THE CURRENT DROP / COUNTDOWN + PRE-ORDER</p>
           <h3 id="new-drop-heading">New <i>drop.</i></h3>
         </div>
-        <div class="product-grid">${renderProductCards(newDrop)}</div>
+        <div class="product-grid product-showcase-carousel">${renderProductCards(newDrop)}</div>
       </section>
     ` : "";
     const arrivalsMarkup = newArrivals.length ? `
@@ -409,7 +456,7 @@
           <p class="eyebrow">JUST DROPPED</p>
           <h3 id="new-arrivals-heading">New <i>arrivals.</i></h3>
         </div>
-        <div class="product-grid">${renderProductCards(newArrivals)}</div>
+        <div class="product-grid product-showcase-carousel">${renderProductCards(newArrivals)}</div>
       </section>
     ` : "";
     const topSectionsMarkup = newDropMarkup + arrivalsMarkup;
@@ -417,6 +464,7 @@
     if (!otherProducts.length) {
       sections.innerHTML = topSectionsMarkup;
       renderPagination(0);
+      initShowcaseCarousels();
       return;
     }
 
@@ -435,6 +483,7 @@
       </section>
     `;
     renderPagination(totalPages);
+    initShowcaseCarousels();
   }
 
   document.addEventListener("click", (event) => {
