@@ -15,6 +15,7 @@
       '<button class="wardrobe-back" type="button" aria-label="Back to all clothes" hidden>← BACK</button>' +
       '<a class="wardrobe-logo" href="/" aria-label="MONOWEAR home"><span class="wardrobe-logo-mark">M</span><span>MONOWEAR</span></a>' +
       '<span class="wardrobe-top-note">INDEPENDENT BY DESIGN</span>' +
+      '<button class="wardrobe-bag-count" type="button">BAG (0)</button>' +
     '</header>' +
     '<div class="wardrobe-home-view">' +
       '<div class="wardrobe-intro"><span class="wardrobe-section-label">FEATURED / NEXT DROP</span><span>SELECT A PIECE TO EXPLORE ↗</span></div>' +
@@ -34,6 +35,12 @@
   const backButtons = [layer.querySelector(".wardrobe-back"), layer.querySelector(".wardrobe-focus-back")];
   const focusImage = layer.querySelector(".wardrobe-focus-image");
   const variantRail = layer.querySelector(".wardrobe-variant-rail");
+  const bagCount = layer.querySelector(".wardrobe-bag-count");
+  const syncBagCount = () => { const counter = document.getElementById("cartCount") || document.getElementById("cart-count"); if (counter && bagCount) bagCount.textContent = "BAG (" + (counter.textContent || "0").trim() + ")"; };
+  if (bagCount) bagCount.addEventListener("click", () => { const cartButton = document.getElementById("cartToggle"); if (cartButton) cartButton.click(); });
+  const cartCounter = document.getElementById("cartCount") || document.getElementById("cart-count");
+  if (cartCounter && window.MutationObserver) new MutationObserver(syncBagCount).observe(cartCounter, { childList: true, characterData: true, subtree: true });
+  syncBagCount();
   let products = [], selectedProduct = null, selectedVariant = 0, drag = null, dragged = false;
 
   const safeImageUrl = (value) => {
