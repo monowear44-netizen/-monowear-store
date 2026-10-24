@@ -400,10 +400,9 @@
   }
 
   function renderProducts() {
-    const featuredGrid = $("featuredProductGrid");
     const sections = $("productSections");
-    if (!featuredGrid || !sections) {
-      console.error("MONOWEAR: Product section containers are missing from storefront HTML.");
+    if (!sections) {
+      console.error("MONOWEAR: Product section container is missing from storefront HTML.");
       return;
     }
     const searchInput = $("searchProducts");
@@ -421,14 +420,9 @@
     const featured = visibleProducts.filter((product) => Boolean(Number(product.featured)) && !(phase.phase === "live" && dropMonthOpen));
     const newDrop = visibleProducts.filter((product) => dropMonthOpen && ((Boolean(Number(product.featured)) && phase.phase === "live") || (!Boolean(Number(product.featured)) && Boolean(product.new_arrival))));
     const newArrivals = visibleProducts.filter((product) => !dropMonthOpen && !Boolean(Number(product.featured)) && Boolean(product.new_arrival));
-    const otherProducts = visibleProducts.filter((product) => !featured.includes(product) && !newDrop.includes(product) && !newArrivals.includes(product));
-    const featuredSection = $("featuredProductsSection");
-    if (featuredSection) featuredSection.hidden = featured.length === 0;
-    // Fetch the first three featured images immediately so the first visible row
-    // does not wait for native lazy-loading heuristics. Images farther down remain lazy.
-    featuredGrid.classList.add("product-showcase-carousel");
-    featuredGrid.innerHTML = featured.length ? renderProductCards(featured, 3) : "";
-    initShowcaseCarousels();
+    // The wardrobe rail now owns the featured spotlight. Keep every published item
+    // available in the normal shop below, except products already grouped as drop/arrival.
+    const otherProducts = visibleProducts.filter((product) => !newDrop.includes(product) && !newArrivals.includes(product));
 
     if (!visibleProducts.length) {
       const empty = products.length
