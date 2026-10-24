@@ -256,3 +256,32 @@
 @media(prefers-reduced-motion:reduce) {
   .drop-cinema-products.is-changing .drop-cinema-product-image img {animation:none;opacity:1;transform:none}
 }
+
+
+/* Separate drop countdown panel: reserved space, never over a product image. */
+.drop-cinema-countdown {
+  position:absolute; z-index:3; left:9%; bottom:70px;
+  width:clamp(205px, 28vw, 340px);
+  display:flex; flex-direction:column; align-items:flex-start; gap:7px;
+  padding:14px 17px; border-left:1px solid rgba(218,177,151,.62);
+  background:linear-gradient(90deg,rgba(7,8,10,.72),rgba(7,8,10,.18));
+  color:rgba(246,238,232,.9); text-align:left; pointer-events:none;
+}
+.drop-cinema-countdown-label {
+  font:9px 'DM Mono',monospace; letter-spacing:.18em; color:rgba(218,177,151,.9);
+}
+.drop-cinema-countdown-value {
+  font:700 clamp(15px,1.55vw,21px)/1.2 'DM Mono',monospace;
+  letter-spacing:.025em; white-space:nowrap; font-variant-numeric:tabular-nums;
+}
+.drop-cinema-countdown small {
+  font:9px 'DM Mono',monospace; letter-spacing:.06em; color:rgba(246,238,232,.68);
+}
+@media(max-width:700px) {
+  .drop-cinema-countdown {left:7%; bottom:66px; width:55%; gap:5px; padding:10px 9px}
+  .drop-cinema-countdown-label {font-size:7px;letter-spacing:.12em}
+  .drop-cinema-countdown-value {font-size:clamp(10px,3.2vw,14px);letter-spacing:0}
+  .drop-cinema-countdown small {font-size:7px;letter-spacing:.02em}
+  .drop-cinema-products {right:7%;bottom:64px;width:27%;gap:4px}
+  .drop-cinema-product-image {height:clamp(72px,22vw,98px)}
+}
