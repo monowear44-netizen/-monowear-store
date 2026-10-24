@@ -103,11 +103,13 @@
     button.className = "wardrobe-piece" + (small ? " wardrobe-piece-small" : "");
     button.setAttribute("role", "listitem");
     button.setAttribute("aria-label", "Explore " + product.name + (variant.name ? " in " + variant.name : ""));
-    button.innerHTML = '<span class="wardrobe-hanger" aria-hidden="true"><i></i></span><span class="wardrobe-piece-image-wrap"><img loading="lazy" decoding="async" alt=""></span><span class="wardrobe-piece-name"></span><span class="wardrobe-piece-color"></span>';
+    button.innerHTML = '<span class="wardrobe-hanger" aria-hidden="true"><i></i></span><span class="wardrobe-piece-image-wrap"><img loading="lazy" decoding="async" alt=""></span><span class="wardrobe-piece-name"></span><span class="wardrobe-piece-color"></span><span class="wardrobe-piece-status"></span>';
     const img = button.querySelector("img");
     img.src = variant.image; img.alt = product.name + (variant.name ? " — " + variant.name : "");
     button.querySelector(".wardrobe-piece-name").textContent = product.name || "MONOWEAR PIECE";
     button.querySelector(".wardrobe-piece-color").textContent = variant.name || "MONO ORIGINAL";
+    const statusLabels = { featured: "FEATURED", "new-drop": "PRE-ORDER", "new-arrival": "NEW ARRIVAL" };
+    button.querySelector(".wardrobe-piece-status").textContent = statusLabels[product.status] || "";
     button.style.setProperty("--piece-index", index);
     button.addEventListener("click", () => { if (dragged) return; if (small && selectedProduct) { const nextIndex = selectedProduct.variants.findIndex(v => v.image === variant.image); if (nextIndex >= 0) { selectedVariant = nextIndex; renderFocus(); } } else { openFocus(product, variant); } });
     return button;
