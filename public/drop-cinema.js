@@ -24,6 +24,7 @@
     '<div class="drop-cinema-frame"></div>',
     '<div class="drop-cinema-wordmark"></div>',
     '<div class="drop-cinema-embers"></div>',
+    '<div class="drop-cinema-countdown" aria-live="off"><span class="drop-cinema-countdown-label" data-cinema-drop-label>DROP GOES LIVE IN</span><strong class="drop-cinema-countdown-value" data-cinema-drop-countdown>—D —H —M —S</strong><small>Official drop <time data-cinema-drop-date datetime="2026-11-10">2026-11-10</time></small></div>',
     '<a class="drop-cinema-products" href="#shop" aria-label="Explore the current drop products"><div class="drop-cinema-product-image"><img alt="" src="" /></div><span class="drop-cinema-product-name"></span><span class="drop-cinema-product-index"></span></a>'
   ].join("");
   layer.querySelector(".drop-cinema-wordmark").innerHTML = wordmarkLines
@@ -104,10 +105,18 @@
       if (image) entries.push({ image, color: String(color || "").trim() });
     };
 
-    add(product && (product.image || product.image_url || product.imageUrl), "");
-    parseImageData(product && product.images).forEach((entry) => add(entry));
+    let colors = product && product.colors;
+    if (typeof colors === "string") {
+      try { colors = JSON.parse(colors); } catch { colors = colors.split(",").map((item) => item.trim()).filter(Boolean); }
+    }
+    if (!Array.isArray(colors)) colors = [];
+
+    // Read explicit colour-to-image mappings first so duplicate primary images
+    // keep their colour label instead of becoming an unlabeled slide.
     const colorMap = product && product.color_images;
     parseImageData(colorMap).forEach((entry) => add(entry));
+    parseImageData(product && product.images).forEach((entry, index) => add(entry, colors[index] || ""));
+    add(product && (product.image || product.image_url || product.imageUrl), "");
 
     const seen = new Set();
     return entries.filter((entry) => {
@@ -164,7 +173,7 @@
       slideTimer = window.setTimeout(() => {
         slideIndex = nextIndex;
         renderProductSlide();
-      }, 5000);
+      }, 3500);
     } catch {
       if (token !== slideRenderToken) return;
       if (slideItems.length > 1) {
@@ -186,6 +195,9 @@
         name: String(product.name || "MONOWEAR piece") + (color ? " · " + color : ""),
         href: "/product.html?slug=" + encodeURIComponent(product.slug || "") + "&id=" + encodeURIComponent(String(product.id || ""))
       })));
+      // Warm every slide immediately. The current image stays visible until
+      // the next image is fully loaded, avoiding broken/blank transitions.
+      slideItems.forEach((item) => preloadImage(item.image).catch(() => {}));
       renderProductSlide();
     })
     .catch(() => { productShowcase.hidden = true; });
@@ -215,10 +227,37 @@
     const date = new Date(dateString + "T00:00:00+01:00");
     return Number.isNaN(date.getTime()) ? null : date;
   };
+  const cinemaCountdownLabel = layer.querySelector("[data-cinema-drop-label]");
+  const cinemaCountdownValue = layer.querySelector("[data-cinema-drop-countdown]");
+  const cinemaCountdownDate = layer.querySelector("[data-cinema-drop-date]");
+  let campaignLaunchDate = "2026-11-10";
+  const updateCinemaCountdown = () => {
+    const target = dateAtMidnightWAT(campaignLaunchDate);
+    if (cinemaCountdownDate) {
+      cinemaCountdownDate.textContent = campaignLaunchDate;
+      cinemaCountdownDate.dateTime = campaignLaunchDate;
+    }
+    if (!target || Date.now() >= target.getTime()) {
+      if (cinemaCountdownLabel) cinemaCountdownLabel.textContent = "THE DROP IS LIVE";
+      if (cinemaCountdownValue) cinemaCountdownValue.textContent = "AVAILABLE NOW";
+      return;
+    }
+    const seconds = Math.max(0, Math.floor((target.getTime() - Date.now()) / 1000));
+    const days = Math.floor(seconds / 86400);
+    const hours = String(Math.floor((seconds % 86400) / 3600)).padStart(2, "0");
+    const minutes = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+    const secs = String(seconds % 60).padStart(2, "0");
+    if (cinemaCountdownLabel) cinemaCountdownLabel.textContent = "DROP GOES LIVE IN";
+    if (cinemaCountdownValue) cinemaCountdownValue.textContent = days + "D " + hours + "H " + minutes + "M " + secs + "S";
+  };
+  updateCinemaCountdown();
+  window.setInterval(updateCinemaCountdown, 1000);
   const previewMode = new URLSearchParams(window.location.search).get("cinemaPreview") === "1";
   const applyCampaignWindow = (settings = {}) => {
     const preorderDate = String(settings.drop_preorder_date || "2026-10-21");
     const launchDate = String(settings.drop_launch_date || "2026-11-10");
+    campaignLaunchDate = launchDate;
+    updateCinemaCountdown();
     const startsAt = dateAtMidnightWAT(preorderDate);
     const launchAt = dateAtMidnightWAT(launchDate);
     // Keep the campaign cinema running through the entire month containing drop day.
