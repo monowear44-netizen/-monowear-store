@@ -1,9 +1,11 @@
 /* MONOWEAR — virtual wardrobe rail */
 (() => {
   "use strict";
-  const hero = document.getElementById("heroSection");
-  if (!hero || hero.dataset.wardrobeReady === "true") return;
-  hero.dataset.wardrobeReady = "true";
+  const featureSection = document.getElementById("featuredProductsSection");
+  const featuredGrid = document.getElementById("featuredProductGrid");
+  const subheading = featureSection && featureSection.querySelector(".product-subheading");
+  if (!featureSection || !featuredGrid || !subheading || featureSection.dataset.wardrobeReady === "true") return;
+  featureSection.dataset.wardrobeReady = "true";
 
   const layer = document.createElement("section");
   layer.className = "drop-cinema-layer wardrobe-experience";
@@ -175,8 +177,8 @@
     layer.querySelector(".wardrobe-count").textContent = String(products.length).padStart(2, "0") + " PIECES";
   };
 
-  const grain = hero.querySelector(".hero-grain");
-  if (grain) grain.insertAdjacentElement("afterend", layer); else hero.prepend(layer);
+  layer.hidden = true;
+  subheading.insertAdjacentElement("afterend", layer);
 
   const dateAtMidnightWAT = value => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return null;
@@ -194,8 +196,10 @@
       end = dateAtMidnightWAT(next.getUTCFullYear() + "-" + String(next.getUTCMonth() + 1).padStart(2, "0") + "-01");
     }
     const active = previewMode || (preorder && launch && end && launch >= preorder && Date.now() >= preorder.getTime() && Date.now() < end.getTime());
-    hero.classList.toggle("drop-cinema-active", Boolean(active));
-    if (active) hero.setAttribute("data-campaign-animation", "virtual-wardrobe"); else hero.removeAttribute("data-campaign-animation");
+    featureSection.classList.toggle("featured-wardrobe-active", Boolean(active));
+    layer.hidden = !active;
+    featuredGrid.hidden = Boolean(active);
+    if (active) featureSection.setAttribute("data-campaign-animation", "virtual-wardrobe"); else featureSection.removeAttribute("data-campaign-animation");
   };
 
   fetch("/api/store", { credentials: "same-origin", cache: "no-store" })
