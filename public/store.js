@@ -525,7 +525,8 @@
       const quantity = Math.max(1, Number(item.quantity) || 1);
       const details = [
         "Size: " + escapeHTML(item.size || "One size"),
-        item.color ? "Colour: " + escapeHTML(item.color) : ""
+        item.color ? "Colour: " + escapeHTML(item.color) : "",
+        item.preorder ? "PRE-ORDER" : ""
       ].filter(Boolean).join(" · ");
       return `<div class="checkout-order-item">
         <div class="checkout-order-image">${item.image ? `<img src="${escapeHTML(item.image)}" alt="" loading="lazy">` : '<span>MONO</span>'}</div>
@@ -568,6 +569,7 @@
                   <strong>${escapeHTML(item.name)}</strong>
                   <p>Size: ${escapeHTML(item.size || "One size")}</p>
                   ${item.color ? `<p>Colour: ${escapeHTML(item.color)}</p>` : ""}
+                  ${item.preorder ? '<p class="cart-preorder-label">PRE-ORDER</p>' : ""}
                   <p>${money(item.price)} × ${Number(item.quantity) || 1}</p>
                 </div>
                 <button
