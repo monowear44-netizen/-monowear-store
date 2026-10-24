@@ -25,37 +25,19 @@
     '<div class="drop-cinema-wordmark"></div>',
     '<div class="drop-cinema-embers"></div>',
     '<div class="drop-cinema-countdown" aria-live="off"><span class="drop-cinema-countdown-label" data-cinema-drop-label>DROP GOES LIVE IN</span><strong class="drop-cinema-countdown-value" data-cinema-drop-countdown>—D —H —M —S</strong><small>Official drop <time data-cinema-drop-date datetime="2026-11-10">2026-11-10</time></small></div>',
-    '<a class="drop-cinema-products" href="#shop" aria-label="Explore the current drop products"><div class="drop-cinema-product-image"><img alt="" src="" /></div><span class="drop-cinema-product-name"></span><span class="drop-cinema-product-index"></span></a>'
+    '<section class="drop-cinema-rack" aria-label="Scroll through MONOWEAR drop products"><div class="drop-cinema-rack-heading"><span>THE DROP / PIECES</span><span class="drop-cinema-rack-hint">SWIPE TO EXPLORE ↔</span></div><div class="drop-cinema-rail" aria-hidden="true"></div><div class="drop-cinema-track" tabindex="0" aria-label="Scrollable clothing rack"></div></section>'
   ].join("");
   layer.querySelector(".drop-cinema-wordmark").innerHTML = wordmarkLines
     .filter(Boolean).map((line) => line.replace(/[&<>"]/g, "")).join("<br>");
-  // Replace the old campaign caption with a compact product-image slideshow.
-  const productShowcase = layer.querySelector(".drop-cinema-products");
-  const productImage = layer.querySelector(".drop-cinema-product-image img");
-  const productName = layer.querySelector(".drop-cinema-product-name");
-  const productIndex = layer.querySelector(".drop-cinema-product-index");
-  productImage.addEventListener("error", () => {
-    // Skip only the failed file; keep the rest of the campaign images rotating.
-    productShowcase.classList.add("image-unavailable");
-    if (slideItems.length > 1) {
-      window.setTimeout(() => {
-        slideIndex = (slideIndex + 1) % slideItems.length;
-        renderProductSlide();
-      }, 250);
-    }
-  });
-  productImage.addEventListener("load", () => productShowcase.classList.remove("image-unavailable"));
+
+  const rack = layer.querySelector(".drop-cinema-rack");
+  const track = layer.querySelector(".drop-cinema-track");
   const safeImageUrl = (value) => {
     let raw = String(value || "").trim();
     if (!raw) return "";
-    // Database entries can contain JSON-quoted paths from older imports.
-    if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))) {
-      raw = raw.slice(1, -1).trim();
-    }
-    if (/^(data:image\/|blob:)/i.test(raw)) return raw;
-    if (/^https?:\/\//i.test(raw)) return raw;
+    if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))) raw = raw.slice(1, -1).trim();
+    if (/^(data:image\/|blob:)/i.test(raw) || /^https?:\/\//i.test(raw)) return raw;
     if (raw.startsWith("//")) return window.location.protocol + raw;
-    // Support absolute upload paths, nested paths, query strings, and older relative URLs.
     if (/^(?:\.?\.?\/)?uploads\//i.test(raw)) {
       raw = raw.replace(/^(?:\.\/|\.\.\/)+/g, "");
       return "/" + raw.replace(/^\/+/, "");
@@ -81,43 +63,24 @@
     const entries = [];
     const add = (value, color = "") => {
       if (value == null) return;
-      if (Array.isArray(value)) {
-        value.forEach((item) => add(item, color));
-        return;
-      }
+      if (Array.isArray(value)) return value.forEach((item) => add(item, color));
       if (typeof value === "object") {
         const label = String(value.color || value.colour || value.name || color || "").trim();
-        // Imported/admin image objects have used several field names over time.
-        const candidate = value.url || value.src || value.path || value.image_url || value.imageUrl ||
-          value.filename || value.file || value.image || value.value || value.location;
-        if (candidate && candidate !== value) {
-          add(candidate, label);
-          return;
-        }
-        // Handle maps such as { Green: "/uploads/green.jpg" } and nested image objects.
-        Object.entries(value).forEach(([key, item]) => {
-          const nextColor = label || (typeof item === "string" ? key : color);
-          add(item, nextColor);
-        });
-        return;
+        const candidate = value.url || value.src || value.path || value.image_url || value.imageUrl || value.filename || value.file || value.image || value.value || value.location;
+        if (candidate && candidate !== value) return add(candidate, label);
+        return Object.entries(value).forEach(([key, item]) => add(item, label || (typeof item === "string" ? key : color)));
       }
       const image = safeImageUrl(value);
       if (image) entries.push({ image, color: String(color || "").trim() });
     };
-
     let colors = product && product.colors;
     if (typeof colors === "string") {
       try { colors = JSON.parse(colors); } catch { colors = colors.split(",").map((item) => item.trim()).filter(Boolean); }
     }
     if (!Array.isArray(colors)) colors = [];
-
-    // Read explicit colour-to-image mappings first so duplicate primary images
-    // keep their colour label instead of becoming an unlabeled slide.
-    const colorMap = product && product.color_images;
-    parseImageData(colorMap).forEach((entry) => add(entry));
+    parseImageData(product && product.color_images).forEach((entry) => add(entry));
     parseImageData(product && product.images).forEach((entry, index) => add(entry, colors[index] || ""));
     add(product && (product.image || product.image_url || product.imageUrl), "");
-
     const seen = new Set();
     return entries.filter((entry) => {
       if (seen.has(entry.image)) return false;
@@ -125,82 +88,86 @@
       return true;
     });
   };
-  let slideItems = [];
-  let slideIndex = 0;
-  let slideRenderToken = 0;
-  let slideTimer = null;
-  const imagePreloads = new Map();
-  const preloadImage = (url) => {
-    if (imagePreloads.has(url)) return imagePreloads.get(url);
-    const promise = new Promise((resolve, reject) => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = () => reject(new Error("Campaign image failed to load"));
-      image.src = url;
-      if (image.complete && image.naturalWidth > 0) resolve(image);
-    });
-    imagePreloads.set(url, promise);
-    return promise;
-  };
-  const renderProductSlide = async () => {
-    if (slideTimer) window.clearTimeout(slideTimer);
-    if (!slideItems.length) {
-      productShowcase.hidden = true;
-      return;
-    }
-    const index = slideIndex % slideItems.length;
-    const slide = slideItems[index];
-    const token = ++slideRenderToken;
-    try {
-      // Load first, then update image + text together. A slow image can no
-      // longer be cancelled by the next timer tick or paired with the wrong name.
-      const loadedImage = await preloadImage(slide.image);
-      if (token !== slideRenderToken) return;
-      productShowcase.classList.remove("is-changing");
-      productImage.src = loadedImage.src;
-      productImage.alt = slide.name;
-      productName.textContent = slide.name;
-      productIndex.textContent = String(index + 1).padStart(2, "0") + " / " + String(slideItems.length).padStart(2, "0");
-      productShowcase.href = slide.href;
-      productShowcase.hidden = false;
-      productShowcase.classList.remove("image-unavailable");
-      void productShowcase.offsetWidth;
-      productShowcase.classList.add("is-changing");
-      // Start the 2.8-second display window only after this image is visible.
-      // Warm the next image during that window to avoid a blank/slow transition.
-      const nextIndex = (index + 1) % slideItems.length;
-      if (slideItems.length > 1) preloadImage(slideItems[nextIndex].image).catch(() => {});
-      slideTimer = window.setTimeout(() => {
-        slideIndex = nextIndex;
-        renderProductSlide();
-      }, 2800);
-    } catch {
-      if (token !== slideRenderToken) return;
-      if (slideItems.length > 1) {
-        slideIndex = (index + 1) % slideItems.length;
-        renderProductSlide();
-      } else {
-        productShowcase.hidden = true;
-      }
-    }
-  };
+  const preloadImage = (url) => new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Product image failed to load"));
+    image.src = url;
+    if (image.complete && image.naturalWidth > 0) resolve(image);
+  });
+  let dragStartX = 0;
+  let dragScrollLeft = 0;
+  let dragging = false;
+  track.addEventListener("pointerdown", (event) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    dragging = true;
+    dragStartX = event.clientX;
+    dragScrollLeft = track.scrollLeft;
+    track.classList.add("is-dragging");
+    if (event.pointerType === "mouse") track.setPointerCapture(event.pointerId);
+  });
+  track.addEventListener("pointermove", (event) => {
+    if (!dragging) return;
+    track.scrollLeft = dragScrollLeft - (event.clientX - dragStartX);
+  });
+  const stopDragging = () => { dragging = false; track.classList.remove("is-dragging"); };
+  track.addEventListener("pointerup", stopDragging);
+  track.addEventListener("pointercancel", stopDragging);
+  track.addEventListener("lostpointercapture", stopDragging);
+
   fetch("/api/store", { credentials: "same-origin", cache: "no-store" })
     .then((response) => response.ok ? response.json() : Promise.reject(new Error("Store unavailable")))
-    .then((data) => {
+    .then(async (data) => {
       const all = Array.isArray(data.products) ? data.products.filter((p) => p && p.published !== false) : [];
       const featured = all.filter((p) => Boolean(Number(p.featured)));
       const products = [...featured, ...all.filter((product) => !featured.includes(product))];
-      slideItems = products.flatMap((product) => imageEntriesForProduct(product).map(({ image, color }) => ({
+      const items = products.flatMap((product) => imageEntriesForProduct(product).map(({ image, color }) => ({
         image,
-        name: String(product.name || "MONOWEAR piece") + (color ? " · " + color : ""),
+        color,
+        name: String(product.name || "MONOWEAR piece"),
         href: "/product.html?slug=" + encodeURIComponent(product.slug || "") + "&id=" + encodeURIComponent(String(product.id || ""))
       })));
-      // Warm every slide immediately. The current image stays visible until
-      // the next image is fully loaded, avoiding broken/blank transitions.
-      slideItems.forEach((item) => preloadImage(item.image).catch(() => {}));
-      renderProductSlide();
+      const loaded = await Promise.all(items.map(async (item) => {
+        try { await preloadImage(item.image); return item; } catch { return null; }
+      }));
+      const readyItems = loaded.filter(Boolean);
+      if (!readyItems.length) {
+        rack.classList.add("is-empty");
+        return;
+      }
+      const fragment = document.createDocumentFragment();
+      readyItems.forEach((item, index) => {
+        const link = document.createElement("a");
+        link.className = "drop-cinema-hanger";
+        link.href = item.href;
+        link.setAttribute("aria-label", "Shop " + item.name + (item.color ? " in " + item.color : ""));
+        const hanger = document.createElement("span");
+        hanger.className = "drop-cinema-hanger-hook";
+        hanger.setAttribute("aria-hidden", "true");
+        const imageWrap = document.createElement("span");
+        imageWrap.className = "drop-cinema-hanger-image";
+        const image = document.createElement("img");
+        image.src = item.image;
+        image.alt = item.name + (item.color ? " — " + item.color : "");
+        image.loading = "eager";
+        image.decoding = "async";
+        imageWrap.appendChild(image);
+        const label = document.createElement("span");
+        label.className = "drop-cinema-hanger-label";
+        label.textContent = item.name;
+        const color = document.createElement("span");
+        color.className = "drop-cinema-hanger-color";
+        color.textContent = item.color || "MONOWEAR";
+        const count = document.createElement("span");
+        count.className = "drop-cinema-hanger-count";
+        count.textContent = String(index + 1).padStart(2, "0");
+        link.append(hanger, imageWrap, label, color, count);
+        fragment.appendChild(link);
+      });
+      track.replaceChildren(fragment);
+      rack.hidden = false;
     })
-    .catch(() => { productShowcase.hidden = true; });
+    .catch(() => { rack.hidden = true; });
   const grain = hero.querySelector(".hero-grain");
   if (grain) grain.insertAdjacentElement("afterend", layer);
   else hero.prepend(layer);
