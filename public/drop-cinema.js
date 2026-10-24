@@ -118,21 +118,40 @@
   };
   let slideItems = [];
   let slideIndex = 0;
+  let slideRenderToken = 0;
   const renderProductSlide = () => {
     if (!slideItems.length) {
       productShowcase.hidden = true;
       return;
     }
-    const slide = slideItems[slideIndex % slideItems.length];
-    productImage.src = slide.image;
-    productImage.alt = slide.name;
-    productName.textContent = slide.name;
-    productIndex.textContent = String(slideIndex + 1).padStart(2, "0") + " / " + String(slideItems.length).padStart(2, "0");
-    productShowcase.href = slide.href;
-    productShowcase.hidden = false;
-    productShowcase.classList.remove("is-changing");
-    void productShowcase.offsetWidth;
-    productShowcase.classList.add("is-changing");
+    const index = slideIndex % slideItems.length;
+    const slide = slideItems[index];
+    const token = ++slideRenderToken;
+    // Preload each image before changing its name/index, so slow files never
+    // leave the previous product photo paired with the next product's name.
+    const preload = new Image();
+    preload.onload = () => {
+      if (token !== slideRenderToken) return;
+      productShowcase.classList.remove("is-changing");
+      productImage.src = slide.image;
+      productImage.alt = slide.name;
+      productName.textContent = slide.name;
+      productIndex.textContent = String(index + 1).padStart(2, "0") + " / " + String(slideItems.length).padStart(2, "0");
+      productShowcase.href = slide.href;
+      productShowcase.hidden = false;
+      void productShowcase.offsetWidth;
+      productShowcase.classList.add("is-changing");
+    };
+    preload.onerror = () => {
+      if (token !== slideRenderToken) return;
+      if (slideItems.length > 1) {
+        slideIndex = (index + 1) % slideItems.length;
+        renderProductSlide();
+      } else {
+        productShowcase.hidden = true;
+      }
+    };
+    preload.src = slide.image;
   };
   fetch("/api/store", { credentials: "same-origin", cache: "no-store" })
     .then((response) => response.ok ? response.json() : Promise.reject(new Error("Store unavailable")))
@@ -150,7 +169,7 @@
         window.setInterval(() => {
           slideIndex = (slideIndex + 1) % slideItems.length;
           renderProductSlide();
-        }, 3200);
+        }, 2400);
       }
     })
     .catch(() => { productShowcase.hidden = true; });
