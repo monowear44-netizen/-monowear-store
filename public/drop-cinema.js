@@ -1,258 +1,222 @@
-/* MONOWEAR — date-gated cinematic campaign header */
+/* MONOWEAR — virtual wardrobe rail */
 (() => {
   "use strict";
   const hero = document.getElementById("heroSection");
-  if (!hero || hero.dataset.cinemaReady === "true") return;
-  hero.dataset.cinemaReady = "true";
+  if (!hero || hero.dataset.wardrobeReady === "true") return;
+  hero.dataset.wardrobeReady = "true";
 
-  const layer = document.createElement("div");
-  layer.className = "drop-cinema-layer";
-  layer.setAttribute("aria-hidden", "true");
-  const titleNode = document.getElementById("heroTitle");
-  const subtitleNode = document.getElementById("heroSubtitle");
-  const campaignTitle = (titleNode?.innerText || "HELP IS ON THE WAY.")
-    .replace(/\\s+/g, " ").trim();
-  const campaignWords = campaignTitle.split(" ").filter(Boolean);
-  const wordmarkLines = campaignWords.length > 3
-    ? [campaignWords.slice(0, 2).join(" "), campaignWords.slice(2, 4).join(" "), campaignWords.slice(4).join(" ")]
-    : [campaignWords.slice(0, 1).join(" "), campaignWords.slice(1, 3).join(" "), campaignWords.slice(3).join(" ")];
-  const campaignSubtitle = (subtitleNode?.innerText || "PRESSURE. PERSISTENCE. A WAY THROUGH.")
-    .replace(/\\s+/g, " ").trim();
-  layer.innerHTML = [
-    '<div class="drop-cinema-light"></div>',
-    '<div class="drop-cinema-scan"></div>',
-    '<div class="drop-cinema-frame"></div>',
-    '<div class="drop-cinema-wordmark"></div>',
-    '<div class="drop-cinema-embers"></div>',
-    '<div class="drop-cinema-countdown" aria-live="off"><span class="drop-cinema-countdown-label" data-cinema-drop-label>DROP GOES LIVE IN</span><strong class="drop-cinema-countdown-value" data-cinema-drop-countdown>—D —H —M —S</strong><small>Official drop <time data-cinema-drop-date datetime="2026-11-10">2026-11-10</time></small></div>',
-    '<section class="drop-cinema-rack" aria-label="Scroll through MONOWEAR drop products"><div class="drop-cinema-rack-heading"><span>THE DROP / PIECES</span><span class="drop-cinema-rack-hint">SWIPE TO EXPLORE ↔</span></div><div class="drop-cinema-rail" aria-hidden="true"></div><div class="drop-cinema-track" tabindex="0" aria-label="Scrollable clothing rack"></div></section>'
-  ].join("");
-  layer.querySelector(".drop-cinema-wordmark").innerHTML = wordmarkLines
-    .filter(Boolean).map((line) => line.replace(/[&<>"]/g, "")).join("<br>");
+  const layer = document.createElement("section");
+  layer.className = "wardrobe-experience";
+  layer.setAttribute("aria-label", "MONOWEAR virtual wardrobe");
+  layer.innerHTML =
+    '<header class="wardrobe-top">' +
+      '<button class="wardrobe-back" type="button" aria-label="Back to all clothes" hidden>← BACK</button>' +
+      '<a class="wardrobe-logo" href="/" aria-label="MONOWEAR home"><span class="wardrobe-logo-mark">M</span><span>MONOWEAR</span></a>' +
+      '<span class="wardrobe-top-note">INDEPENDENT BY DESIGN</span>' +
+    '</header>' +
+    '<div class="wardrobe-home-view">' +
+      '<div class="wardrobe-intro"><span>THE WARDROBE</span><span>SELECT A PIECE TO EXPLORE ↗</span></div>' +
+      '<div class="wardrobe-rail-wrap"><div class="wardrobe-rail-line" aria-hidden="true"></div><div class="wardrobe-track" tabindex="0" role="list" aria-label="Clothing rail. Swipe or scroll to browse."></div></div>' +
+      '<div class="wardrobe-bottom-meta"><span>LIVE THE NAME. WEAR THE MEANING.</span><span class="wardrobe-count">00 PIECES</span></div>' +
+    '</div>' +
+    '<div class="wardrobe-focus-view" hidden>' +
+      '<button class="wardrobe-focus-back" type="button" aria-label="Return to wardrobe">← ALL PIECES</button>' +
+      '<div class="wardrobe-focus-stage"><div class="wardrobe-focus-main"><span class="wardrobe-focus-hook" aria-hidden="true"></span><img class="wardrobe-focus-image" alt="" /></div><div class="wardrobe-variant-rail" aria-label="Available colours"></div></div>' +
+      '<div class="wardrobe-focus-info"><div class="wardrobe-focus-copy"><p class="wardrobe-focus-kicker">MONOWEAR / SELECTED PIECE</p><h2 class="wardrobe-focus-name"></h2><p class="wardrobe-focus-description"></p><div class="wardrobe-focus-price"></div></div><a class="wardrobe-view-button" href="#">VIEW PRODUCT ↗</a></div>' +
+      '<p class="wardrobe-transparency-note">BEST DISPLAYED WITH TRANSPARENT PNG PRODUCT IMAGES</p>' +
+    '</div><div class="wardrobe-bottom-rule" aria-hidden="true"></div>';
 
-  const rack = layer.querySelector(".drop-cinema-rack");
-  const track = layer.querySelector(".drop-cinema-track");
+  const homeView = layer.querySelector(".wardrobe-home-view");
+  const focusView = layer.querySelector(".wardrobe-focus-view");
+  const track = layer.querySelector(".wardrobe-track");
+  const backButtons = [layer.querySelector(".wardrobe-back"), layer.querySelector(".wardrobe-focus-back")];
+  const focusImage = layer.querySelector(".wardrobe-focus-image");
+  const variantRail = layer.querySelector(".wardrobe-variant-rail");
+  let products = [], selectedProduct = null, selectedVariant = 0, drag = null, dragged = false;
+
   const safeImageUrl = (value) => {
     let raw = String(value || "").trim();
     if (!raw) return "";
     if ((raw.startsWith('"') && raw.endsWith('"')) || (raw.startsWith("'") && raw.endsWith("'"))) raw = raw.slice(1, -1).trim();
     if (/^(data:image\/|blob:)/i.test(raw) || /^https?:\/\//i.test(raw)) return raw;
     if (raw.startsWith("//")) return window.location.protocol + raw;
-    if (/^(?:\.?\.?\/)?uploads\//i.test(raw)) {
-      raw = raw.replace(/^(?:\.\/|\.\.\/)+/g, "");
-      return "/" + raw.replace(/^\/+/, "");
-    }
+    if (/^(?:\.?\.?\/)?uploads\//i.test(raw)) return "/" + raw.replace(/^(?:\.\/|\.\.\/)+/, "").replace(/^\/+/, "");
     if (raw.startsWith("/")) return raw;
     return "";
   };
-  const parseImageData = (value) => {
-    if (typeof value === "string") {
-      const trimmed = value.trim();
-      if (!trimmed) return [];
-      try {
-        const parsed = JSON.parse(trimmed);
-        if (typeof parsed === "string") return [parsed];
-        return Array.isArray(parsed) ? parsed : (parsed && typeof parsed === "object" ? Object.entries(parsed).map(([color, image]) => ({ color, image })) : [trimmed]);
-      } catch { return [trimmed]; }
-    }
-    if (Array.isArray(value)) return value;
-    if (value && typeof value === "object") return Object.entries(value).map(([color, image]) => ({ color, image }));
+  const parse = (value) => {
+    if (value == null || value === "") return [];
+    if (Array.isArray(value) || (typeof value === "object")) return value;
+    if (typeof value === "string") { try { return JSON.parse(value); } catch { return value.split(",").map(s => s.trim()).filter(Boolean); } }
     return [];
   };
-  const imageEntriesForProduct = (product) => {
-    const entries = [];
-    const add = (value, color = "") => {
-      if (value == null) return;
-      if (Array.isArray(value)) return value.forEach((item) => add(item, color));
-      if (typeof value === "object") {
-        const label = String(value.color || value.colour || value.name || color || "").trim();
-        const candidate = value.url || value.src || value.path || value.image_url || value.imageUrl || value.filename || value.file || value.image || value.value || value.location;
-        if (candidate && candidate !== value) return add(candidate, label);
-        return Object.entries(value).forEach(([key, item]) => add(item, label || (typeof item === "string" ? key : color)));
-      }
-      const image = safeImageUrl(value);
-      if (image) entries.push({ image, color: String(color || "").trim() });
-    };
-    let colors = product && product.colors;
-    if (typeof colors === "string") {
-      try { colors = JSON.parse(colors); } catch { colors = colors.split(",").map((item) => item.trim()).filter(Boolean); }
-    }
-    if (!Array.isArray(colors)) colors = [];
-    parseImageData(product && product.color_images).forEach((entry) => add(entry));
-    parseImageData(product && product.images).forEach((entry, index) => add(entry, colors[index] || ""));
-    add(product && (product.image || product.image_url || product.imageUrl), "");
-    const seen = new Set();
-    return entries.filter((entry) => {
-      if (seen.has(entry.image)) return false;
-      seen.add(entry.image);
-      return true;
-    });
+  const getImage = (entry) => {
+    if (typeof entry === "string") return safeImageUrl(entry);
+    if (!entry || typeof entry !== "object") return "";
+    return safeImageUrl(entry.url || entry.src || entry.path || entry.image_url || entry.imageUrl || entry.filename || entry.file || entry.image || entry.value || entry.location);
   };
-  const preloadImage = (url) => new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Product image failed to load"));
-    image.src = url;
-    if (image.complete && image.naturalWidth > 0) resolve(image);
-  });
-  let dragStartX = 0;
-  let dragScrollLeft = 0;
-  let dragging = false;
-  track.addEventListener("pointerdown", (event) => {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
-    dragging = true;
-    dragStartX = event.clientX;
-    dragScrollLeft = track.scrollLeft;
-    track.classList.add("is-dragging");
-    if (event.pointerType === "mouse") track.setPointerCapture(event.pointerId);
-  });
-  track.addEventListener("pointermove", (event) => {
-    if (!dragging) return;
-    track.scrollLeft = dragScrollLeft - (event.clientX - dragStartX);
-  });
-  const stopDragging = () => { dragging = false; track.classList.remove("is-dragging"); };
-  track.addEventListener("pointerup", stopDragging);
-  track.addEventListener("pointercancel", stopDragging);
-  track.addEventListener("lostpointercapture", stopDragging);
-
-  fetch("/api/store", { credentials: "same-origin", cache: "no-store" })
-    .then((response) => response.ok ? response.json() : Promise.reject(new Error("Store unavailable")))
-    .then(async (data) => {
-      const all = Array.isArray(data.products) ? data.products.filter((p) => p && p.published !== false) : [];
-      const featured = all.filter((p) => Boolean(Number(p.featured)));
-      const products = [...featured, ...all.filter((product) => !featured.includes(product))];
-      const items = products.flatMap((product) => imageEntriesForProduct(product).map(({ image, color }) => ({
-        image,
-        color,
-        name: String(product.name || "MONOWEAR piece"),
-        href: "/product.html?slug=" + encodeURIComponent(product.slug || "") + "&id=" + encodeURIComponent(String(product.id || ""))
-      })));
-      const loaded = await Promise.all(items.map(async (item) => {
-        try { await preloadImage(item.image); return item; } catch { return null; }
-      }));
-      const readyItems = loaded.filter(Boolean);
-      if (!readyItems.length) {
-        rack.classList.add("is-empty");
-        return;
-      }
-      const fragment = document.createDocumentFragment();
-      readyItems.forEach((item, index) => {
-        const link = document.createElement("a");
-        link.className = "drop-cinema-hanger";
-        link.href = item.href;
-        link.setAttribute("aria-label", "Shop " + item.name + (item.color ? " in " + item.color : ""));
-        const hanger = document.createElement("span");
-        hanger.className = "drop-cinema-hanger-hook";
-        hanger.setAttribute("aria-hidden", "true");
-        const imageWrap = document.createElement("span");
-        imageWrap.className = "drop-cinema-hanger-image";
-        const image = document.createElement("img");
-        image.src = item.image;
-        image.alt = item.name + (item.color ? " — " + item.color : "");
-        image.loading = "eager";
-        image.decoding = "async";
-        imageWrap.appendChild(image);
-        const label = document.createElement("span");
-        label.className = "drop-cinema-hanger-label";
-        label.textContent = item.name;
-        const color = document.createElement("span");
-        color.className = "drop-cinema-hanger-color";
-        color.textContent = item.color || "MONOWEAR";
-        const count = document.createElement("span");
-        count.className = "drop-cinema-hanger-count";
-        count.textContent = String(index + 1).padStart(2, "0");
-        link.append(hanger, imageWrap, label, color, count);
-        fragment.appendChild(link);
+  const makeVariants = (p) => {
+    const result = [];
+    const add = (name, raw) => {
+      (Array.isArray(raw) ? raw : [raw]).forEach(entry => {
+        const image = getImage(entry);
+        if (image && !result.some(v => v.image === image)) result.push({ name: String(name || (entry && (entry.color || entry.colour)) || "Original").trim(), image });
       });
-      track.replaceChildren(fragment);
-      rack.hidden = false;
-    })
-    .catch(() => { rack.hidden = true; });
-  const grain = hero.querySelector(".hero-grain");
-  if (grain) grain.insertAdjacentElement("afterend", layer);
-  else hero.prepend(layer);
-
-  const emberField = layer.querySelector(".drop-cinema-embers");
-  let seed = 17;
-  const random = () => {
-    seed = (seed * 9301 + 49297) % 233280;
-    return seed / 233280;
+    };
+    const colorImages = parse(p.color_images);
+    if (colorImages && typeof colorImages === "object" && !Array.isArray(colorImages)) {
+      Object.entries(colorImages).forEach(([color, images]) => add(color, images));
+    } else if (Array.isArray(colorImages)) {
+      colorImages.forEach((entry, i) => add(entry.color || entry.colour || entry.name || ("Colour " + (i + 1)), entry));
+    }
+    const colors = parse(p.colors), images = parse(p.images);
+    if (!result.length && Array.isArray(images)) images.forEach((image, i) => add(Array.isArray(colors) ? colors[i] : "", image));
+    add("", p.image || p.image_url || p.imageUrl);
+    const unique = result.filter((v, i, a) => a.findIndex(x => x.image === v.image) === i);
+    if (Array.isArray(colors) && colors.length) unique.forEach((v, i) => { if (!v.name || v.name === "Original") v.name = String(colors[i] || "Original"); });
+    return unique;
   };
-  for (let i = 0; i < 26; i += 1) {
-    const ember = document.createElement("i");
-    ember.className = "drop-cinema-ember";
-    ember.style.setProperty("--x", (random() * 100).toFixed(2) + "%");
-    ember.style.setProperty("--size", (1.5 + random() * 2.2).toFixed(1) + "px");
-    ember.style.setProperty("--duration", (8 + random() * 12).toFixed(1) + "s");
-    ember.style.setProperty("--delay", (-random() * 18).toFixed(1) + "s");
-    ember.style.setProperty("--drift", ((random() - .5) * 130).toFixed(0) + "px");
-    emberField.appendChild(ember);
-  }
+  const money = value => new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(Number(value || 0));
+  const productUrl = p => "/product.html?slug=" + encodeURIComponent(p.slug || "") + "&id=" + encodeURIComponent(String(p.id || ""));
+  const preload = src => new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(src); image.onerror = () => reject(new Error("Image unavailable")); image.src = src;
+    if (image.complete && image.naturalWidth) resolve(src);
+  });
 
-  const dateAtMidnightWAT = (dateString) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateString || ""))) return null;
-    const date = new Date(dateString + "T00:00:00+01:00");
+  const createHanger = (product, variant, index, small) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "wardrobe-piece" + (small ? " wardrobe-piece-small" : "");
+    button.setAttribute("role", "listitem");
+    button.setAttribute("aria-label", "Explore " + product.name + (variant.name ? " in " + variant.name : ""));
+    button.innerHTML = '<span class="wardrobe-hanger" aria-hidden="true"><i></i></span><span class="wardrobe-piece-image-wrap"><img loading="lazy" decoding="async" alt=""></span><span class="wardrobe-piece-name"></span><span class="wardrobe-piece-color"></span>';
+    const img = button.querySelector("img");
+    img.src = variant.image; img.alt = product.name + (variant.name ? " — " + variant.name : "");
+    button.querySelector(".wardrobe-piece-name").textContent = product.name || "MONOWEAR PIECE";
+    button.querySelector(".wardrobe-piece-color").textContent = variant.name || "MONO ORIGINAL";
+    button.style.setProperty("--piece-index", index);
+    button.addEventListener("click", () => { if (!dragged) openFocus(product, variant); });
+    return button;
+  };
+  const openFocus = (product, variant) => {
+    selectedProduct = product;
+    selectedVariant = Math.max(0, product.variants.findIndex(v => v.image === variant.image));
+    homeView.hidden = true; focusView.hidden = false; layer.classList.add("is-focused");
+    backButtons.forEach(b => b.hidden = false); layer.querySelector(".wardrobe-back").hidden = true;
+    renderFocus();
+  };
+  const renderFocus = () => {
+    if (!selectedProduct) return;
+    const v = selectedProduct.variants[selectedVariant] || selectedProduct.variants[0];
+    focusImage.classList.remove("is-swapping"); void focusImage.offsetWidth; focusImage.classList.add("is-swapping");
+    focusImage.src = v.image; focusImage.alt = selectedProduct.name + (v.name ? " — " + v.name : "");
+    layer.querySelector(".wardrobe-focus-name").textContent = selectedProduct.name || "MONOWEAR PIECE";
+    layer.querySelector(".wardrobe-focus-description").textContent = selectedProduct.description || "";
+    layer.querySelector(".wardrobe-focus-price").textContent = money(selectedProduct.price);
+    layer.querySelector(".wardrobe-view-button").href = productUrl(selectedProduct);
+    variantRail.replaceChildren();
+    if (selectedProduct.variants.length > 1) selectedProduct.variants.forEach((item, index) => {
+      if (index === selectedVariant) return;
+      const button = createHanger(selectedProduct, item, index, true);
+      button.classList.add("is-variant");
+      button.setAttribute("aria-label", "Switch to " + (item.name || "other colour"));
+      button.addEventListener("click", event => {
+        event.stopImmediatePropagation();
+        selectedVariant = index;
+        renderFocus();
+      }, { once: true });
+      variantRail.appendChild(button);
+    });
+    variantRail.hidden = selectedProduct.variants.length < 2;
+  };
+  const closeFocus = () => {
+    selectedProduct = null; focusView.hidden = true; homeView.hidden = false; layer.classList.remove("is-focused");
+    backButtons.forEach(b => b.hidden = true);
+  };
+  backButtons.forEach(button => button.addEventListener("click", closeFocus));
+  focusImage.addEventListener("animationend", () => focusImage.classList.remove("is-swapping"));
+  focusView.addEventListener("click", event => { if (event.target === focusView) closeFocus(); });
+
+  track.addEventListener("pointerdown", event => {
+    if (event.pointerType !== "mouse" || event.button !== 0) return;
+    drag = { x: event.clientX, scroll: track.scrollLeft }; dragged = false;
+    track.classList.add("is-dragging"); track.setPointerCapture(event.pointerId);
+  });
+  track.addEventListener("pointermove", event => {
+    if (!drag) return;
+    const delta = event.clientX - drag.x;
+    if (Math.abs(delta) > 5) dragged = true;
+    track.scrollLeft = drag.scroll - delta;
+  });
+  const endDrag = () => { drag = null; track.classList.remove("is-dragging"); window.setTimeout(() => { dragged = false; }, 100); };
+  track.addEventListener("pointerup", endDrag); track.addEventListener("pointercancel", endDrag); track.addEventListener("lostpointercapture", endDrag);
+  track.addEventListener("wheel", event => {
+    if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) { track.scrollLeft += event.deltaY; event.preventDefault(); }
+  }, { passive: false });
+
+  const sampleSvg = (fill, kind) => {
+    const paths = {
+      tee: '<path d="M58 24 82 10h56l24 14 38 26-23 39-20-12v140H43V77L23 89 0 50z"/>',
+      hoodie: '<path d="M70 25 89 12h42l19 13 31 15 34 40-27 25-18-17v129H29V88L11 105-16 80 15 40z"/><path d="M89 15q21 43 42 0" fill="none" stroke="#111" stroke-width="4"/>',
+      jersey: '<path d="M60 24 84 11h52l24 13 40 28-25 43-21-13v138H42V82L21 95-4 52z"/>',
+      jacket: '<path d="M68 22 90 11h40l22 11 35 22 28 40-28 24-18-17v129H31V91L13 108-15 84 15 44z"/><path d="M110 25v205" stroke="#111" stroke-width="4"/>',
+      cap: '<path d="M32 139q12-96 78-96t78 96l-10 23H43z"/><path d="M43 143q88-25 154 0l-12 22H52z" fill="#73766f"/>'
+    };
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 260"><g fill="' + fill + '">' + paths[kind] + '</g></svg>';
+    return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
+  };
+  const fallback = [
+    { id:"sample-1", name:"MONO HEAVY TEE", price:18500, description:"Sample piece — add your product image in Studio.", variants:[{name:"Black",image:sampleSvg("#252725","tee")},{name:"White",image:sampleSvg("#f7f7f3","tee")}] },
+    { id:"sample-2", name:"MONO ZIP HOODIE", price:32000, description:"Sample piece — add your product image in Studio.", variants:[{name:"Charcoal",image:sampleSvg("#343734","hoodie")}] },
+    { id:"sample-3", name:"MONO JERSEY", price:24000, description:"Sample piece — add your product image in Studio.", variants:[{name:"Green",image:sampleSvg("#174c35","jersey")},{name:"Blue",image:sampleSvg("#274a8c","jersey")}] },
+    { id:"sample-4", name:"MONO WORK JACKET", price:38000, description:"Sample piece — add your product image in Studio.", variants:[{name:"Olive",image:sampleSvg("#505742","jacket")}] },
+    { id:"sample-5", name:"MONO TRACK TOP", price:29000, description:"Sample piece — add your product image in Studio.", variants:[{name:"Black",image:sampleSvg("#202321","hoodie")},{name:"Forest",image:sampleSvg("#164a36","hoodie")}] },
+    { id:"sample-6", name:"MONO CAP", price:12000, description:"Sample piece — add your product image in Studio.", variants:[{name:"Forest",image:sampleSvg("#164a36","cap")}] }
+  ];
+  const renderRail = () => {
+    track.replaceChildren();
+    products.forEach((product, index) => track.appendChild(createHanger(product, product.variants[0], index, false)));
+    layer.querySelector(".wardrobe-count").textContent = String(products.length).padStart(2, "0") + " PIECES";
+  };
+
+  const grain = hero.querySelector(".hero-grain");
+  if (grain) grain.insertAdjacentElement("afterend", layer); else hero.prepend(layer);
+
+  const dateAtMidnightWAT = value => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return null;
+    const date = new Date(value + "T00:00:00+01:00");
     return Number.isNaN(date.getTime()) ? null : date;
   };
-  const cinemaCountdownLabel = layer.querySelector("[data-cinema-drop-label]");
-  const cinemaCountdownValue = layer.querySelector("[data-cinema-drop-countdown]");
-  const cinemaCountdownDate = layer.querySelector("[data-cinema-drop-date]");
-  let campaignLaunchDate = "2026-11-10";
-  const updateCinemaCountdown = () => {
-    const target = dateAtMidnightWAT(campaignLaunchDate);
-    if (cinemaCountdownDate) {
-      cinemaCountdownDate.textContent = campaignLaunchDate;
-      cinemaCountdownDate.dateTime = campaignLaunchDate;
+  const previewMode = new URLSearchParams(location.search).get("cinemaPreview") === "1";
+  const applyCampaignWindow = settings => {
+    settings = settings || {};
+    const preorder = dateAtMidnightWAT(String(settings.drop_preorder_date || "2026-10-21"));
+    const launch = dateAtMidnightWAT(String(settings.drop_launch_date || "2026-11-10"));
+    let end = null;
+    if (launch) {
+      const next = new Date(launch.getTime()); next.setUTCMonth(next.getUTCMonth() + 1);
+      end = dateAtMidnightWAT(next.getUTCFullYear() + "-" + String(next.getUTCMonth() + 1).padStart(2, "0") + "-01");
     }
-    if (!target || Date.now() >= target.getTime()) {
-      if (cinemaCountdownLabel) cinemaCountdownLabel.textContent = "THE DROP IS LIVE";
-      if (cinemaCountdownValue) cinemaCountdownValue.textContent = "AVAILABLE NOW";
-      return;
-    }
-    const seconds = Math.max(0, Math.floor((target.getTime() - Date.now()) / 1000));
-    const days = Math.floor(seconds / 86400);
-    const hours = String(Math.floor((seconds % 86400) / 3600)).padStart(2, "0");
-    const minutes = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
-    const secs = String(seconds % 60).padStart(2, "0");
-    if (cinemaCountdownLabel) cinemaCountdownLabel.textContent = "DROP GOES LIVE IN";
-    if (cinemaCountdownValue) cinemaCountdownValue.textContent = days + "D " + hours + "H " + minutes + "M " + secs + "S";
-  };
-  updateCinemaCountdown();
-  window.setInterval(updateCinemaCountdown, 1000);
-  const previewMode = new URLSearchParams(window.location.search).get("cinemaPreview") === "1";
-  const applyCampaignWindow = (settings = {}) => {
-    const preorderDate = String(settings.drop_preorder_date || "2026-10-21");
-    const launchDate = String(settings.drop_launch_date || "2026-11-10");
-    campaignLaunchDate = launchDate;
-    updateCinemaCountdown();
-    const startsAt = dateAtMidnightWAT(preorderDate);
-    const launchAt = dateAtMidnightWAT(launchDate);
-    // Keep the campaign cinema running through the entire month containing drop day.
-    // It clears automatically at midnight WAT on the first day of the following month.
-    let endsAt = null;
-    if (launchAt) {
-      const nextMonth = new Date(launchAt.getTime());
-      nextMonth.setUTCMonth(nextMonth.getUTCMonth() + 1);
-      const year = nextMonth.getUTCFullYear();
-      const month = String(nextMonth.getUTCMonth() + 1).padStart(2, "0");
-      endsAt = dateAtMidnightWAT(`${year}-${month}-01`);
-    }
-    const now = Date.now();
-    const isCampaignWindow = previewMode || (startsAt && launchAt && endsAt &&
-      launchAt >= startsAt && endsAt > startsAt &&
-      now >= startsAt.getTime() && now < endsAt.getTime());
-    hero.classList.toggle("drop-cinema-active", Boolean(isCampaignWindow));
-    if (isCampaignWindow) {
-      hero.setAttribute("data-campaign-animation", "current-drop");
-    } else {
-      hero.removeAttribute("data-campaign-animation");
-    }
+    const active = previewMode || (preorder && launch && end && launch >= preorder && Date.now() >= preorder.getTime() && Date.now() < end.getTime());
+    hero.classList.toggle("drop-cinema-active", Boolean(active));
+    if (active) hero.setAttribute("data-campaign-animation", "virtual-wardrobe"); else hero.removeAttribute("data-campaign-animation");
   };
 
-  // Use the same published Studio dates as the storefront countdown.
-  applyCampaignWindow();
   fetch("/api/store", { credentials: "same-origin", cache: "no-store" })
-    .then((response) => response.ok ? response.json() : Promise.reject(new Error("Store settings unavailable")))
-    .then((data) => applyCampaignWindow(data && data.settings ? data.settings : {}))
-    .catch(() => { /* Safe defaults keep the campaign animation independent. */ });
+    .then(r => r.ok ? r.json() : Promise.reject(new Error("Store unavailable")))
+    .then(async data => {
+      const all = Array.isArray(data.products) ? data.products.filter(p => p && p.published !== false && Number(p.published == null ? 1 : p.published) !== 0) : [];
+      const featured = all.filter(p => Boolean(Number(p.featured)));
+      const ordered = featured.concat(all.filter(p => !featured.includes(p)));
+      const ready = await Promise.all(ordered.map(async p => {
+        const product = Object.assign({}, p, { variants: makeVariants(p) });
+        product.variants = (await Promise.all(product.variants.map(async v => { try { await preload(v.image); return v; } catch { return null; } }))).filter(Boolean);
+        return product.variants.length ? product : null;
+      }));
+      products = ready.filter(Boolean);
+      if (!products.length) products = fallback;
+      renderRail(); applyCampaignWindow(data.settings || {});
+    })
+    .catch(() => { products = fallback; renderRail(); applyCampaignWindow({}); });
 })();
