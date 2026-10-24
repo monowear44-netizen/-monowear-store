@@ -1101,17 +1101,28 @@ $("productForm").addEventListener("submit", async (event) => {
       throw Error("A product can have up to 10 images in total. Remove some images before adding more.");
     }
 
-    // Upload all selected files together using the server's multi-image route.
+    // Upload selected gallery files in their selection order. If the number of
+    // newly uploaded photos matches the listed colours, map them in that same
+    // order so the storefront animation always pairs each colour with its photo.
     const uploadedImages = await uploadImages(selectedFiles);
 
     let colorImages = readColorImageMap();
+    if (uploadedImages.length > 1 && uploadedImages.length === body.colors.length) {
+      body.colors.forEach((color, index) => {
+        colorImages[color] = uploadedImages[index];
+      });
+    }
+
+    // Explicit per-colour uploads override the ordered gallery mapping.
     for (const input of $("colorImageAssignments").querySelectorAll("input[data-color-image]")) {
       const file = input.files && input.files[0];
       if (!file) continue;
       const urls = await uploadImages([file]);
       colorImages[input.dataset.colorImage] = urls[0];
     }
-    // Keep only mappings for colours that are currently offered for this product.
+
+    // Keep only mappings for currently offered colours, in the same order as
+    // the colour list. Matching is case-insensitive to preserve old assignments.
     const normalizedColorImages = {};
     for (const color of body.colors) {
       const key = Object.keys(colorImages).find((item) => item.toLowerCase() === color.toLowerCase());
@@ -1119,9 +1130,13 @@ $("productForm").addEventListener("submit", async (event) => {
     }
     body.color_images = normalizedColorImages;
 
-    // Newly uploaded product photos must take priority over the previously saved gallery.
-    // Otherwise the old first image remains the product.image and the storefront never changes.
-    body.images = [...uploadedImages, ...existingImages, ...Object.values(normalizedColorImages)]
+    // Re-uploading a gallery replaces the old gallery rather than appending stale
+    // photos. With no new gallery files, retain the saved order and append any
+    // newly assigned colour photos that are not already present.
+    const orderedGallery = uploadedImages.length
+      ? uploadedImages
+      : existingImages;
+    body.images = [...orderedGallery, ...Object.values(normalizedColorImages)]
       .filter((url, index, all) => all.indexOf(url) === index);
     body.image = uploadedImages[0] || body.images[0] || body.image || "";
 
