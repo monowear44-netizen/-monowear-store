@@ -924,6 +924,9 @@ function newProduct() {
   form.elements.stock.value = 0;
   form.elements.published.checked = true;
   form.elements.featured.checked = false;
+  form.elements.rail_status.value = "";
+  form.elements.rail_drop_date.value = "";
+  form.elements.rail_type.value = "top";
   form.elements.discount_enabled.checked = false;
   syncDiscountFields();
   form.elements.sort_order.value = 0;
@@ -970,6 +973,9 @@ window.editProduct = (id) => {
     "image",
     "images",
     "color_images",
+    "rail_status",
+    "rail_drop_date",
+    "rail_type",
     "description",
     "sort_order"
   ]) {
@@ -1049,7 +1055,10 @@ $("productForm").addEventListener("submit", async (event) => {
     "stock",
     "image",
     "description",
-    "sort_order"
+    "sort_order",
+    "rail_status",
+    "rail_drop_date",
+    "rail_type"
   ]) {
     body[key] = form.elements[key].value;
   }
