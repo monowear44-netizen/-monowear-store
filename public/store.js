@@ -992,7 +992,9 @@ if (checkoutForm) {
       items: cart.map((item) => ({
         product_id: Number(item.id),
         quantity: Number(item.quantity),
-        size: String(item.size || "")
+        size: String(item.size || ""),
+        color: String(item.color || ""),
+        preorder: Boolean(item.preorder)
       }))
     };
 
