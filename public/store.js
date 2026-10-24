@@ -362,7 +362,7 @@
           colourIndex = (colourIndex + 1) % colour.options.length;
           colour.selectedIndex = colourIndex;
           colour.dispatchEvent(new Event("change", { bubbles: true }));
-        }, 1400);
+        }, 850);
       });
       if (cards.length > 1) {
         const timer = window.setInterval(() => {
@@ -632,6 +632,21 @@
     let value = key ? map[key] : "";
     if (value && typeof value === "object") value = value.url || value.src || value.path || "";
     value = String(value || "").trim();
+
+    // If the admin uploaded a gallery with one image per colour but has not
+    // explicitly mapped each colour yet, use the matching colour position.
+    if (!value) {
+      let gallery = product && product.images;
+      if (typeof gallery === "string") {
+        try { gallery = JSON.parse(gallery); } catch { gallery = []; }
+      }
+      if (Array.isArray(gallery)) {
+        gallery = gallery.map((item) => typeof item === "string" ? item : (item && (item.url || item.src || item.path)) || "").filter(Boolean);
+        const colors = Array.isArray(product.colors) ? product.colors : [];
+        const colorIndex = colors.findIndex((item) => String(item).trim().toLocaleLowerCase() === wanted);
+        if (colors.length > 1 && gallery.length === colors.length && colorIndex >= 0) value = gallery[colorIndex];
+      }
+    }
     if (!value) return "";
     if (/^(data:|blob:|https?:\/\/)/i.test(value)) return value;
     if (value.startsWith("//")) return location.protocol + value;
