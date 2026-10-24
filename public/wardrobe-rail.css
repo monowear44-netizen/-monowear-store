@@ -1,0 +1,49 @@
+/* wardrobe-rail.css — MONOWEAR wardrobe rail; theme follows the existing site variables. */
+.wr{
+  --wr-bg:var(--bg,#f0efe9);
+  --wr-fg:var(--ink,#141414);
+  --wr-mut:var(--muted,#797970);
+  --wr-line:var(--line,#d4d2c9);
+  --wr-accent:var(--accent,#c6ff4b);
+  position:relative;overflow:hidden;width:100%;height:min(86svh,720px);min-height:520px;
+  background:var(--wr-bg);color:var(--wr-fg);font-family:inherit;-webkit-tap-highlight-color:transparent;
+  transition:background .3s,color .3s;
+}
+.wr *{box-sizing:border-box}
+.wr-bg{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;pointer-events:none}
+.wr-bg::after{content:"";position:absolute;inset:0;background:var(--wr-bg);opacity:.55}
+.wr-rail{position:absolute;inset:0;z-index:1;overflow-x:auto;overflow-y:hidden;display:flex;align-items:flex-start;padding:84px 12vw 0;scrollbar-width:none;cursor:grab;-webkit-overflow-scrolling:touch;transition:opacity .45s,transform .45s}
+.wr-rail::-webkit-scrollbar{display:none}
+.wr-track{position:relative;display:flex;gap:34px;padding-top:26px;min-width:max-content}
+.wr-track:before{content:"";position:absolute;left:-12vw;right:-12vw;top:26px;border-top:2px solid var(--wr-line)}
+.wr-it{position:relative;width:150px;display:flex;flex-direction:column;align-items:center;transform-origin:50% 0;animation:wr-sway 5s ease-in-out infinite;cursor:pointer;background:none;border:0;padding:0;color:inherit;font:inherit}
+.wr-it:nth-child(2n){animation-delay:-1.7s}.wr-it:nth-child(3n){animation-delay:-3.1s}.wr-it:hover{animation-duration:2s}
+@keyframes wr-sway{0%,100%{transform:rotate(-1.2deg)}50%{transform:rotate(1.2deg)}}
+.wr-it svg{width:46px;height:30px;margin-top:-4px;margin-bottom:-12px;position:relative;z-index:2;color:var(--wr-mut)}
+.wr-it img{width:150px;height:200px;object-fit:contain;filter:drop-shadow(0 10px 8px rgba(0,0,0,.18));position:relative}
+.wr-it.cap img{height:110px;margin-top:30px}.wr-it.jean img{height:240px}
+.wr-it small{margin-top:12px;font-size:9px;letter-spacing:.14em;color:var(--wr-mut);text-transform:uppercase}
+.wr-tag{display:inline-block;margin-top:6px;font-size:8px;letter-spacing:.14em;background:var(--wr-accent);color:#111;padding:3px 6px;text-transform:uppercase;font-weight:700}
+.wr-empty{position:absolute;z-index:1;top:40%;left:0;right:0;text-align:center;font-size:11px;letter-spacing:.14em;color:var(--wr-mut);text-transform:uppercase}
+.wr.wr-focus .wr-rail{opacity:0;transform:scale(.96);pointer-events:none}
+.wr-stage{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .45s;padding:56px 14px 24px}
+.wr.wr-focus .wr-stage{opacity:1;pointer-events:auto}
+.wr-wire{position:absolute;left:0;right:0;top:calc(50% - 215px);border-top:2px solid var(--wr-line)}
+.wr-row{display:flex;align-items:flex-start;justify-content:center;gap:14px;position:relative;z-index:1}
+.wr-main{display:flex;flex-direction:column;align-items:center;width:min(62vw,300px)}
+.wr-main svg{width:70px;height:46px;color:var(--wr-mut);margin-bottom:-18px;position:relative;z-index:2}
+.wr-main img{width:100%;height:min(40svh,340px);object-fit:contain;filter:drop-shadow(0 18px 14px rgba(0,0,0,.2));transition:transform .4s,opacity .3s}
+.wr-main img.out{transform:translateX(-30px);opacity:0}
+.wr-side{display:flex;flex-wrap:wrap;gap:8px;width:92px;margin-top:-6px}
+.wr-side button{background:none;border:0;padding:0;width:42px;display:flex;flex-direction:column;align-items:center;cursor:pointer;animation:wr-sway 4s ease-in-out infinite;transform-origin:50% 0;color:var(--wr-mut)}
+.wr-side svg{width:22px;height:14px;margin-bottom:-5px}.wr-side img{width:42px;height:56px;object-fit:contain;filter:drop-shadow(0 4px 4px rgba(0,0,0,.2))}
+.wr-meta{text-align:center;margin-top:18px}.wr-nm{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.wr-cl{font-size:10px;color:var(--wr-mut);letter-spacing:.14em;margin:6px 0 10px;text-transform:uppercase}
+.wr-cd{margin:10px 0 0;font:700 15px monospace;letter-spacing:.06em}.wr-cd small{display:block;font:9px monospace;letter-spacing:.16em;color:var(--wr-mut);margin-bottom:3px}
+.wr-add{margin-top:14px;font:700 10px inherit;letter-spacing:.16em;background:var(--wr-fg);color:var(--wr-bg);border:0;padding:11px 24px;cursor:pointer;border-radius:2px}
+.wr-back{position:absolute;z-index:2;top:14px;left:16px;font-size:10px;letter-spacing:.14em;background:none;border:0;color:var(--wr-fg);opacity:0;pointer-events:none;transition:opacity .3s;cursor:pointer}
+.wr.wr-focus .wr-back{opacity:1;pointer-events:auto}
+.wr-hint{position:absolute;z-index:2;bottom:16px;left:0;right:0;text-align:center;font-size:9px;letter-spacing:.2em;color:var(--wr-mut);transition:opacity .3s;pointer-events:none}
+.wr.wr-focus .wr-hint{opacity:0}
+@media(max-width:600px){.wr{min-height:500px;height:min(78svh,640px)}.wr-rail{padding:72px 9vw 0}.wr-track{gap:22px}.wr-it,.wr-it img{width:126px}.wr-it img{height:178px}.wr-it.jean img{height:210px}.wr-it.cap img{height:100px}.wr-main{width:min(58vw,250px)}.wr-main img{height:min(36svh,290px)}.wr-side{width:76px;gap:6px}.wr-side button{width:34px}.wr-side img{width:34px;height:48px}.wr-wire{top:calc(50% - 185px)}}
+@media(prefers-reduced-motion:reduce){.wr-it,.wr-side button{animation:none}}
