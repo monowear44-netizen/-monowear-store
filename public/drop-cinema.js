@@ -39,16 +39,44 @@
     if (/^uploads\/[a-zA-Z0-9._-]+$/.test(raw)) return "/" + raw;
     return "";
   };
-  const imageForProduct = (product) => {
-    let colorImages = product && product.color_images;
-    if (typeof colorImages === "string") {
-      try { colorImages = JSON.parse(colorImages); } catch { colorImages = {}; }
+  const parseImageData = (value) => {
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (!trimmed) return [];
+      try {
+        const parsed = JSON.parse(trimmed);
+        return Array.isArray(parsed) ? parsed : (parsed && typeof parsed === "object" ? Object.entries(parsed).map(([color, image]) => ({ color, image })) : [trimmed]);
+      } catch { return [trimmed]; }
     }
-    const variants = colorImages && typeof colorImages === "object" && !Array.isArray(colorImages)
-      ? Object.values(colorImages).map((entry) => safeImageUrl(typeof entry === "object" ? (entry.url || entry.src || entry.path) : entry)).filter(Boolean)
-      : [];
-    const primary = safeImageUrl(product && (product.image || product.images?.[0]));
-    return [...new Set([primary, ...variants].filter(Boolean))];
+    if (Array.isArray(value)) return value;
+    if (value && typeof value === "object") return Object.entries(value).map(([color, image]) => ({ color, image }));
+    return [];
+  };
+  const imageEntriesForProduct = (product) => {
+    const entries = [];
+    const add = (value, color = "") => {
+      const entry = value && typeof value === "object" ? value : { url: value };
+      const image = safeImageUrl(entry.url || entry.src || entry.path || entry.image || entry.filename || entry.file || entry.image_url || entry.imageUrl);
+      if (image) entries.push({ image, color: String(entry.color || entry.colour || entry.name || color || "").trim() });
+    };
+    // Keep the main image, every gallery image, and every explicitly uploaded colour image.
+    add(product && (product.image || product.image_url || product.imageUrl), "");
+    parseImageData(product && product.images).forEach((entry) => add(entry));
+    parseImageData(product && product.color_images).forEach((entry) => {
+      if (entry && typeof entry === "object" && (entry.image || entry.url || entry.src || entry.path || entry.filename || entry.file)) {
+        add(entry, entry.color || entry.colour || "");
+      } else if (entry && typeof entry === "object") {
+        add(entry.image || entry.url || entry.src || entry.path, entry.color || entry.colour || "");
+      } else {
+        add(entry);
+      }
+    });
+    const seen = new Set();
+    return entries.filter((entry) => {
+      if (seen.has(entry.image)) return false;
+      seen.add(entry.image);
+      return true;
+    });
   };
   let slideItems = [];
   let slideIndex = 0;
@@ -74,9 +102,9 @@
       const all = Array.isArray(data.products) ? data.products.filter((p) => p && p.published !== false) : [];
       const featured = all.filter((p) => Boolean(Number(p.featured)));
       const products = featured.length ? featured : all;
-      slideItems = products.flatMap((product) => imageForProduct(product).slice(0, 1).map((image) => ({
+      slideItems = products.flatMap((product) => imageEntriesForProduct(product).map(({ image, color }) => ({
         image,
-        name: String(product.name || "MONOWEAR piece"),
+        name: String(product.name || "MONOWEAR piece") + (color ? " · " + color : ""),
         href: "/product.html?slug=" + encodeURIComponent(product.slug || "") + "&id=" + encodeURIComponent(String(product.id || ""))
       })));
       renderProductSlide();
