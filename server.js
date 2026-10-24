@@ -2862,9 +2862,10 @@ function normalizeCheckoutItems(items) {
 
     const size = String(item.size ?? "").trim().slice(0, 40);
     const color = String(item.color ?? "").trim().slice(0, 40);
-    const key = `${productId}|${size}|${color}`;
+    const preorder = Boolean(item.preorder);
+    const key = `${productId}|${size}|${color}|${preorder ? "preorder" : "normal"}`;
 
-    const line = lines.get(key) || { productId, size, color, quantity: 0 };
+    const line = lines.get(key) || { productId, size, color, preorder, quantity: 0 };
     line.quantity += quantity;
     lines.set(key, line);
 
@@ -2883,7 +2884,7 @@ function normalizeCheckoutItems(items) {
       throw new Error("A product in your cart is no longer available.");
     }
 
-    if (Number(product.featured) === 1) {
+    if (Number(product.featured) === 1 && String(product.rail_status || "") !== "new-drop") {
       const preorderDate = String(getSetting("drop_preorder_date", "2026-10-21") || "2026-10-21");
       const preorderOpens = new Date(preorderDate + "T00:00:00+01:00");
       if (Number.isFinite(preorderOpens.getTime()) && Date.now() < preorderOpens.getTime()) {
@@ -2919,6 +2920,10 @@ function normalizeCheckoutItems(items) {
       );
     }
 
+    const isCurrentPreorder = effectiveRailStatus(product) === "new-drop";
+    if (line.preorder && !isCurrentPreorder) {
+      throw new Error("The pre-order window has ended for " + product.name + ". Refresh the page and add it again.");
+    }
     normalized.push({
       product_id: product.id,
       name: product.name,
@@ -2927,7 +2932,8 @@ function normalizeCheckoutItems(items) {
       price: Number(product.price),
       quantity: line.quantity,
       size: line.size,
-      color: line.color
+      color: line.color,
+      preorder: Boolean(line.preorder && isCurrentPreorder)
     });
   }
 
