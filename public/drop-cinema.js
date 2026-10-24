@@ -6,7 +6,7 @@
   hero.dataset.wardrobeReady = "true";
 
   const layer = document.createElement("section");
-  layer.className = "wardrobe-experience";
+  layer.className = "drop-cinema-layer wardrobe-experience";
   layer.setAttribute("aria-label", "MONOWEAR virtual wardrobe");
   layer.innerHTML =
     '<header class="wardrobe-top">' +
@@ -96,7 +96,7 @@
     button.querySelector(".wardrobe-piece-name").textContent = product.name || "MONOWEAR PIECE";
     button.querySelector(".wardrobe-piece-color").textContent = variant.name || "MONO ORIGINAL";
     button.style.setProperty("--piece-index", index);
-    button.addEventListener("click", () => { if (!dragged) openFocus(product, variant); });
+    button.addEventListener("click", () => { if (dragged) return; if (small && selectedProduct) { const nextIndex = selectedProduct.variants.findIndex(v => v.image === variant.image); if (nextIndex >= 0) { selectedVariant = nextIndex; renderFocus(); } } else { openFocus(product, variant); } });
     return button;
   };
   const openFocus = (product, variant) => {
@@ -121,11 +121,6 @@
       const button = createHanger(selectedProduct, item, index, true);
       button.classList.add("is-variant");
       button.setAttribute("aria-label", "Switch to " + (item.name || "other colour"));
-      button.addEventListener("click", event => {
-        event.stopImmediatePropagation();
-        selectedVariant = index;
-        renderFocus();
-      }, { once: true });
       variantRail.appendChild(button);
     });
     variantRail.hidden = selectedProduct.variants.length < 2;
