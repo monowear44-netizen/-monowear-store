@@ -196,25 +196,6 @@
     if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) { track.scrollLeft += event.deltaY; event.preventDefault(); }
   }, { passive: false });
 
-  const sampleSvg = (fill, kind) => {
-    const paths = {
-      tee: '<path d="M58 24 82 10h56l24 14 38 26-23 39-20-12v140H43V77L23 89 0 50z"/>',
-      hoodie: '<path d="M70 25 89 12h42l19 13 31 15 34 40-27 25-18-17v129H29V88L11 105-16 80 15 40z"/><path d="M89 15q21 43 42 0" fill="none" stroke="#111" stroke-width="4"/>',
-      jersey: '<path d="M60 24 84 11h52l24 13 40 28-25 43-21-13v138H42V82L21 95-4 52z"/>',
-      jacket: '<path d="M68 22 90 11h40l22 11 35 22 28 40-28 24-18-17v129H31V91L13 108-15 84 15 44z"/><path d="M110 25v205" stroke="#111" stroke-width="4"/>',
-      cap: '<path d="M32 139q12-96 78-96t78 96l-10 23H43z"/><path d="M43 143q88-25 154 0l-12 22H52z" fill="#73766f"/>'
-    };
-    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 260"><g fill="' + fill + '">' + paths[kind] + '</g></svg>';
-    return "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg);
-  };
-  const fallback = [
-    { id:"sample-1", name:"MONO HEAVY TEE", price:18500, description:"Sample piece — add your product image in Studio.", variants:[{name:"Black",image:sampleSvg("#252725","tee")},{name:"White",image:sampleSvg("#f7f7f3","tee")}] },
-    { id:"sample-2", name:"MONO ZIP HOODIE", price:32000, description:"Sample piece — add your product image in Studio.", variants:[{name:"Charcoal",image:sampleSvg("#343734","hoodie")}] },
-    { id:"sample-3", name:"MONO JERSEY", price:24000, description:"Sample piece — add your product image in Studio.", variants:[{name:"Green",image:sampleSvg("#174c35","jersey")},{name:"Blue",image:sampleSvg("#274a8c","jersey")}] },
-    { id:"sample-4", name:"MONO WORK JACKET", price:38000, description:"Sample piece — add your product image in Studio.", variants:[{name:"Olive",image:sampleSvg("#505742","jacket")}] },
-    { id:"sample-5", name:"MONO TRACK TOP", price:29000, description:"Sample piece — add your product image in Studio.", variants:[{name:"Black",image:sampleSvg("#202321","hoodie")},{name:"Forest",image:sampleSvg("#164a36","hoodie")}] },
-    { id:"sample-6", name:"MONO CAP", price:12000, description:"Sample piece — add your product image in Studio.", variants:[{name:"Forest",image:sampleSvg("#164a36","cap")}] }
-  ];
   const renderRail = () => {
     track.replaceChildren();
     products.forEach((product, index) => track.appendChild(createHanger(product, product.variants[0], index, false)));
