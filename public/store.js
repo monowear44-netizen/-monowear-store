@@ -710,7 +710,8 @@
       (item) =>
         Number(item.id) === Number(productId) &&
         item.size === selectedSize &&
-        String(item.color || "") === selectedColor
+        String(item.color || "") === selectedColor &&
+        Boolean(item.preorder) === Boolean(options.preorder)
     );
     if (existingItem) {
       if (Number(existingItem.quantity) >= Number(product.stock)) {
@@ -727,6 +728,7 @@
         image: options.image || productImageForColor(product, selectedColor) || product.image || "",
         size: selectedSize,
         color: selectedColor,
+        preorder: Boolean(options.preorder),
         quantity: 1
       });
     }
