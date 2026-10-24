@@ -202,8 +202,8 @@
     .then(r => r.ok ? r.json() : Promise.reject(new Error("Store unavailable")))
     .then(async data => {
       const all = Array.isArray(data.products) ? data.products.filter(p => p && p.published !== false && Number(p.published == null ? 1 : p.published) !== 0) : [];
-      const label = String((data.settings || {}).wardrobe_section_label || "Featured / Next Drop");
-      const ordered = label === "New Arrivals"
+      const selectedLabel = String((data.settings || {}).wardrobe_section_label || "Featured / Next Drop");
+      const ordered = selectedLabel === "New Arrivals"
         ? all.filter(p => Boolean(p.new_arrival))
         : all.filter(p => Boolean(Number(p.featured)));
       const ready = await Promise.all(ordered.map(async p => {
