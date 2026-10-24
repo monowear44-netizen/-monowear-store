@@ -1014,3 +1014,25 @@ html[data-theme="gold"] .waitlist-section{
 .mono-fit-product-details small{font-size:10px;line-height:1.45;color:#696b60}
 @media(max-width:520px){.mono-fit-launcher{right:12px;bottom:12px;min-width:0;padding:10px 12px;gap:9px}.mono-fit-launcher-mark{width:32px;height:32px;flex-basis:32px}.mono-fit-launcher-copy strong{font-size:9px}.mono-fit-launcher-copy small{font-size:10px}.mono-fit-panel{right:8px;bottom:70px;width:calc(100vw - 16px);height:min(600px,calc(100dvh - 90px));min-height:320px}.mono-fit-panel-head{padding:13px}.mono-fit-messages{padding:12px}.mono-fit-product{grid-template-columns:68px minmax(0,1fr)}}
 @media(prefers-reduced-motion:reduce){.mono-fit-launcher,.mono-fit-option,.mono-fit-product{transition:none}}
+
+
+/* CHECKOUT ORDER SUMMARY — MORE COMFORTABLE MOBILE READABILITY */
+.checkout-order-summary{padding:1.1rem!important;margin:1.1rem 0 1.2rem!important}
+.checkout-summary-heading{margin-bottom:.9rem!important}
+.checkout-summary-heading h3{font-size:1.08rem!important}
+.checkout-summary-heading span{font-size:.86rem!important}
+.checkout-order-items{gap:.85rem!important;max-height:300px!important}
+.checkout-order-item{grid-template-columns:58px minmax(0,1fr) auto!important;gap:.85rem!important;padding-bottom:.85rem!important}
+.checkout-order-image{width:58px!important;height:70px!important;font-size:.75rem!important}
+.checkout-order-details{gap:.28rem!important}
+.checkout-order-details strong{font-size:.94rem!important;line-height:1.35!important}
+.checkout-order-details small{font-size:.81rem!important;line-height:1.45!important}
+.checkout-order-line-total{font-size:.88rem!important;font-weight:700!important}
+@media(max-width:520px){
+ .checkout-order-summary{padding:.9rem!important}
+ .checkout-order-item{grid-template-columns:50px minmax(0,1fr) auto!important;gap:.65rem!important}
+ .checkout-order-image{width:50px!important;height:62px!important}
+ .checkout-order-details strong{font-size:.88rem!important}
+ .checkout-order-details small{font-size:.77rem!important}
+ .checkout-order-line-total{font-size:.81rem!important}
+}
