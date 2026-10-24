@@ -943,6 +943,8 @@ function newProduct() {
   const fileInput = form.elements.imageFile;
   if (fileInput) fileInput.value = "";
 
+  window.syncWardrobeAdminProduct?.();
+
   form.scrollIntoView({
     behavior: "smooth",
     block: "start"
@@ -1023,6 +1025,7 @@ window.editProduct = (id) => {
   $("deleteProductButton").hidden = false;
 
   showError("productError", "");
+  window.syncWardrobeAdminProduct?.();
 
   form.scrollIntoView({
     behavior: "smooth",
