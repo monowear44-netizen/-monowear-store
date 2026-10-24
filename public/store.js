@@ -283,7 +283,11 @@
       const id = Number(product.id);
       const stock = Number(product.stock ?? 0);
       const sizes = Array.isArray(product.sizes) ? product.sizes : [];
-      const colors = Array.isArray(product.colors) ? product.colors : [];
+      let colors = product && product.colors;
+        if (typeof colors === "string") {
+          try { colors = JSON.parse(colors); } catch { colors = colors.split(",").map((item) => item.trim()).filter(Boolean); }
+        }
+        if (!Array.isArray(colors)) colors = [];
       const soldOut = stock <= 0;
       const phase = dropPhase();
       const isConfiguredFeatured = Boolean(Number(product.featured));
