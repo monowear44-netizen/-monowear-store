@@ -14,8 +14,7 @@
     '<header class="wardrobe-top">' +
       '<button class="wardrobe-back" type="button" aria-label="Back to all clothes" hidden>← BACK</button>' +
       '<a class="wardrobe-logo" href="/" aria-label="MONOWEAR home"><span class="wardrobe-logo-mark">M</span><span>MONOWEAR</span></a>' +
-      '<span class="wardrobe-top-note">INDEPENDENT BY DESIGN</span>' +
-      '<button class="wardrobe-bag-count" type="button">BAG (0)</button>' +
+      '<span class="wardrobe-top-note"><span>INDEPENDENT BY DESIGN</span><button class="wardrobe-bag-count" type="button">BAG (0)</button></span>' +
     '</header>' +
     '<div class="wardrobe-home-view">' +
       '<div class="wardrobe-intro"><span class="wardrobe-section-label">FEATURED / NEXT DROP</span><span>SELECT A PIECE TO EXPLORE ↗</span></div>' +
