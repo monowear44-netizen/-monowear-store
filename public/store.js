@@ -357,24 +357,8 @@
         carousel.scrollTo({ left: Math.max(0, left), behavior: animate ? "smooth" : "auto" });
       };
       activate(0, false);
-      cards.forEach((card) => {
-        const colour = card.querySelector(".color-select");
-        if (!colour || colour.options.length < 2) return;
-        let colourIndex = colour.selectedIndex || 0;
-        window.setInterval(() => {
-          if (document.hidden || carousel.matches(":hover") || carousel.contains(document.activeElement)) return;
-          colourIndex = (colourIndex + 1) % colour.options.length;
-          colour.selectedIndex = colourIndex;
-          colour.dispatchEvent(new Event("change", { bubbles: true }));
-        }, 850);
-      });
-      if (cards.length > 1) {
-        const timer = window.setInterval(() => {
-          if (document.hidden || carousel.matches(":hover") || carousel.contains(document.activeElement)) return;
-          activate(activeIndex + 1);
-        }, 1750);
-        showcaseTimers.set(carousel, timer);
-      }
+      // Keep the storefront product rows still. Customers can choose a card
+      // or colour manually; only the dedicated campaign cinema area auto-animates.
       carousel.addEventListener("click", (event) => {
         const card = event.target.closest(".product-card");
         if (!card) return;
