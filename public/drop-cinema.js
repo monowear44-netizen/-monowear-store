@@ -134,12 +134,20 @@
     const refreshCountdown = () => {
       if (status !== "new-drop" || !selectedProduct.dropDate) { countdown.hidden = true; return; }
       const remaining = new Date(selectedProduct.dropDate + "T00:00:00+01:00").getTime() - Date.now();
-      if (remaining <= 0) { countdown.hidden = true; return; }
+      if (remaining <= 0) {
+        countdown.hidden = true;
+        selectedProduct.status = "new-arrival";
+        layer.querySelector(".wardrobe-rail-status").textContent = "NEW ARRIVAL";
+        layer.querySelector(".wardrobe-add-to-bag").textContent = "ADD TO BAG";
+        return;
+      }
       const seconds = Math.floor(remaining / 1000), pad = n => String(n).padStart(2, "0");
       countdown.textContent = "PRE-ORDER · " + Math.floor(seconds / 86400) + "D " + pad(Math.floor(seconds % 86400 / 3600)) + "H " + pad(Math.floor(seconds % 3600 / 60)) + "M " + pad(seconds % 60) + "S";
       countdown.hidden = false;
     };
     refreshCountdown();
+    clearInterval(window.monowearWardrobeCountdown);
+    window.monowearWardrobeCountdown = setInterval(refreshCountdown, 1000);
     layer.querySelector(".wardrobe-add-to-bag").textContent = status === "new-drop" ? "PRE-ORDER +" : "ADD TO BAG";
     layer.querySelector(".wardrobe-view-button").href = productUrl(selectedProduct);
     variantRail.replaceChildren();
@@ -161,6 +169,7 @@
     window.addToCart(productId);
   });
   const closeFocus = () => {
+    clearInterval(window.monowearWardrobeCountdown);
     selectedProduct = null; focusView.hidden = true; homeView.hidden = false; layer.classList.remove("is-focused");
     backButtons.forEach(b => b.hidden = true);
   };
