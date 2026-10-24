@@ -167,3 +167,13 @@
   .drop-cinema-layer .wardrobe-view-button { min-height:42px; padding:12px 13px; font-size:9px; }
   .drop-cinema-layer .wardrobe-focus-info { max-width:100%; }
 }
+
+.drop-cinema-layer .wardrobe-top-note { display:flex; align-items:center; gap:14px; }
+.drop-cinema-layer .wardrobe-bag-count {
+  justify-self:end; border:0; padding:8px 0 8px 8px; background:transparent;
+  color:var(--fg); font:8px 'DM Mono',monospace; letter-spacing:.12em; white-space:nowrap;
+}
+@media(max-width:700px) {
+  .drop-cinema-layer .wardrobe-top-note { max-width:none; }
+  .drop-cinema-layer .wardrobe-bag-count { font-size:7px; }
+}
