@@ -21,8 +21,20 @@
     if (n >= end) return '';
     return d > n ? 'new-drop' : 'new-arrival';
   }
+  function validDropDate(p) {
+    var raw = String(p && p.dropDate || '').trim();
+    if (!raw) return null;
+    var d = new Date(/^\\d{4}-\\d{2}-\\d{2}$/.test(raw) ? raw + 'T00:00:00+01:00' : raw);
+    return Number.isFinite(d.getTime()) ? d : null;
+  }
+  function dateLabel(p) {
+    var d = validDropDate(p);
+    return d ? d.toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Africa/Lagos' }) : '';
+  }
   function countdown(p) {
-    var ms = new Date(p.dropDate + 'T00:00:00') - new Date();
+    var d = validDropDate(p);
+    if (!d) return null;
+    var ms = d.getTime() - Date.now();
     if (ms <= 0) return null;
     var s = Math.floor(ms / 1000), z = function (n) { return String(n).padStart(2, '0'); };
     return Math.floor(s / 86400) + 'D ' + z(Math.floor(s % 86400 / 3600)) + 'H ' + z(Math.floor(s % 3600 / 60)) + 'M ' + z(s % 60) + 'S';
@@ -48,8 +60,9 @@
     $('.wr-nm').textContent = p.name;
     $('.wr-cl').textContent = c.name + ' · ' + money(p.price);
     var cd = countdown(p);
-    var showCountdown = e === 'new-drop' || (e === 'featured' && !!cd);
-    $('.wr-st').innerHTML = e ? '<span class="wr-tag">' + LABEL[e] + '</span>' + (showCountdown ? '<div class="wr-cd"><small>DROP GOES LIVE IN</small><span class="wr-cdv">' + (cd || '00D 00H 00M 00S') + '</span></div>' : '') : '';
+    var showCountdown = (e === 'new-drop' || e === 'featured') && !!validDropDate(p);
+    var dateText = dateLabel(p);
+    $('.wr-st').innerHTML = e ? '<span class="wr-tag">' + LABEL[e] + '</span>' + (showCountdown ? '<div class="wr-cd"><small>DROP GOES LIVE ON ' + esc(dateText) + '</small><span class="wr-cdv">' + (cd || 'DROP IS LIVE') + '</span></div>' : '') : '';
     $('.wr-add').textContent = e === 'new-drop' ? 'PRE-ORDER +' : 'ADD TO BAG';
     var side = $('.wr-side'); side.innerHTML = '';
     p.colors.forEach(function (k, j) {
