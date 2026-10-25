@@ -47,7 +47,7 @@
     $('.wr-main').innerHTML = hook(p.type) + '<img src="' + esc(c.src) + '" alt="' + esc(p.name) + '">';
     $('.wr-nm').textContent = p.name;
     $('.wr-cl').textContent = c.name + ' · ' + money(p.price);
-    $('.wr-st').innerHTML = e ? '<span class="wr-tag">' + LABEL[e] + '</span>' + (e === 'new-drop' ? '<div class="wr-cd"><small>DROP GOES LIVE IN</small><span class="wr-cdv">' + (countdown(p) || '00D 00H 00M 00S') + '</span></div>' : '') : '';
+    var cd = countdown(p);\n    var showCountdown = e === 'new-drop' || (e === 'featured' && !!cd);\n    $('.wr-st').innerHTML = e ? '<span class="wr-tag">' + LABEL[e] + '</span>' + (showCountdown ? '<div class="wr-cd"><small>DROP GOES LIVE IN</small><span class="wr-cdv">' + (cd || '00D 00H 00M 00S') + '</span></div>' : '') : '';
     $('.wr-add').textContent = e === 'new-drop' ? 'PRE-ORDER +' : 'ADD TO BAG';
     var side = $('.wr-side'); side.innerHTML = '';
     p.colors.forEach(function (k, j) {
