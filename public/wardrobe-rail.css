@@ -47,3 +47,16 @@
 .wr.wr-focus .wr-hint{opacity:0}
 @media(max-width:600px){.wr{min-height:500px;height:min(78svh,640px)}.wr-rail{padding:72px 9vw 0}.wr-track{gap:22px}.wr-it,.wr-it img{width:126px}.wr-it img{height:178px}.wr-it.jean img{height:210px}.wr-it.cap img{height:100px}.wr-main{width:min(58vw,250px)}.wr-main img{height:min(36svh,290px)}.wr-side{width:76px;gap:6px}.wr-side button{width:34px}.wr-side img{width:34px;height:48px}.wr-wire{top:calc(50% - 185px)}}
 @media(prefers-reduced-motion:reduce){.wr-it,.wr-side button{animation:none}}
+
+/* Slightly more readable storefront and wardrobe rail typography. */
+.wr-it small{font-size:11px}
+.wr-tag{font-size:9px;padding:4px 7px}
+.wr-empty{font-size:12px}
+.wr-nm{font-size:14px}
+.wr-cl{font-size:11px}
+.wr-cd{font-size:16px}
+.wr-cd small{font-size:10px}
+.wr-add{font-size:11px}
+.wr-back{font-size:11px}
+.wr-hint{font-size:10px}
+@media(max-width:600px){.wr-nm{font-size:14px}.wr-cl{font-size:11px}.wr-it small{font-size:10px}}
