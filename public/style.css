@@ -1178,3 +1178,11 @@ html[data-theme="gold"] .waitlist-section{
   .showcase-picker-info>strong{font-size:10px}
   .showcase-picker-info button{padding:7px 4px}
 }
+
+/* Storefront-wide readability pass: a small, consistent type-size increase. */
+body{font-size:16px}
+.site-header nav a,.cart-toggle,.account-link{font-size:11px}
+.announcement{font-size:11px}
+.hero-copy>p:not(.eyebrow){font-size:15px}
+.eyebrow{font-size:12px}
+.button{font-size:12px}
