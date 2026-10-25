@@ -24,7 +24,7 @@
   function validDropDate(p) {
     var raw = String(p && p.dropDate || '').trim();
     if (!raw) return null;
-    var d = new Date(/^\\d{4}-\\d{2}-\\d{2}$/.test(raw) ? raw + 'T00:00:00+01:00' : raw);
+    var d = new Date(/^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw + 'T00:00:00+01:00' : raw);
     return Number.isFinite(d.getTime()) ? d : null;
   }
   function dateLabel(p) {
