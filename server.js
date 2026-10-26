@@ -251,6 +251,20 @@ db.exec(`
  `);
 }
 
+// One-time account link for Segun's existing Studio-recorded sale.
+// Keep this exact-reference update idempotent so redeploys are safe.
+{
+  const segunEmail = "segun@gmail.com";
+  const segunCustomer = db.prepare("SELECT id FROM customers WHERE LOWER(TRIM(email)) = LOWER(?)").get(segunEmail);
+  db.prepare(`
+    UPDATE orders
+    SET customer_email = ?,
+        customer_id = COALESCE(?, customer_id),
+        updated_at = CURRENT_TIMESTAMP
+    WHERE reference = ?
+  `).run(segunEmail, segunCustomer ? segunCustomer.id : null, "MONO-MANUAL-1792795657365-DD69E3");
+}
+
 // Private first-party website analytics. Store only a random visitor token,
 // page path and timestamp; do not store IP addresses or raw user-agent strings.
 db.exec(`
