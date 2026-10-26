@@ -3962,13 +3962,16 @@ app.get("/api/orders/track/:reference", checkoutLimiter, (req, res) => {
 });
 
 app.get("/api/customer/orders", requireCustomer, (req, res) => {
+  const customer = db.prepare("SELECT id, email FROM customers WHERE id = ?").get(req.session.customerId);
+  if (!customer) return res.status(404).json({ error: "Customer account not found." });
+  linkCustomerOrders(customer);
   const orders = db.prepare(`
     SELECT *
     FROM orders
-    WHERE LOWER(customer_email) = LOWER(?)
+    WHERE customer_id = ? OR LOWER(customer_email) = LOWER(?)
     ORDER BY id DESC
-  `).all(req.session.customerEmail);
-
+  `).all(customer.id, customer.email);
+  res.set("Cache-Control", "no-store");
   res.json(orders.map(safeOrder));
 });
 
