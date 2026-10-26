@@ -3984,7 +3984,7 @@ app.get("/api/orders/track/:reference", checkoutLimiter, (req, res) => {
 });
 
 app.get("/api/customer/orders", requireCustomer, (req, res) => {
-  const customer = db.prepare("SELECT id, email FROM customers WHERE id = ?").get(req.session.customerId);
+  const customer = db.prepare("SELECT id, name, email FROM customers WHERE id = ?").get(req.session.customerId);
   if (!customer) return res.status(404).json({ error: "Customer account not found." });
   linkCustomerOrders(customer);
   const orders = db.prepare(`
