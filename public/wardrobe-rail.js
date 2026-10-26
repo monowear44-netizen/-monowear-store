@@ -5,7 +5,7 @@
   if (!root) return;
   var API = '/api/wardrobe-rail';
   var LABEL = { featured: 'Featured', 'new-drop': 'New drop', 'new-arrival': 'New arrival' };
-  var P = [], S = { show: 'all', background: '' }, cur = 0, ci = 0, timer = null;
+  var P = [], S = { show: 'all', background: '', model_enabled: 'off' }, cur = 0, ci = 0, timer = null, modelTimer = null, modelIndex = 0;
   function $(s) { return root.querySelector(s); }
   function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function safeImage(src) { var v=String(src||'').trim(); return (/^https:\/\//i.test(v) || /^\/uploads\/[a-zA-Z0-9._/-]+$/.test(v) || /^data:image\//i.test(v)) ? v : ''; }
@@ -39,8 +39,27 @@
     var s = Math.floor(ms / 1000), z = function (n) { return String(n).padStart(2, '0'); };
     return Math.floor(s / 86400) + 'D ' + z(Math.floor(s % 86400 / 3600)) + 'H ' + z(Math.floor(s % 3600 / 60)) + 'M ' + z(s % 60) + 'S';
   }
-  root.innerHTML = '<div class="wr-bg" hidden></div><div class="wr-rail" aria-label="Clothing rail"><div class="wr-track"></div></div><div class="wr-empty" hidden>Nothing on the rail right now</div><div class="wr-stage"><div class="wr-wire"></div><div class="wr-row"><div class="wr-main"></div><div class="wr-side"></div></div><div class="wr-meta"><div class="wr-nm"></div><div class="wr-cl"></div><div class="wr-st"></div><button class="wr-add" type="button"></button></div></div><div class="wr-rail-countdown" hidden aria-live="off"><small></small><strong></strong></div><button class="wr-back" type="button">← BACK</button><div class="wr-hint">SWIPE · TAP AN ITEM</div>';
+  root.innerHTML = '<div class="wr-bg" hidden></div><aside class="wr-model" hidden aria-label="MONOWEAR virtual model"><div class="wr-model-head"><small>MONOWEAR / VIRTUAL MODEL</small><button type="button" class="wr-model-toggle" aria-label="Pause automatic outfit changes">Ⅱ</button></div><div class="wr-model-figure"><div class="wr-model-headshape"></div><div class="wr-model-neck"></div><div class="wr-model-body"><img class="wr-model-garment" alt="Current outfit being modelled"></div><div class="wr-model-arm wr-model-arm-left"></div><div class="wr-model-arm wr-model-arm-right"></div><div class="wr-model-leg wr-model-leg-left"></div><div class="wr-model-leg wr-model-leg-right"></div></div><div class="wr-model-info"><small class="wr-model-name"></small><span class="wr-model-colour"></span></div></aside><div class="wr-rail" aria-label="Clothing rail"><div class="wr-track"></div></div><div class="wr-empty" hidden>Nothing on the rail right now</div><div class="wr-stage"><div class="wr-wire"></div><div class="wr-row"><div class="wr-main"></div><div class="wr-side"></div></div><div class="wr-meta"><div class="wr-nm"></div><div class="wr-cl"></div><div class="wr-st"></div><button class="wr-add" type="button"></button></div></div><div class="wr-rail-countdown" hidden aria-live="off"><small></small><strong></strong></div><button class="wr-back" type="button">← BACK</button><div class="wr-hint">SWIPE · TAP AN ITEM</div>';
   var rail = $('.wr-rail'), track = $('.wr-track');
+  function setupModel() {
+    var model = $('.wr-model'); if (!model) return;
+    var enabled = S.model_enabled === 'on'; model.hidden = !enabled; root.classList.toggle('wr-has-model', enabled);
+    if (!enabled) { clearInterval(modelTimer); modelTimer = null; return; }
+    function showModelItem() {
+      var list = P.filter(function(p){ return eff(p) && p.colors && p.colors.length; });
+      if (!list.length) return;
+      if (modelIndex >= list.length) modelIndex = 0;
+      var p = list[modelIndex], c = p.colors[0];
+      model.querySelector('.wr-model-garment').src = c.src;
+      model.querySelector('.wr-model-garment').alt = p.name + ' — virtual outfit preview';
+      model.querySelector('.wr-model-name').textContent = p.name;
+      model.querySelector('.wr-model-colour').textContent = c.name + ' · ' + money(p.price);
+      modelIndex = (modelIndex + 1) % list.length;
+    }
+    showModelItem(); clearInterval(modelTimer); modelTimer = setInterval(showModelItem, 5000);
+    var pause = model.querySelector('.wr-model-toggle');
+    pause.onclick = function(){ if(modelTimer){clearInterval(modelTimer);modelTimer=null;pause.textContent='▶';}else{showModelItem();modelTimer=setInterval(showModelItem,5000);pause.textContent='Ⅱ';} };
+  }
   function applyBg() { var b = $('.wr-bg'); b.hidden = !S.background; b.style.backgroundImage = S.background ? 'url("' + S.background.replace(/"/g, '%22') + '")' : 'none'; }
   function drawRail() {
     track.innerHTML = ''; var n = 0;
@@ -104,7 +123,7 @@
   rail.addEventListener('click', function (e) { if (mv) { e.stopPropagation(); e.preventDefault(); mv = false; } }, true);
   fetch(API, { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
     P = Array.isArray(d.products) ? d.products.map(function (p) { p.colors = (Array.isArray(p.colors) ? p.colors : []).map(function (c) { return { name: String(c.name || 'Original'), src: safeImage(c.src || c.imageUrl || c.image) }; }).filter(function (c) { return c.src; }); return p; }).filter(function (p) { return p.colors.length; }) : [];
-    S = d.RAIL || d.settings || S; applyBg(); drawRail(); updateRailCountdown();
+    S = d.RAIL || d.settings || S; applyBg(); drawRail(); updateRailCountdown(); setupModel();
     setInterval(updateRailCountdown, 1000);
   }).catch(function (error) { console.error('MONOWEAR wardrobe rail:', error); $('.wr-empty').hidden = false; });
 })();
