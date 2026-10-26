@@ -49,7 +49,52 @@
       if (S.show !== 'all' && e !== S.show) return;
       n++; var b = document.createElement('button'); b.type = 'button'; b.className = 'wr-it ' + (p.type === 'jean' || p.type === 'cap' ? p.type : 'top');
       b.innerHTML = hook(p.type) + '<img alt="' + esc(p.name) + '" src="' + esc(p.colors[0].src) + '"><small>' + esc(p.name) + '</small><span class="wr-tag">' + LABEL[e] + '</span>';
-      b.addEventListener('click', function () { openItem(i); }); track.appendChild(b);
+      /* Rotate the garment directly on the rail. A horizontal drag/swipe cycles its available product photos; a tap still opens the normal detail view. */
+      var railImg = b.querySelector('img'), angle = 0, startX = null, lastX = null, dragged = false, suppressClick = false, carry = 0;
+      var railViews = [{ name: 'Front', src: p.colors[0].src }];
+      (Array.isArray(p.views) ? p.views : []).forEach(function (src, viw) {
+        src = safeImage(src);
+        if (src && !railViews.some(function (v) { return v.src === src; })) railViews.push({ name: viw === 0 ? 'Front' : (viw === 1 ? 'Back' : 'Angle ' + (viw + 1)), src: src });
+      });
+      function setRailAngle(next) {
+        if (railViews.length < 2) return;
+        angle = (next + railViews.length) % railViews.length;
+        railImg.style.opacity = '.55';
+        railImg.src = railViews[angle].src;
+        requestAnimationFrame(function () { railImg.style.opacity = '1'; });
+        railImg.alt = p.name + ' — ' + railViews[angle].name;
+        b.setAttribute('aria-label', p.name + ', ' + railViews[angle].name + '. Drag left or right to rotate.');
+      }
+      b.style.touchAction = 'pan-y';
+      b.addEventListener('pointerdown', function (ev) {
+        if (railViews.length < 2) return;
+        ev.stopPropagation();
+        startX = lastX = ev.clientX; dragged = false; carry = 0; suppressClick = false;
+        try { b.setPointerCapture(ev.pointerId); } catch (_) {}
+      });
+      b.addEventListener('pointermove', function (ev) {
+        if (startX === null || lastX === null || railViews.length < 2) return;
+        ev.stopPropagation();
+        var dx = ev.clientX - lastX;
+        if (Math.abs(ev.clientX - startX) > 7) dragged = true;
+        carry += dx; lastX = ev.clientX;
+        while (Math.abs(carry) >= 24) {
+          setRailAngle(angle + (carry < 0 ? 1 : -1));
+          carry += carry < 0 ? 24 : -24;
+        }
+      });
+      function finishRailDrag() {
+        if (startX === null) return;
+        if (dragged) suppressClick = true;
+        startX = lastX = null;
+      }
+      b.addEventListener('pointerup', finishRailDrag);
+      b.addEventListener('pointercancel', finishRailDrag);
+      b.addEventListener('click', function (ev) {
+        if (suppressClick) { ev.preventDefault(); ev.stopPropagation(); suppressClick = false; return; }
+        openItem(i);
+      });
+      track.appendChild(b);
     });
     $('.wr-empty').hidden = n > 0;
   }
