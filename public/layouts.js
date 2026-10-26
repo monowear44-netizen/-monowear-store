@@ -60,6 +60,9 @@ function load(){
   if(id==="countdown"||id==="shop_the_look"||id==="trust_row"||id==="lookbook"||id==="drop_archive"||id==="worn_by_you")slots[id]=buildNew(id);
  });
  const ordered=[];
+ // Detach existing movable homepage sections first so a selected layout cannot leave duplicate sections behind.
+ [map.nav,map.ticker,map.hero_center,map.categories,map.rail,map.story,map.newsletter,map.footer].filter(Boolean).forEach(node=>node.remove());
+ if(announcement)announcement.remove();
  if(announcement)ordered.push(announcement);
  layout.sections.forEach(id=>{let node=slots[id];if(!node)return;if(id==="all_pieces_grid")node.dataset.layoutMode="all-pieces";if(id==="categories")node.dataset.layoutMode="categories";ordered.push(node)});
  const hidden=(()=>{try{return JSON.parse(settings["site.sectionVisibility"]||"{}")}catch{return {}}})();
