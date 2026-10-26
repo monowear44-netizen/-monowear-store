@@ -43,3 +43,10 @@
   .sidebar .nav:hover{transform:none}
   .main{margin-left:0;padding:20px 4%}
 }
+
+
+/* Product image background-removal control */
+.background-remover-tools{display:flex;flex-direction:column;align-items:flex-start;gap:7px;margin:12px 0 16px;padding:12px;border:1px solid var(--line,#d4d2c9);border-radius:10px}
+.background-remover-tools button{min-height:40px;padding:10px 14px;font-size:11px;letter-spacing:.06em}
+.background-remover-tools p{margin:0;line-height:1.5;font-size:12px}
+.background-remover-tools button:disabled{opacity:.55;cursor:wait}
