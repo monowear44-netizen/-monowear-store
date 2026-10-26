@@ -3727,38 +3727,63 @@ app.get("/api/payment/verify/:reference", checkoutLimiter, async (req, res) => {
 // ORDER TRACKING
 // ============================================================
 
-app.get("/api/orders/track/:reference", (req, res) => {
-  const reference = String(req.params.reference || "").trim();
+app.get("/api/orders/track/:reference", checkoutLimiter, (req, res) => {
+  const reference = String(req.params.reference || "").trim().slice(0, 120);
   const email = String(req.query.email || "").trim().toLowerCase();
 
-  if (!reference || !validEmail(email)) {
-    return res.status(400).json({
-      error: "Enter your order reference and email address."
-    });
+  if (!reference) return res.status(400).json({ error: "Enter your order reference." });
+  if (email && !validEmail(email)) {
+    return res.status(400).json({ error: "Enter a valid email address, or leave it blank." });
   }
 
+  // The unique order reference is the primary lookup. Email is optional,
+  // but when supplied it must match the saved order as an extra check.
   const order = db.prepare(`
-    SELECT *
-    FROM orders
+    SELECT * FROM orders
     WHERE reference = ?
-      AND LOWER(customer_email) = ?
-  `).get(reference, email);
+      AND (? = '' OR LOWER(COALESCE(customer_email, '')) = ?)
+  `).get(reference, email, email);
 
-  if (!order) {
-    return res.status(404).json({
-      error: "We could not find an order matching those details."
+  if (!order) return res.status(404).json({
+    error: "We couldn't find an order matching those details. Check the order reference and, if entered, the email address."
+  });
+
+  let items = [];
+  try {
+    const savedItems = JSON.parse(order.items || "[]");
+    items = (Array.isArray(savedItems) ? savedItems : []).map((item) => {
+      const productId = Number(item.product_id || item.id || item.productId || 0);
+      const product = productId > 0 ? db.prepare("SELECT image, images FROM products WHERE id = ?").get(productId) : null;
+      let image = product?.image || "";
+      if (product && !image) {
+        try { image = JSON.parse(product.images || "[]")[0] || ""; } catch {}
+      }
+      return {
+        name: String(item.name || item.product_name || "MONOWEAR item").slice(0, 180),
+        quantity: Math.max(1, Number(item.quantity) || 1),
+        size: String(item.size || "").slice(0, 40),
+        color: String(item.color || item.colour || "").slice(0, 60),
+        image
+      };
     });
-  }
+  } catch {}
 
   const events = db.prepare(`
-    SELECT status, message, created_at
-    FROM order_events
-    WHERE order_id = ?
-    ORDER BY id ASC
+    SELECT status, message, created_at FROM order_events
+    WHERE order_id = ? ORDER BY id ASC
   `).all(order.id);
 
+  res.set("Cache-Control", "no-store");
   res.json({
-    order: safeOrder(order),
+    order: {
+      reference: order.reference,
+      customer_name: order.customer_name,
+      created_at: order.created_at,
+      payment_status: order.payment_status,
+      order_status: order.order_status,
+      total: Number(order.total || 0),
+      items
+    },
     events
   });
 });
