@@ -218,6 +218,39 @@ db.exec(`
  if (!cols.has('rail_type')) db.exec("ALTER TABLE products ADD COLUMN rail_type TEXT NOT NULL DEFAULT 'top'");
 }
 
+// Customer-account extensions. Idempotent for existing persistent databases.
+{
+ const customerCols = new Set(db.prepare("PRAGMA table_info(customers)").all().map(column => column.name));
+ for (const [name, type] of [
+  ["phone", "TEXT NOT NULL DEFAULT ''"], ["address", "TEXT NOT NULL DEFAULT ''"],
+  ["city", "TEXT NOT NULL DEFAULT ''"], ["state", "TEXT NOT NULL DEFAULT ''"],
+  ["postcode", "TEXT NOT NULL DEFAULT ''"]
+ ]) if (!customerCols.has(name)) db.exec("ALTER TABLE customers ADD COLUMN " + name + " " + type);
+ const orderCols = new Set(db.prepare("PRAGMA table_info(orders)").all().map(column => column.name));
+ if (!orderCols.has("customer_id")) db.exec("ALTER TABLE orders ADD COLUMN customer_id INTEGER");
+ db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_orders_customer_id ON orders(customer_id);
+  CREATE TABLE IF NOT EXISTS customer_preferences (
+   customer_id INTEGER PRIMARY KEY, top_size TEXT DEFAULT '', bottom_size TEXT DEFAULT '',
+   fit_preference TEXT DEFAULT 'not_set', drop_notifications INTEGER NOT NULL DEFAULT 0,
+   order_notifications INTEGER NOT NULL DEFAULT 1, updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+   FOREIGN KEY(customer_id) REFERENCES customers(id) ON DELETE CASCADE
+  );
+  CREATE TABLE IF NOT EXISTS customer_saved_items (
+   customer_id INTEGER NOT NULL, product_id INTEGER NOT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+   PRIMARY KEY(customer_id, product_id),
+   FOREIGN KEY(customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+   FOREIGN KEY(product_id) REFERENCES products(id) ON DELETE CASCADE
+  );
+  CREATE TABLE IF NOT EXISTS customer_support_requests (
+   id INTEGER PRIMARY KEY AUTOINCREMENT, customer_id INTEGER NOT NULL, customer_email TEXT NOT NULL,
+   topic TEXT NOT NULL DEFAULT 'other', reference TEXT DEFAULT '', message TEXT NOT NULL,
+   status TEXT NOT NULL DEFAULT 'open', created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+   FOREIGN KEY(customer_id) REFERENCES customers(id) ON DELETE CASCADE
+  );
+ `);
+}
+
 // Private first-party website analytics. Store only a random visitor token,
 // page path and timestamp; do not store IP addresses or raw user-agent strings.
 db.exec(`
@@ -1803,6 +1836,146 @@ app.post("/api/customer/logout", (req, res) => {
     success: true
   });
 });
+// ============================================================
+// CUSTOMER ACCOUNT: PROFILE, HISTORY, SAVED PIECES AND PREFERENCES
+// ============================================================
+function linkCustomerOrders(customer) {
+  if (!customer) return;
+  db.prepare(`UPDATE orders SET customer_id = ? WHERE customer_id IS NULL AND LOWER(COALESCE(customer_email,'')) = LOWER(?)`)
+    .run(customer.id, customer.email);
+}
+function safeCustomer(customer) {
+  return { id: customer.id, name: customer.name || "", email: customer.email || "",
+    phone: customer.phone || "", address: customer.address || "", city: customer.city || "",
+    state: customer.state || "", postcode: customer.postcode || "", created_at: customer.created_at };
+}
+function getCustomerPreferences(customerId) {
+  let prefs = db.prepare("SELECT * FROM customer_preferences WHERE customer_id = ?").get(customerId);
+  if (!prefs) {
+    db.prepare("INSERT OR IGNORE INTO customer_preferences (customer_id) VALUES (?)").run(customerId);
+    prefs = db.prepare("SELECT * FROM customer_preferences WHERE customer_id = ?").get(customerId);
+  }
+  return { topSize: prefs.top_size || "", bottomSize: prefs.bottom_size || "",
+    fitPreference: prefs.fit_preference || "not_set", dropNotifications: !!prefs.drop_notifications,
+    orderNotifications: !!prefs.order_notifications };
+}
+app.get("/api/customer/account", requireCustomer, (req, res) => {
+  try {
+    const customer = db.prepare("SELECT * FROM customers WHERE id = ?").get(req.session.customerId);
+    if (!customer) return res.status(404).json({ error: "Customer account not found." });
+    linkCustomerOrders(customer);
+    const orders = db.prepare("SELECT * FROM orders WHERE customer_id = ? OR LOWER(customer_email) = LOWER(?) ORDER BY id DESC")
+      .all(customer.id, customer.email).map(safeOrder);
+    const saved = db.prepare("SELECT product_id, created_at FROM customer_saved_items WHERE customer_id = ? ORDER BY created_at DESC")
+      .all(customer.id);
+    res.set("Cache-Control", "no-store");
+    res.json({ customer: safeCustomer(customer), orders, saved, preferences: getCustomerPreferences(customer.id) });
+  } catch (error) {
+    console.error("Customer account load error:", error);
+    res.status(500).json({ error: "Your account could not be loaded right now." });
+  }
+});
+app.put("/api/customer/profile", requireCustomer, (req, res) => {
+  const name = String(req.body.name || "").trim().slice(0, 120);
+  const phone = String(req.body.phone || "").trim().slice(0, 40);
+  const address = String(req.body.address || "").trim().slice(0, 240);
+  const city = String(req.body.city || "").trim().slice(0, 100);
+  const state = String(req.body.state || "").trim().slice(0, 100);
+  const postcode = String(req.body.postcode || "").trim().slice(0, 20);
+  if (name.length < 2) return res.status(400).json({ error: "Enter your full name." });
+  db.prepare("UPDATE customers SET name=?, phone=?, address=?, city=?, state=?, postcode=? WHERE id=?")
+    .run(name, phone, address, city, state, postcode, req.session.customerId);
+  const customer = db.prepare("SELECT * FROM customers WHERE id=?").get(req.session.customerId);
+  res.json({ success: true, customer: safeCustomer(customer) });
+});
+app.put("/api/customer/email", loginLimiter, requireCustomer, (req, res) => {
+  const email = String(req.body.email || "").trim().toLowerCase();
+  const currentPassword = String(req.body.currentPassword || "");
+  if (!validEmail(email)) return res.status(400).json({ error: "Enter a valid email address." });
+  const customer = db.prepare("SELECT * FROM customers WHERE id=?").get(req.session.customerId);
+  if (!customer || !bcrypt.compareSync(currentPassword, customer.password_hash))
+    return res.status(401).json({ error: "Your current password is incorrect." });
+  const existing = db.prepare("SELECT id FROM customers WHERE email=? AND id<>?").get(email, customer.id);
+  if (existing) return res.status(409).json({ error: "That email is already linked to another account." });
+  try {
+    linkCustomerOrders(customer);
+    db.prepare("UPDATE customers SET email=? WHERE id=?").run(email, customer.id);
+    req.session.customerEmail = email;
+    req.session.save((err) => {
+      if (err) return res.status(500).json({ error: "Email changed, but the session could not be refreshed. Please sign in again." });
+      const updated = db.prepare("SELECT * FROM customers WHERE id=?").get(customer.id);
+      res.set("Cache-Control", "no-store");
+      res.json({ success: true, customer: safeCustomer(updated) });
+    });
+  } catch (error) {
+    if (String(error.message).includes("UNIQUE")) return res.status(409).json({ error: "That email is already linked to another account." });
+    console.error("Customer email update error:", error);
+    res.status(500).json({ error: "Could not update your email." });
+  }
+});
+app.put("/api/customer/password", loginLimiter, requireCustomer, (req, res) => {
+  const currentPassword = String(req.body.currentPassword || "");
+  const newPassword = String(req.body.newPassword || "");
+  if (newPassword.length < 8 || newPassword.length > 128)
+    return res.status(400).json({ error: "Your new password must be between 8 and 128 characters." });
+  const customer = db.prepare("SELECT * FROM customers WHERE id=?").get(req.session.customerId);
+  if (!customer || !bcrypt.compareSync(currentPassword, customer.password_hash))
+    return res.status(401).json({ error: "Your current password is incorrect." });
+  db.prepare("UPDATE customers SET password_hash=? WHERE id=?").run(bcrypt.hashSync(newPassword, 12), customer.id);
+  req.session.regenerate((err) => {
+    if (err) return res.status(500).json({ error: "Password changed, but your session could not be refreshed. Please sign in again." });
+    req.session.customerId = customer.id;
+    req.session.customerEmail = customer.email;
+    req.session.save((saveErr) => {
+      if (saveErr) return res.status(500).json({ error: "Password changed. Please sign in again." });
+      res.json({ success: true, message: "Password updated." });
+    });
+  });
+});
+app.put("/api/customer/preferences", requireCustomer, (req, res) => {
+  const topSize = String(req.body.topSize || "").trim().slice(0, 20);
+  const bottomSize = String(req.body.bottomSize || "").trim().slice(0, 30);
+  const fitPreference = ["not_set","slim","regular","oversized","relaxed"].includes(req.body.fitPreference) ? req.body.fitPreference : "not_set";
+  const dropNotifications = req.body.dropNotifications ? 1 : 0;
+  const orderNotifications = req.body.orderNotifications === false ? 0 : 1;
+  db.prepare(`INSERT INTO customer_preferences (customer_id,top_size,bottom_size,fit_preference,drop_notifications,order_notifications,updated_at)
+   VALUES (?,?,?,?,?,?,CURRENT_TIMESTAMP) ON CONFLICT(customer_id) DO UPDATE SET top_size=excluded.top_size,bottom_size=excluded.bottom_size,
+   fit_preference=excluded.fit_preference,drop_notifications=excluded.drop_notifications,order_notifications=excluded.order_notifications,updated_at=CURRENT_TIMESTAMP`)
+   .run(req.session.customerId, topSize, bottomSize, fitPreference, dropNotifications, orderNotifications);
+  res.json({ success: true, preferences: getCustomerPreferences(req.session.customerId) });
+});
+app.post("/api/customer/saved/:productId", requireCustomer, (req, res) => {
+  const productId = Number(req.params.productId);
+  if (!Number.isSafeInteger(productId) || productId < 1) return res.status(400).json({ error: "Choose a valid product." });
+  const product = db.prepare("SELECT id FROM products WHERE id=? AND published=1").get(productId);
+  if (!product) return res.status(404).json({ error: "That piece is not available to save." });
+  db.prepare("INSERT OR IGNORE INTO customer_saved_items (customer_id,product_id) VALUES (?,?)").run(req.session.customerId, productId);
+  res.json({ success: true });
+});
+app.delete("/api/customer/saved/:productId", requireCustomer, (req, res) => {
+  const productId = Number(req.params.productId);
+  db.prepare("DELETE FROM customer_saved_items WHERE customer_id=? AND product_id=?").run(req.session.customerId, productId);
+  res.json({ success: true });
+});
+app.post("/api/customer/support", loginLimiter, requireCustomer, async (req, res) => {
+  const topic = ["order","return","delivery","account","other"].includes(req.body.topic) ? req.body.topic : "other";
+  const reference = String(req.body.reference || "").trim().slice(0, 120);
+  const message = String(req.body.message || "").trim().slice(0, 2500);
+  if (message.length < 8) return res.status(400).json({ error: "Please add a little more detail to your request." });
+  const customer = db.prepare("SELECT id,name,email FROM customers WHERE id=?").get(req.session.customerId);
+  if (!customer) return res.status(404).json({ error: "Customer account not found." });
+  const result = db.prepare("INSERT INTO customer_support_requests (customer_id,customer_email,topic,reference,message) VALUES (?,?,?,?,?)")
+    .run(customer.id, customer.email, topic, reference, message);
+  if (resend) {
+    try {
+      await resend.emails.send({ from: EMAIL_FROM, to: ORDER_NOTIFICATION_EMAIL,
+        subject: "MONOWEAR customer support — " + topic,
+        text: "Customer support request #" + result.lastInsertRowid + "\nName: " + customer.name + "\nEmail: " + customer.email + "\nTopic: " + topic + "\nOrder reference: " + (reference || "Not provided") + "\n\n" + message });
+    } catch (error) { console.error("Support request notification failed:", error); }
+  }
+  res.status(201).json({ success: true, requestId: Number(result.lastInsertRowid) });
+});
+
 // ============================================================
 // PUBLIC STORE API
 // ============================================================
