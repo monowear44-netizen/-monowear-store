@@ -55,7 +55,7 @@ function load(){
   if(id==="footer"){slots[id]=map.footer;return}
   if(id==="story"){slots[id]=map.story;return}
   if(id==="hero_center"){slots[id]=map.hero_center;return}
-  if(id==="categories"||id==="all_pieces_grid"){slots[id]=map[id]||map.categories;return}
+  if(id==="categories"){slots[id]=buildNew("categories");return}\n  if(id==="all_pieces_grid"){slots[id]=map.categories;return}
   if(id==="hero_split"||id==="hero_full"){if(!slots[id])slots[id]=buildNew(id);return}
   if(id==="countdown"||id==="shop_the_look"||id==="trust_row"||id==="lookbook"||id==="drop_archive"||id==="worn_by_you")slots[id]=buildNew(id);
  });
