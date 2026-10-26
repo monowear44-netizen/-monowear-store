@@ -42,11 +42,24 @@ function load(){
  const preview=qs.get("layoutPreview");
  const active=validLayout(preview||settings["site.activeLayout"]);
  const themeId=THEMES[qs.get("themePreview")]?qs.get("themePreview"):(THEMES[settings["site.activeTheme"]]?settings["site.activeTheme"]:(LAYOUTS[active]?.defaultTheme||"mono"));
+ const layout=LAYOUTS[active];
+ // The original Drop first homepage is the real, hand-built MONOWEAR storefront.
+ // Do not rebuild, detach, replace, or reorder its sections. Only add a preview banner
+ // when explicitly previewing it; this keeps the original hero, ticker, shop, rail,
+ // story, newsletter and footer intact.
+ if(active==="drop_first"){
+   if(preview){
+     applyTheme(themeId);
+     const banner=make("div","layout-preview-banner","PREVIEW MODE — "+layout.name+" · Not published");
+     const exit=make("a","","Exit preview");exit.href="/";banner.append(exit);
+     document.body.prepend(banner);document.body.classList.add("layout-preview-mode");
+   }
+   return;
+ }
  applyTheme(themeId);
  const main=document.querySelector("main");if(!main)return;
  const map=existingMap();const announcement=document.querySelector("#announcement");
  const slots={};
- const layout=LAYOUTS[active];
  layout.sections.forEach(id=>{
   if(id==="nav"){slots[id]=map.nav;return}
   if(id==="ticker"){slots[id]=map.ticker;return}
@@ -61,7 +74,6 @@ function load(){
   if(id==="countdown"||id==="shop_the_look"||id==="trust_row"||id==="lookbook"||id==="drop_archive"||id==="worn_by_you")slots[id]=buildNew(id);
  });
  const ordered=[];
- // Detach existing movable homepage sections first so a selected layout cannot leave duplicate sections behind.
  [map.nav,map.ticker,map.hero_center,map.categories,map.rail,map.story,map.newsletter,map.footer].filter(Boolean).forEach(node=>node.remove());
  if(announcement)announcement.remove();
  if(announcement)ordered.push(announcement);
