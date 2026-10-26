@@ -223,6 +223,44 @@
       letter-spacing: 1px;
       text-transform: uppercase;
     }
+    .mw-wardrobe-section { margin-top: 18px; }
+    .mw-wardrobe-section .mw-section-heading { align-items: end; }
+    .mw-heading-light { color: var(--muted); font-weight: 400; }
+    .mw-wardrobe-panel { padding: 18px; overflow: hidden; }
+    .mw-wardrobe-rail { display: flex; gap: 18px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; padding: 4px 2px 14px; scrollbar-width: thin; }
+    .mw-rail-order { flex: 0 0 min(86%, 420px); min-width: 0; scroll-snap-align: start; border: 1px solid var(--line); background: var(--panel2); padding: 16px; }
+    .mw-rail-order-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding-bottom:13px; border-bottom:1px solid var(--line); }
+    .mw-rail-order-heading h3 { margin:3px 0 5px; font-size:12px; overflow-wrap:anywhere; }
+    .mw-rail-order-heading p { margin:0; font-size:10px; color:var(--muted); }
+    .mw-rail-order-heading > strong { white-space:nowrap; font-size:13px; }
+    .mw-rail-pieces { display:flex; gap:12px; overflow-x:auto; padding:15px 0; }
+    .mw-rail-piece { flex:0 0 142px; min-width:0; }
+    .mw-rail-hanger { height:15px; text-align:center; font-size:8px; letter-spacing:3px; color:var(--muted); }
+    .mw-rail-piece-image { height:156px; display:flex; align-items:center; justify-content:center; background:#e8e7e1; position:relative; overflow:hidden; }
+    .mw-rail-piece-image img { width:100%; height:100%; object-fit:contain; padding:9px; }
+    .mw-piece-placeholder { text-align:center; color:#252525; font-size:20px; font-weight:800; letter-spacing:-1px; line-height:1.05; }
+    .mw-piece-placeholder small { font-size:8px; letter-spacing:2px; }
+    .mw-rail-piece-info h3 { margin:10px 0 5px; font-size:11px; line-height:1.5; }
+    .mw-rail-piece-info p, .mw-rail-piece-info span { display:block; margin:3px 0; font-size:9px; color:var(--muted); letter-spacing:.7px; }
+    .mw-rail-order-footer { display:flex; flex-wrap:wrap; align-items:center; gap:9px; padding-top:12px; border-top:1px solid var(--line); }
+    .mw-rail-payment { color:var(--muted); font-size:9px; letter-spacing:.6px; }
+    .mw-text-link { margin-left:auto; color:var(--ink); font-size:9px; letter-spacing:.7px; text-decoration:none; }
+    .mw-wardrobe-empty { width:100%; min-width:0; padding:30px 18px; text-align:center; border:1px dashed var(--line); }
+    .mw-wardrobe-empty h3 { margin:8px 0; font-size:20px; }
+    .mw-wardrobe-empty p:not(.mw-eyebrow) { max-width:390px; margin:0 auto 18px; color:var(--muted); font-size:12px; line-height:1.8; }
+    .mw-collapsible-section { margin-top:12px; }
+    .mw-disclosure { border:1px solid var(--line); background:var(--panel); }
+    .mw-disclosure > summary { list-style:none; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:15px; padding:20px; }
+    .mw-disclosure > summary::-webkit-details-marker { display:none; }
+    .mw-disclosure > summary > span:first-child { display:grid; gap:5px; }
+    .mw-disclosure > summary small { color:var(--muted); font-size:9px; letter-spacing:1.5px; }
+    .mw-disclosure > summary strong { font-size:13px; letter-spacing:.7px; }
+    .mw-disclosure-action { font-size:9px; letter-spacing:1px; white-space:nowrap; }
+    .mw-disclosure[open] .mw-disclosure-action { font-size:0; }
+    .mw-disclosure[open] .mw-disclosure-action::after { content:"CLOSE −"; font-size:9px; }
+    .mw-disclosure-body { padding:0 18px 18px; }
+    .mw-disclosure-body .mw-panel { padding:16px; }
+    @media (max-width:600px) { .mw-rail-order { flex-basis:88%; } .mw-rail-piece { flex-basis:128px; } .mw-rail-piece-image { height:145px; } .mw-wardrobe-panel { padding:10px; } .mw-disclosure > summary { padding:17px; } }
     .mw-cart-item {
       display: flex;
       justify-content: space-between;
@@ -485,73 +523,46 @@
       <span>View your customer account information.</span>
     </a>
   </nav>
-  <section class="mw-section" id="orders">
+  <section class="mw-section mw-wardrobe-section" id="orders">
     <div class="mw-section-heading">
       <div>
         <p class="mw-eyebrow">YOUR PURCHASES</p>
-        <h2>RECENT ORDERS</h2>
+        <h2>MY WARDROBE <span class="mw-heading-light">/ ON THE RAIL</span></h2>
+        <p class="mw-muted">Your pieces, your journey. Swipe to explore your purchases.</p>
       </div>
-      <button
-        class="mw-button mw-button-outline"
-        id="refreshOrders"
-        type="button"
-      >
-        REFRESH ↻
-      </button>
+      <button class="mw-button mw-button-outline" id="refreshOrders" type="button">REFRESH ↻</button>
     </div>
-    <div class="mw-panel">
+    <div class="mw-panel mw-wardrobe-panel">
       <div id="ordersContent" class="mw-muted">
-        Loading your orders…
+        Loading your wardrobe…
       </div>
       <p class="mw-message" id="ordersMessage" aria-live="polite"></p>
     </div>
   </section>
-  <section class="mw-section" id="bag">
-    <div class="mw-section-heading">
-      <div>
-        <p class="mw-eyebrow">YOUR SELECTION</p>
-        <h2>MY BAG</h2>
+  <section class="mw-section mw-collapsible-section" id="bag">
+    <details class="mw-disclosure">
+      <summary><span><small>YOUR SELECTION</small><strong>MY BAG</strong></span><span class="mw-disclosure-action">OPEN +</span></summary>
+      <div class="mw-disclosure-body">
+        <div class="mw-section-heading"><p class="mw-muted">Your selected pieces.</p><a class="mw-button mw-button-outline" href="/#shop">CONTINUE SHOPPING ↗</a></div>
+        <div class="mw-panel">
+          <div id="bagContent" class="mw-muted">Checking your shopping bag…</div>
+          <p class="mw-muted">Your bag is stored in this browser. Items added on another device or browser may not appear here.</p>
+        </div>
       </div>
-      <a class="mw-button mw-button-outline" href="/#shop">
-        CONTINUE SHOPPING ↗
-      </a>
-    </div>
-    <div class="mw-panel">
-      <div id="bagContent" class="mw-muted">
-        Checking your shopping bag…
-      </div>
-      <p class="mw-muted">
-        Your bag is stored in this browser. Items added on another
-        device or browser may not appear here.
-      </p>
-    </div>
+    </details>
   </section>
-  <section class="mw-section" id="profile">
-    <div class="mw-section-heading">
-      <div>
-        <p class="mw-eyebrow">YOUR DETAILS</p>
-        <h2>MY PROFILE</h2>
+  <section class="mw-section mw-collapsible-section" id="profile">
+    <details class="mw-disclosure">
+      <summary><span><small>YOUR DETAILS</small><strong>MY PROFILE</strong></span><span class="mw-disclosure-action">OPEN +</span></summary>
+      <div class="mw-disclosure-body">
+        <div class="mw-panel">
+          <div class="mw-profile-row"><span class="mw-profile-label">Full name</span><strong id="profileName">—</strong></div>
+          <div class="mw-profile-row"><span class="mw-profile-label">Email address</span><span id="profileEmail">—</span></div>
+          <p class="mw-muted">Need to update your details? Contact MONOWEAR support.</p>
+          <a class="mw-button mw-button-outline" href="mailto:monowear44@gmail.com">CONTACT SUPPORT ↗</a>
+        </div>
       </div>
-    </div>
-    <div class="mw-panel">
-      <div class="mw-profile-row">
-        <span class="mw-profile-label">Full name</span>
-        <strong id="profileName">—</strong>
-      </div>
-      <div class="mw-profile-row">
-        <span class="mw-profile-label">Email address</span>
-        <span id="profileEmail">—</span>
-      </div>
-      <p class="mw-muted">
-        Need to update your details? Contact MONOWEAR support.
-      </p>
-      <a
-        class="mw-button mw-button-outline"
-        href="mailto:monowear44@gmail.com"
-      >
-        CONTACT SUPPORT ↗
-      </a>
-    </div>
+    </details>
   </section>
   <section class="mw-section">
     <div class="mw-panel">
@@ -664,49 +675,35 @@
       const orders = await api("/api/customer/orders");
       if (!Array.isArray(orders) || orders.length === 0) {
         content.innerHTML = `
-          <p>You haven't placed any orders yet.</p>
-          <a class="mw-button" href="/#shop">
-            DISCOVER THE COLLECTION ↗
-          </a>
+          <div class="mw-wardrobe-empty">
+            <p class="mw-eyebrow">YOUR RAIL IS WAITING</p>
+            <h3>Nothing on the rail yet.</h3>
+            <p>Your purchased pieces will appear here when orders are linked to your account.</p>
+            <a class="mw-button" href="/#shop">DISCOVER MORE ↗</a>
+          </div>
         `;
         return;
       }
+      content.className = "mw-wardrobe-rail";
       content.innerHTML = orders.map((order) => {
         const items = Array.isArray(order.items) ? order.items : [];
-        const itemDescription = items.length
-          ? items.map((item) => `
-              ${escapeHTML(item.name || "MONOWEAR product")}
-              ${item.size
-                ? ` — Size: ${escapeHTML(item.size)}`
-                : ""}
-              × ${escapeHTML(item.quantity ?? item.qty ?? 1)}
-            `).join("<br>")
-          : "Order items";
         const status = order.order_status || order.status || "pending";
-        return `
-          <article class="mw-order">
-            <div class="mw-order-top">
-              <div>
-                <h3>${escapeHTML(order.reference || "MONOWEAR ORDER")}</h3>
-                <p>${escapeHTML(order.created_at || "")}</p>
-              </div>
-              <strong>${money(order.total)}</strong>
-            </div>
-            <p>${itemDescription}</p>
-            <p>
-              Payment:
-              ${escapeHTML(order.payment_status || "pending")}
-            </p>
-            <p>
-              Order status:
-              ${escapeHTML(status)}
-            </p>
-            <span class="mw-status">
-              ${escapeHTML(status)}
-            </span>
-            <p><a class="mw-button" href="/track.html?reference=${encodeURIComponent(order.reference || "")}&amp;email=${encodeURIComponent(order.customer_email || "")}">TRACK THIS ORDER ↗</a></p>
-          </article>
-        `;
+        const pieces = items.length ? items.map((item) => {
+          const name = item.name || item.product_name || "MONOWEAR piece";
+          const image = item.image || item.image_url || item.product_image || "";
+          const size = item.size ? `<span>SIZE ${escapeHTML(item.size)}</span>` : "";
+          const quantity = Number(item.quantity ?? item.qty ?? 1) || 1;
+          return `<article class="mw-rail-piece">
+            <div class="mw-rail-hanger" aria-hidden="true">MONO</div>
+            <div class="mw-rail-piece-image">${image ? `<img src="${escapeHTML(image)}" alt="${escapeHTML(name)}" loading="lazy" onerror="this.parentElement.classList.add('is-image-missing');this.remove()">` : `<span class="mw-piece-placeholder">MONO<br><small>WARDROBE</small></span>`}</div>
+            <div class="mw-rail-piece-info"><h3>${escapeHTML(name)}</h3><p>QUANTITY ${quantity}</p>${size}</div>
+          </article>`;
+        }).join("") : `<p class="mw-muted">Piece details are unavailable for this order.</p>`;
+        return `<article class="mw-rail-order">
+          <div class="mw-rail-order-heading"><div><p class="mw-eyebrow">ORDER</p><h3>${escapeHTML(order.reference || "MONOWEAR ORDER")}</h3><p>${escapeHTML(order.created_at || "")}</p></div><strong>${money(order.total)}</strong></div>
+          <div class="mw-rail-pieces">${pieces}</div>
+          <div class="mw-rail-order-footer"><span class="mw-status">${escapeHTML(status)}</span><span class="mw-rail-payment">PAYMENT · ${escapeHTML(order.payment_status || "pending")}</span><a class="mw-text-link" href="/track.html?reference=${encodeURIComponent(order.reference || "")}&amp;email=${encodeURIComponent(order.customer_email || "")}">TRACK ORDER ↗</a></div>
+        </article>`;
       }).join("");
     } catch (error) {
       content.textContent = "Your orders could not be loaded right now.";
