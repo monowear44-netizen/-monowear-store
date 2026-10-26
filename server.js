@@ -1861,7 +1861,7 @@ function effectiveRailStatus(product, now = new Date()) {
 }
 function readWardrobeRailSettings() {
   const saved = parseJSON(getSetting("wardrobe_rail", ""), {});
-  return { show: ["all", "featured", "new-drop", "new-arrival"].includes(saved.show) ? saved.show : "all", background: String(saved.background || ""), model_enabled: saved.model_enabled === "on" ? "on" : "off" };
+  return { show: ["all", "featured", "new-drop", "new-arrival"].includes(saved.show) ? saved.show : "all", background: String(saved.background || "") };
 }
 app.get("/api/wardrobe-rail", (req, res) => {
   try {
@@ -1882,11 +1882,10 @@ app.get("/api/admin/wardrobe-rail", requireAdmin, (req, res) => res.json(readWar
 app.put("/api/admin/wardrobe-rail", requireAdmin, (req, res) => {
   const body = req.body || {}, show = ["all", "featured", "new-drop", "new-arrival"].includes(body.show) ? body.show : "all";
   const background = String(body.background || "").trim();
-  const model_enabled = body.model_enabled === "on" ? "on" : "off";
   if (background && !(/^\/uploads\/[a-zA-Z0-9._-]+$/.test(background) || /^https:\/\/[^"'\s]+$/i.test(background))) return res.status(400).json({ error: "Use a valid uploaded image or HTTPS image URL." });
-  const value = JSON.stringify({ show, background, model_enabled });
+  const value = JSON.stringify({ show, background });
   db.prepare("INSERT INTO settings (key, value) VALUES ('wardrobe_rail', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(value);
-  res.set("Cache-Control", "no-store"); res.json({ success: true, RAIL: { show, background, model_enabled } });
+  res.set("Cache-Control", "no-store"); res.json({ success: true, RAIL: { show, background } });
 });
 
 // ============================================================
