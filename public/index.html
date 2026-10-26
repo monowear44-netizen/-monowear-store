@@ -37,18 +37,21 @@
       MONOWEAR<span>®</span>
     </a>
 
-    <nav>
+    <nav id="siteNavigation" aria-label="Main navigation">
       <a href="#shop">SHOP</a>
       <a href="/drops.html">DROPS ↗</a>
       <a href="#story">THE STORY</a>
       <a href="#footer">CONTACT</a>
+      <a class="mobile-account-link" href="/account.html">ACCOUNT ↗</a>
     </nav>
 
     <div class="header-actions">
       <a class="account-link" href="/account.html">ACCOUNT ↗</a>
-
       <button class="cart-toggle" id="cartToggle" type="button">
         BAG <span id="cartCount">0</span>
+      </button>
+      <button class="mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-controls="siteNavigation" aria-expanded="false" aria-label="Open navigation">
+        <span></span><span></span>
       </button>
     </div>
   </header>
@@ -453,5 +456,24 @@
   <script src="/wardrobe-rail.js?v=wardrobe-rail-no-rotation-20261026-1" defer></script>
   <script src="/cart-connect.js?v=wardrobe-rail-cart-20261025-2" defer></script>
   <script src="/layouts.js?v=layouts-20261026-1" defer></script>\n  <script src="/saved-pieces.js?v=20261026" defer></script>
+
+<script>
+(() => {
+  const button = document.getElementById('mobileMenuToggle');
+  const nav = document.getElementById('siteNavigation');
+  if (!button || !nav) return;
+  button.addEventListener('click', () => {
+    const isOpen = button.getAttribute('aria-expanded') === 'true';
+    button.setAttribute('aria-expanded', String(!isOpen));
+    button.setAttribute('aria-label', isOpen ? 'Open navigation' : 'Close navigation');
+    nav.classList.toggle('is-open', !isOpen);
+  });
+  nav.querySelectorAll('a').forEach(link => link.addEventListener('click', () => {
+    button.setAttribute('aria-expanded', 'false');
+    button.setAttribute('aria-label', 'Open navigation');
+    nav.classList.remove('is-open');
+  }));
+})();
+</script>
 </body>
 </html>
