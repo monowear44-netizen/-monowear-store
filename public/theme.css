@@ -461,3 +461,32 @@ html[data-theme] .waitlist-section #newsletterLink {
 html[data-theme] .waitlist-section #newsletterMessage[data-state="success"] {
   color: var(--accent) !important;
 }
+
+
+/* Waitlist contrast fix: keep copy readable over green/background imagery in every theme. */
+html[data-theme] .waitlist-section::before {
+  background: linear-gradient(100deg, rgba(5, 8, 6, .88) 0%, rgba(5, 8, 6, .70) 100%) !important;
+}
+html[data-theme] .waitlist-section,
+html[data-theme] .waitlist-section .newsletter-copy,
+html[data-theme] .waitlist-section .newsletter-copy .eyebrow,
+html[data-theme] .waitlist-section .newsletter-copy h2,
+html[data-theme] .waitlist-section .newsletter-copy > p:last-child,
+html[data-theme] .waitlist-section form label,
+html[data-theme] .waitlist-section #newsletterMessage,
+html[data-theme] .waitlist-section #newsletterLink {
+  color: #FFFFFF !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .55);
+}
+html[data-theme] .waitlist-section input[type="email"] {
+  background: rgba(10, 15, 12, .92) !important;
+  color: #FFFFFF !important;
+  border-color: rgba(255, 255, 255, .62) !important;
+}
+html[data-theme] .waitlist-section input[type="email"]::placeholder {
+  color: #D9E2DC !important;
+}
+html[data-theme] .waitlist-section .button,
+html[data-theme] .waitlist-section #newsletterLink {
+  text-shadow: none;
+}
