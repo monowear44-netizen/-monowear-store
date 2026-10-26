@@ -5,7 +5,7 @@
   if (!root) return;
   var API = '/api/wardrobe-rail';
   var LABEL = { featured: 'Featured', 'new-drop': 'New drop', 'new-arrival': 'New arrival' };
-  var P = [], S = { show: 'all', background: '' }, cur = 0, ci = 0, vi = 0, timer = null;
+  var P = [], S = { show: 'all', background: '' }, cur = 0, ci = 0, timer = null;
   function $(s) { return root.querySelector(s); }
   function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function safeImage(src) { var v=String(src||'').trim(); return (/^https:\/\//i.test(v) || /^\/uploads\/[a-zA-Z0-9._/-]+$/.test(v) || /^data:image\//i.test(v)) ? v : ''; }
@@ -39,7 +39,7 @@
     var s = Math.floor(ms / 1000), z = function (n) { return String(n).padStart(2, '0'); };
     return Math.floor(s / 86400) + 'D ' + z(Math.floor(s % 86400 / 3600)) + 'H ' + z(Math.floor(s % 3600 / 60)) + 'M ' + z(s % 60) + 'S';
   }
-  root.innerHTML = '<div class="wr-bg" hidden></div><div class="wr-rail" aria-label="Clothing rail"><div class="wr-track"></div></div><div class="wr-empty" hidden>Nothing on the rail right now</div><div class="wr-stage"><div class="wr-wire"></div><div class="wr-row"><div class="wr-main"></div><div class="wr-side"></div></div><div class="wr-rotate-controls"><button class="wr-rotate-prev" type="button" aria-label="Rotate garment backward">←</button><span class="wr-view-label" aria-live="polite">FRONT</span><button class="wr-rotate-next" type="button" aria-label="Rotate garment forward">→</button></div><div class="wr-meta"><div class="wr-nm"></div><div class="wr-cl"></div><div class="wr-st"></div><button class="wr-add" type="button"></button></div></div><div class="wr-rail-countdown" hidden aria-live="off"><small></small><strong></strong></div><button class="wr-back" type="button">← BACK</button><div class="wr-hint">SWIPE · TAP AN ITEM</div>';
+  root.innerHTML = '<div class="wr-bg" hidden></div><div class="wr-rail" aria-label="Clothing rail"><div class="wr-track"></div></div><div class="wr-empty" hidden>Nothing on the rail right now</div><div class="wr-stage"><div class="wr-wire"></div><div class="wr-row"><div class="wr-main"></div><div class="wr-side"></div></div><div class="wr-meta"><div class="wr-nm"></div><div class="wr-cl"></div><div class="wr-st"></div><button class="wr-add" type="button"></button></div></div><div class="wr-rail-countdown" hidden aria-live="off"><small></small><strong></strong></div><button class="wr-back" type="button">← BACK</button><div class="wr-hint">SWIPE · TAP AN ITEM</div>';
   var rail = $('.wr-rail'), track = $('.wr-track');
   function applyBg() { var b = $('.wr-bg'); b.hidden = !S.background; b.style.backgroundImage = S.background ? 'url("' + S.background.replace(/"/g, '%22') + '")' : 'none'; }
   function drawRail() {
@@ -49,52 +49,7 @@
       if (S.show !== 'all' && e !== S.show) return;
       n++; var b = document.createElement('button'); b.type = 'button'; b.className = 'wr-it ' + (p.type === 'jean' || p.type === 'cap' ? p.type : 'top');
       b.innerHTML = hook(p.type) + '<img alt="' + esc(p.name) + '" src="' + esc(p.colors[0].src) + '"><small>' + esc(p.name) + '</small><span class="wr-tag">' + LABEL[e] + '</span>';
-      /* Rotate the garment directly on the rail. A horizontal drag/swipe cycles its available product photos; a tap still opens the normal detail view. */
-      var railImg = b.querySelector('img'), angle = 0, startX = null, lastX = null, dragged = false, suppressClick = false, carry = 0;
-      var railViews = [{ name: 'Front', src: p.colors[0].src }];
-      (Array.isArray(p.views) ? p.views : []).forEach(function (src, viw) {
-        src = safeImage(src);
-        if (src && !railViews.some(function (v) { return v.src === src; })) railViews.push({ name: viw === 0 ? 'Front' : (viw === 1 ? 'Back' : 'Angle ' + (viw + 1)), src: src });
-      });
-      function setRailAngle(next) {
-        if (railViews.length < 2) return;
-        angle = (next + railViews.length) % railViews.length;
-        railImg.style.opacity = '.55';
-        railImg.src = railViews[angle].src;
-        requestAnimationFrame(function () { railImg.style.opacity = '1'; });
-        railImg.alt = p.name + ' — ' + railViews[angle].name;
-        b.setAttribute('aria-label', p.name + ', ' + railViews[angle].name + '. Drag left or right to rotate.');
-      }
-      b.style.touchAction = 'pan-y';
-      b.addEventListener('pointerdown', function (ev) {
-        if (railViews.length < 2) return;
-        ev.stopPropagation();
-        startX = lastX = ev.clientX; dragged = false; carry = 0; suppressClick = false;
-        try { b.setPointerCapture(ev.pointerId); } catch (_) {}
-      });
-      b.addEventListener('pointermove', function (ev) {
-        if (startX === null || lastX === null || railViews.length < 2) return;
-        ev.stopPropagation();
-        var dx = ev.clientX - lastX;
-        if (Math.abs(ev.clientX - startX) > 7) dragged = true;
-        carry += dx; lastX = ev.clientX;
-        while (Math.abs(carry) >= 24) {
-          setRailAngle(angle + (carry < 0 ? 1 : -1));
-          carry += carry < 0 ? 24 : -24;
-        }
-      });
-      function finishRailDrag() {
-        if (startX === null) return;
-        if (dragged) suppressClick = true;
-        startX = lastX = null;
-      }
-      b.addEventListener('pointerup', finishRailDrag);
-      b.addEventListener('pointercancel', finishRailDrag);
-      b.addEventListener('click', function (ev) {
-        if (suppressClick) { ev.preventDefault(); ev.stopPropagation(); suppressClick = false; return; }
-        openItem(i);
-      });
-      track.appendChild(b);
+      b.addEventListener('click', function () { openItem(i); }); track.appendChild(b);
     });
     $('.wr-empty').hidden = n > 0;
   }
@@ -112,10 +67,7 @@
   function render() {
     if (!P[cur]) return;
     var p = P[cur], c = p.colors[ci] || p.colors[0], e = eff(p);
-    var views = getViews(p, c), view = views[vi] || views[0] || c;
-    vi = Math.min(vi, Math.max(0, views.length - 1));
-    $('.wr-main').innerHTML = hook(p.type) + '<img src="' + esc(view.src) + '" alt="' + esc(p.name + ' — ' + view.name) + '" draggable="false">';
-    var viewLabel = $('.wr-view-label'); if (viewLabel) viewLabel.textContent = (view.name || ('VIEW ' + (vi + 1))).toUpperCase() + ' · ' + (vi + 1) + '/' + views.length;
+    $('.wr-main').innerHTML = hook(p.type) + '<img src="' + esc(c.src) + '" alt="' + esc(p.name) + '">';
     $('.wr-nm').textContent = p.name;
     $('.wr-cl').textContent = c.name + ' · ' + money(p.price);
     var cd = countdown(p);
@@ -132,17 +84,8 @@
       b.addEventListener('click', function (event) { event.stopPropagation(); swap(j); }); side.appendChild(b);
     });
   }
-  function getViews(p, c) { var list = [{ name: 'Front', src: c.src }]; (Array.isArray(p.views) ? p.views : []).forEach(function (src, i) { src = safeImage(src); if (src && !list.some(function (v) { return v.src === src; })) list.push({ name: i === 0 ? 'Front / Gallery' : (i === 1 ? 'Back / Gallery' : 'Angle ' + (i + 1)), src: src }); }); return list; }
-  function rotate(step) { if (!P[cur]) return; var p = P[cur], c = p.colors[ci] || p.colors[0], views = getViews(p, c); if (views.length < 2) { var label = $('.wr-view-label'); if (label) label.textContent = 'ADD BACK / SIDE PHOTOS IN STUDIO'; return; } vi = (vi + step + views.length) % views.length; render(); }
-  $('.wr-rotate-prev').addEventListener('click', function (e) { e.stopPropagation(); rotate(-1); });
-  $('.wr-rotate-next').addEventListener('click', function (e) { e.stopPropagation(); rotate(1); });
-  var touchStartX = null, mouseStartX = null;
-  $('.wr-main').addEventListener('touchstart', function (e) { if (e.touches && e.touches.length === 1) touchStartX = e.touches[0].clientX; }, { passive: true });
-  $('.wr-main').addEventListener('touchend', function (e) { if (touchStartX === null || !e.changedTouches || !e.changedTouches.length) return; var dx = e.changedTouches[0].clientX - touchStartX; touchStartX = null; if (Math.abs(dx) > 28) rotate(dx < 0 ? 1 : -1); }, { passive: true });
-  $('.wr-main').addEventListener('pointerdown', function (e) { if (e.pointerType === 'mouse') mouseStartX = e.clientX; });
-  $('.wr-main').addEventListener('pointerup', function (e) { if (mouseStartX === null) return; var dx = e.clientX - mouseStartX; mouseStartX = null; if (Math.abs(dx) > 28) rotate(dx < 0 ? 1 : -1); });
-  function openItem(i) { cur = i; ci = 0; vi = 0; render(); root.classList.add('wr-focus'); clearInterval(timer); timer = setInterval(function () { var v = $('.wr-cdv'); if (!v) return; var t = countdown(P[cur]); if (t) v.textContent = t; else { render(); drawRail(); } }, 1000); }
-  function swap(j) { var im = $('.wr-main img'); if (!im) return; im.classList.add('out'); setTimeout(function () { ci = j; vi = 0; render(); var n = $('.wr-main img'); if (n) { n.classList.add('out'); requestAnimationFrame(function () { requestAnimationFrame(function () { n.classList.remove('out'); }); }); } }, 260); }
+  function openItem(i) { cur = i; ci = 0; render(); root.classList.add('wr-focus'); clearInterval(timer); timer = setInterval(function () { var v = $('.wr-cdv'); if (!v) return; var t = countdown(P[cur]); if (t) v.textContent = t; else { render(); drawRail(); } }, 1000); }
+  function swap(j) { var im = $('.wr-main img'); if (!im) return; im.classList.add('out'); setTimeout(function () { ci = j; render(); var n = $('.wr-main img'); if (n) { n.classList.add('out'); requestAnimationFrame(function () { requestAnimationFrame(function () { n.classList.remove('out'); }); }); } }, 260); }
   function closeItem() { root.classList.remove('wr-focus'); clearInterval(timer); }
   $('.wr-back').addEventListener('click', closeItem);
   $('.wr-stage').addEventListener('click', function (e) { if (e.target === this || e.target.classList.contains('wr-row') || e.target.classList.contains('wr-wire')) closeItem(); });
@@ -160,7 +103,7 @@
   addEventListener('pointerup', function () { dn = false; });
   rail.addEventListener('click', function (e) { if (mv) { e.stopPropagation(); e.preventDefault(); mv = false; } }, true);
   fetch(API, { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
-    P = Array.isArray(d.products) ? d.products.map(function (p) { p.colors = (Array.isArray(p.colors) ? p.colors : []).map(function (c) { return { name: String(c.name || 'Original'), src: safeImage(c.src || c.imageUrl || c.image) }; }).filter(function (c) { return c.src; }); p.views = (Array.isArray(p.views) ? p.views : []).map(safeImage).filter(Boolean); return p; }).filter(function (p) { return p.colors.length; }) : [];
+    P = Array.isArray(d.products) ? d.products.map(function (p) { p.colors = (Array.isArray(p.colors) ? p.colors : []).map(function (c) { return { name: String(c.name || 'Original'), src: safeImage(c.src || c.imageUrl || c.image) }; }).filter(function (c) { return c.src; }); return p; }).filter(function (p) { return p.colors.length; }) : [];
     S = d.RAIL || d.settings || S; applyBg(); drawRail(); updateRailCountdown();
     setInterval(updateRailCountdown, 1000);
   }).catch(function (error) { console.error('MONOWEAR wardrobe rail:', error); $('.wr-empty').hidden = false; });
