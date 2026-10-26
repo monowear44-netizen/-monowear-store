@@ -1841,8 +1841,30 @@ app.post("/api/customer/logout", (req, res) => {
 // ============================================================
 function linkCustomerOrders(customer) {
   if (!customer) return;
+
+  // First link orders by their recorded email (the normal, unambiguous path).
   db.prepare(`UPDATE orders SET customer_id = ? WHERE customer_id IS NULL AND LOWER(COALESCE(customer_email,'')) = LOWER(?)`)
     .run(customer.id, customer.email);
+
+  // Legacy Studio-recorded sales sometimes have no customer email. Link those
+  // only when both the account name and the unclaimed manual-sale name identify
+  // exactly one customer and exactly one order. Never guess across duplicates.
+  const customerName = String(customer.name || "").trim();
+  if (customerName.length < 2) return;
+  const matchingCustomers = db.prepare(`
+    SELECT COUNT(*) AS total FROM customers WHERE LOWER(TRIM(name)) = LOWER(?)
+  `).get(customerName).total;
+  if (matchingCustomers !== 1) return;
+  const matchingOrders = db.prepare(`
+    SELECT id FROM orders
+    WHERE customer_id IS NULL
+      AND reference LIKE 'MONO-MANUAL-%'
+      AND LOWER(TRIM(COALESCE(customer_name,''))) = LOWER(?)
+      AND TRIM(COALESCE(customer_email,'')) = ''
+  `).all(customerName);
+  if (matchingOrders.length !== 1) return;
+  db.prepare("UPDATE orders SET customer_id = ? WHERE id = ? AND customer_id IS NULL")
+    .run(customer.id, matchingOrders[0].id);
 }
 function safeCustomer(customer) {
   return { id: customer.id, name: customer.name || "", email: customer.email || "",
