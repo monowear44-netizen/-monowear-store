@@ -2495,10 +2495,21 @@ checkAuth();
  (function setupThemePresets() {
    const form = document.getElementById("settingsForm");
    if (!form || !form.elements.design_theme) return;
-   const presets = {"monochrome-studio":{"bg":"#FFFFFF","text":"#111111","muted":"#8A8A8A","accent":"#111111","onAccent":"#FFFFFF","tileA":"#EDEDED","onTileA":"#111111","tileB":"#D4D4D4","onTileB":"#111111"},"earth-sand":{"bg":"#F5EFE6","text":"#3B2F26","muted":"#8A7866","accent":"#A0643A","onAccent":"#FFFFFF","tileA":"#D9C7AE","onTileA":"#3B2F26","tileB":"#6B7A5A","onTileB":"#F5EFE6"},"midnight-streetwear":{"bg":"#0D0D0F","text":"#F5F5F5","muted":"#8B8B93","accent":"#C6FF3D","onAccent":"#0D0D0F","tileA":"#1E1E22","onTileA":"#F5F5F5","tileB":"#2E2E35","onTileB":"#F5F5F5"},"soft-pastel":{"bg":"#FFF8F5","text":"#4A3B47","muted":"#9A8794","accent":"#E8A0BF","onAccent":"#4A3B47","tileA":"#BAD7E9","onTileA":"#4A3B47","tileB":"#FFE5B4","onTileB":"#4A3B47"},"ocean-navy":{"bg":"#F4F7FA","text":"#0B2545","muted":"#6B7F99","accent":"#E07A5F","onAccent":"#FFFFFF","tileA":"#8DA9C4","onTileA":"#0B2545","tileB":"#0B2545","onTileB":"#F4F7FA"},"forest-luxe":{"bg":"#F3F1EA","text":"#1F3A2E","muted":"#6F7F75","accent":"#B08D57","onAccent":"#1F3A2E","tileA":"#2F5D46","onTileA":"#F3F1EA","tileB":"#D8D2C0","onTileB":"#1F3A2E"},"sunset-pop":{"bg":"#FFF4E0","text":"#1A1A1A","muted":"#7A6A55","accent":"#FF4D2E","onAccent":"#FFFFFF","tileA":"#FFC933","onTileA":"#1A1A1A","tileB":"#6C4BFF","onTileB":"#FFF4E0"}};
+   const presets = {
+     dark:    { background: "#111210", text: "#f4f2ea", accent: "#c6ff4b" },
+     white:   { background: "#ffffff", text: "#171815", accent: "#c6ff4b" },
+     emerald: { background: "#073f32", text: "#f2f5ef", accent: "#57d6a0" },
+     gold:    { background: "#171510", text: "#f6f0df", accent: "#d5b15a" },
+     "blue-gold": { background: "#071426", text: "#F5F1E6", accent: "#D8B65C" },
+     wine:    { background: "#2b0b16", text: "#f8edf0", accent: "#d87994" },
+     gothic:  { background: "#0b0b0f", text: "#e9e5ef", accent: "#b7a2d8" },
+     afterglow: { background: "#100e13", text: "#f5f0f5", accent: "#e9a5c7" },
+     helpway: { background: "#211316", text: "#F6EEE8", accent: "#8E3B4A" },
+     "helpway-gradient": { background: "#0B1425", text: "#EAF1FF", accent: "#4169E1" }
+   };
    function applyPreset() {
-     const preset = presets[form.elements.design_theme.value] || presets["midnight-streetwear"];
-     form.elements.design_background.value = preset.bg;
+     const preset = presets[form.elements.design_theme.value] || presets.dark;
+     form.elements.design_background.value = preset.background;
      form.elements.design_text.value = preset.text;
      form.elements.design_accent.value = preset.accent;
      if (window.refreshDesignPreview) window.refreshDesignPreview();
@@ -2518,7 +2529,9 @@ checkAuth();
            method: "PUT",
            body: JSON.stringify({
              design_theme: form.elements.design_theme.value,
-             design_theme: form.elements.design_theme.value
+             design_background: form.elements.design_background.value,
+             design_text: form.elements.design_text.value,
+             design_accent: form.elements.design_accent.value
            })
          });
          currentSettings = { ...currentSettings, ...(result.settings || {}) };
