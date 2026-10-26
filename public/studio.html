@@ -59,6 +59,7 @@
 <button class="nav" data-tab="appearance" type="button">
   Store editor
 </button>
+<button class="nav" data-tab="layouts" type="button">Layouts</button>
 <button class="nav" data-tab="wardrobe-rail" type="button">
   Wardrobe rail
 </button>
@@ -955,6 +956,20 @@
       </p>
     </div>
   </section>
+  <!-- HOMEPAGE LAYOUTS -->
+  <section class="tab-panel" id="tab-layouts" hidden>
+    <div class="toolbar"><div><p class="eyebrow">STOREFRONT CONTROL</p><h2>Homepage layouts</h2><p class="muted">Preview a layout before applying it. Your wardrobe rail stays the same and appears in every layout.</p></div></div>
+    <div id="layoutCards" class="layout-cards" aria-live="polite"></div>
+    <div class="panel layout-theme-panel">
+      <p class="eyebrow">INDEPENDENT SETTING</p><h3>Website theme</h3>
+      <label>Choose a theme<select id="layoutThemeSelect">
+        <option value="mono">Monochrome Studio</option><option value="night">Midnight Streetwear</option><option value="earth">Earth and Sand</option><option value="pastel">Soft Pastel</option><option value="ocean">Ocean Navy</option><option value="forest">Forest Luxe</option><option value="sunset">Sunset Pop</option>
+      </select></label>
+      <button class="primary" id="saveLayoutTheme" type="button">SAVE THEME</button><p id="layoutThemeMessage" class="message" role="status"></p>
+    </div>
+    <div class="panel layout-section-panel"><p class="eyebrow">OPTIONAL</p><h3>Homepage sections</h3><p class="muted">Hide or show individual sections. The Latest release wardrobe rail is always on.</p><div id="layoutSectionToggles" class="layout-section-toggles"></div><button class="primary" id="saveSectionToggles" type="button">SAVE SECTION VISIBILITY</button><p id="layoutSectionsMessage" class="message" role="status"></p></div>
+    <p id="layoutMessage" class="message" role="status" aria-live="polite"></p>
+  </section>
   <!-- ORDERS -->
   <!-- WARDROBE RAIL SETTINGS -->
   <section class="tab-panel" id="tab-wardrobe-rail" hidden>
@@ -1398,6 +1413,6 @@
   <script src="/studio-color-mode.js?v=studio-modes-20261017b" defer></script>
   <script src="/theme.js?v=bluegold-theme-20261017" defer></script>
 <script src="/wardrobe-rail-admin.js?v=rail-admin-20261025-1" defer></script>
-<script src="/admin-product-rail.js?v=wardrobe-product-admin-20261025-2" defer></script>
+<script src="/admin-product-rail.js?v=wardrobe-product-admin-20261025-2" defer></script>\n<script src="/studio-layouts.js?v=layouts-20261026-1" defer></script>
 </body>
 </html>
