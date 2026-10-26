@@ -39,7 +39,7 @@
     var s = Math.floor(ms / 1000), z = function (n) { return String(n).padStart(2, '0'); };
     return Math.floor(s / 86400) + 'D ' + z(Math.floor(s % 86400 / 3600)) + 'H ' + z(Math.floor(s % 3600 / 60)) + 'M ' + z(s % 60) + 'S';
   }
-  root.innerHTML = '<div class="wr-bg" hidden></div><div class="wr-rail" aria-label="Clothing rail"><div class="wr-track"></div></div><div class="wr-empty" hidden>Nothing on the rail right now</div><div class="wr-stage"><div class="wr-wire"></div><div class="wr-row"><div class="wr-main"></div><div class="wr-side"></div></div><div class="wr-meta"><div class="wr-nm"></div><div class="wr-cl"></div><div class="wr-st"></div><button class="wr-add" type="button"></button></div></div><button class="wr-back" type="button">← BACK</button><div class="wr-hint">SWIPE · TAP AN ITEM</div>';
+  root.innerHTML = '<div class="wr-bg" hidden></div><div class="wr-rail" aria-label="Clothing rail"><div class="wr-track"></div></div><div class="wr-empty" hidden>Nothing on the rail right now</div><div class="wr-stage"><div class="wr-wire"></div><div class="wr-row"><div class="wr-main"></div><div class="wr-side"></div></div><div class="wr-meta"><div class="wr-nm"></div><div class="wr-cl"></div><div class="wr-st"></div><button class="wr-add" type="button"></button></div></div><div class="wr-rail-countdown" hidden aria-live="off"><small></small><strong></strong></div><button class="wr-back" type="button">← BACK</button><div class="wr-hint">SWIPE · TAP AN ITEM</div>';
   var rail = $('.wr-rail'), track = $('.wr-track');
   function applyBg() { var b = $('.wr-bg'); b.hidden = !S.background; b.style.backgroundImage = S.background ? 'url("' + S.background.replace(/"/g, '%22') + '")' : 'none'; }
   function drawRail() {
@@ -53,6 +53,17 @@
     });
     $('.wr-empty').hidden = n > 0;
   }
+  function updateRailCountdown() {
+    var box = $('.wr-rail-countdown');
+    if (!box) return;
+    var upcoming = P.filter(function (p) { return eff(p) === 'featured' && countdown(p); })
+      .map(function (p) { return { product: p, date: validDropDate(p) }; })
+      .sort(function (a, b) { return a.date - b.date; })[0];
+    if (!upcoming) { box.hidden = true; return; }
+    box.hidden = false;
+    box.querySelector('small').textContent = 'DROP GOES LIVE ON ' + dateLabel(upcoming.product).toUpperCase();
+    box.querySelector('strong').textContent = countdown(upcoming.product) || '';
+  }
   function render() {
     if (!P[cur]) return;
     var p = P[cur], c = p.colors[ci] || p.colors[0], e = eff(p);
@@ -64,6 +75,7 @@
     var dateText = dateLabel(p);
     $('.wr-st').innerHTML = e ? '<span class="wr-tag">' + LABEL[e] + '</span>' + (showCountdown ? '<div class="wr-cd"><small>DROP GOES LIVE ON ' + esc(dateText) + '</small><span class="wr-cdv">' + (cd || 'DROP IS LIVE') + '</span></div>' : '') : '';
     $('.wr-add').textContent = e === 'new-drop' ? 'PRE-ORDER +' : 'ADD TO BAG';
+    updateRailCountdown();
     var side = $('.wr-side'); side.innerHTML = '';
     p.colors.forEach(function (k, j) {
       if (j === ci) return;
@@ -92,6 +104,7 @@
   rail.addEventListener('click', function (e) { if (mv) { e.stopPropagation(); e.preventDefault(); mv = false; } }, true);
   fetch(API, { credentials: 'same-origin', cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
     P = Array.isArray(d.products) ? d.products.map(function (p) { p.colors = (Array.isArray(p.colors) ? p.colors : []).map(function (c) { return { name: String(c.name || 'Original'), src: safeImage(c.src || c.imageUrl || c.image) }; }).filter(function (c) { return c.src; }); return p; }).filter(function (p) { return p.colors.length; }) : [];
-    S = d.RAIL || d.settings || S; applyBg(); drawRail();
+    S = d.RAIL || d.settings || S; applyBg(); drawRail(); updateRailCountdown();
+    setInterval(updateRailCountdown, 1000);
   }).catch(function (error) { console.error('MONOWEAR wardrobe rail:', error); $('.wr-empty').hidden = false; });
 })();
