@@ -674,6 +674,62 @@ async function uploadImages(files) {
   return urls;
 }
 
+
+// Browser-based product photo background removal. The original files are only
+// replaced after every selected image has been processed successfully.
+let backgroundRemovalModulePromise = null;
+async function getBackgroundRemovalModule() {
+  if (!backgroundRemovalModulePromise) {
+    backgroundRemovalModulePromise = import("https://esm.sh/@imgly/background-removal@1.5.5");
+  }
+  return backgroundRemovalModulePromise;
+}
+
+const backgroundRemovalButton = $("removeProductBackgrounds");
+const backgroundRemovalStatus = $("backgroundRemovalStatus");
+backgroundRemovalButton?.addEventListener("click", async () => {
+  const input = $("productImageFile");
+  const files = [...(input?.files || [])];
+  if (!files.length) {
+    if (backgroundRemovalStatus) backgroundRemovalStatus.textContent = "Choose one or more product photos first.";
+    return;
+  }
+  if (files.some(file => !["image/jpeg", "image/png", "image/webp"].includes(file.type))) {
+    if (backgroundRemovalStatus) backgroundRemovalStatus.textContent = "Use JPG, PNG or WEBP photos for background removal. GIFs are not supported.";
+    return;
+  }
+
+  backgroundRemovalButton.disabled = true;
+  const originalLabel = backgroundRemovalButton.textContent;
+  backgroundRemovalButton.textContent = "LOADING BACKGROUND REMOVER…";
+  if (backgroundRemovalStatus) backgroundRemovalStatus.textContent = "Loading the background-removal engine. First use may take a little while and downloads its model to your browser.";
+
+  try {
+    const { removeBackground } = await getBackgroundRemovalModule();
+    const processed = [];
+    for (let i = 0; i < files.length; i++) {
+      if (backgroundRemovalStatus) backgroundRemovalStatus.textContent = `Removing background from image ${i + 1} of ${files.length}… Keep this page open.`;
+      const blob = await removeBackground(files[i], {
+        output: { format: "image/png", quality: 1 }
+      });
+      const safeName = files[i].name.replace(/\\.[^.]+$/, "") || `product-${i + 1}`;
+      processed.push(new File([blob], `${safeName}-transparent.png`, { type: "image/png", lastModified: Date.now() }));
+    }
+    const transfer = new DataTransfer();
+    processed.forEach(file => transfer.items.add(file));
+    input.files = transfer.files;
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    if (backgroundRemovalStatus) backgroundRemovalStatus.textContent = `Done — ${processed.length} image(s) now have transparent backgrounds. Save the product to upload the edited PNGs.`;
+    backgroundRemovalButton.textContent = "BACKGROUNDS REMOVED ✓";
+  } catch (error) {
+    console.error("Product background removal failed:", error);
+    if (backgroundRemovalStatus) backgroundRemovalStatus.textContent = "Background removal failed to load or process. Check your connection and try again; your original selected photos are unchanged.";
+    backgroundRemovalButton.textContent = originalLabel;
+  } finally {
+    backgroundRemovalButton.disabled = false;
+  }
+});
+
 // ============================================================
 // SHARED HELPERS (added)
 // ============================================================
