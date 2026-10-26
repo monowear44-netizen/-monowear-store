@@ -1876,7 +1876,8 @@ app.get("/api/wardrobe-rail", (req, res) => {
       for (const [name, raw] of Object.entries(map)) (Array.isArray(raw) ? raw : [raw]).forEach(src => { if (typeof src === "string" && src.trim()) colors.push({ name, src }); });
       if (!colors.length && Array.isArray(p.images)) p.images.forEach((src, i) => { if (typeof src === "string" && src.trim()) colors.push({ name: p.colors[i] || (i ? "Colour " + (i + 1) : "Original"), src }); });
       if (!colors.length && p.image) colors.push({ name: "Original", src: p.image });
-      return { id:p.id, name:p.name, slug:p.slug, price:p.price, type:p.rail_type || "top", colors, status:effectiveRailStatus(p), dropDate:p.rail_drop_date || (effectiveRailStatus(p) === "featured" ? getSetting("drop_launch_date", "2026-11-10") : ""), description:p.description || "", stock:p.stock, published:p.published };
+      const views = Array.isArray(p.images) ? p.images.filter(src => typeof src === "string" && src.trim()) : [];
+      return { id:p.id, name:p.name, slug:p.slug, price:p.price, type:p.rail_type || "top", colors, views, status:effectiveRailStatus(p), dropDate:p.rail_drop_date || (effectiveRailStatus(p) === "featured" ? getSetting("drop_launch_date", "2026-11-10") : ""), description:p.description || "", stock:p.stock, published:p.published };
     }).filter(p => p.status && p.colors.length);
     res.set("Cache-Control", "no-store");
     res.json({ products: products.filter(p => rail.show === "all" || p.status === rail.show), RAIL: rail });
