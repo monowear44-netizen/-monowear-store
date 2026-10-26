@@ -67,23 +67,3 @@
 .wr-rail-countdown small{font:10px monospace;letter-spacing:.16em;color:var(--wr-mut);text-transform:uppercase}
 .wr-rail-countdown strong{font:700 clamp(14px,2.8vw,20px) monospace;letter-spacing:.08em;color:var(--wr-accent)}
 @media(max-width:600px){.wr-rail-countdown{bottom:42px}.wr-rail-countdown small{font-size:9px}.wr-rail-countdown strong{font-size:14px}}
-
-/* Optional virtual model panel, controlled from Studio > Wardrobe rail. */
-.wr.wr-has-model{padding-left:230px}
-.wr-model{position:absolute;z-index:3;left:10px;top:12px;bottom:38px;width:205px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:12px 8px 6px;border:1px solid var(--wr-line);background:linear-gradient(160deg,rgba(255,255,255,.055),rgba(0,0,0,.18));overflow:hidden}
-.wr-model[hidden]{display:none!important}
-.wr-model-head{width:100%;display:flex;align-items:center;justify-content:space-between;gap:5px;color:var(--wr-mut);font:9px monospace;letter-spacing:.12em}
-.wr-model-toggle{border:1px solid var(--wr-line);border-radius:50%;width:27px;height:27px;background:transparent;color:var(--wr-fg);cursor:pointer}
-.wr-model-figure{position:relative;width:100%;height:min(54svh,420px);min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;animation:wr-model-breathe 3.6s ease-in-out infinite;transform-origin:50% 100%}
-.wr-model-headshape{width:43px;height:53px;border-radius:48% 48% 43% 43%;background:linear-gradient(110deg,#b77e5c,#70432f);margin-top:8px;z-index:2;box-shadow:inset -7px 0 0 #0002}
-.wr-model-neck{width:19px;height:22px;background:#956246;margin-top:-2px}
-.wr-model-body{position:relative;width:122px;height:170px;background:linear-gradient(100deg,#242524,#080908 75%);clip-path:polygon(25% 0,40% 0,50% 8%,60% 0,75% 0,100% 18%,87% 52%,78% 44%,82% 100%,18% 100%,22% 44%,13% 52%,0 18%);margin-top:-2px;z-index:2;overflow:hidden}
-.wr-model-garment{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 3px 5px #0008);animation:wr-model-change .65s ease}
-.wr-model-arm{position:absolute;top:85px;width:24px;height:135px;border-radius:15px;background:linear-gradient(90deg,#a16d4f,#754a35);z-index:1}
-.wr-model-arm-left{left:calc(50% - 77px);transform:rotate(5deg)}.wr-model-arm-right{right:calc(50% - 77px);transform:rotate(-5deg)}
-.wr-model-leg{position:absolute;top:205px;width:47px;height:155px;background:linear-gradient(90deg,#303d4b,#17202a);border-radius:5px 5px 12px 12px}
-.wr-model-leg-left{left:calc(50% - 47px);transform:rotate(2deg)}.wr-model-leg-right{right:calc(50% - 47px);transform:rotate(-2deg)}
-.wr-model-info{text-align:center;display:flex;flex-direction:column;gap:5px;width:100%;padding-top:7px}.wr-model-info small{font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:700}.wr-model-colour{font-size:9px;color:var(--wr-mut);letter-spacing:.08em}
-@keyframes wr-model-breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}@keyframes wr-model-change{from{opacity:.25;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-@media(max-width:600px){.wr.wr-has-model{padding-left:0;padding-top:235px}.wr-model{left:8px;right:8px;top:8px;bottom:auto;width:auto;height:220px;display:grid;grid-template-columns:100px 1fr;grid-template-rows:26px 1fr;align-items:center;padding:7px 10px}.wr-model-head{grid-column:1/-1}.wr-model-figure{grid-column:1;grid-row:2;height:170px;min-height:0;transform:scale(.56);transform-origin:top center;width:170px;margin-left:-30px;margin-top:3px}.wr-model-info{grid-column:2;grid-row:2;text-align:left;align-self:center}.wr-model-body{width:100px;height:120px}.wr-model-arm{top:68px;height:100px}.wr-model-leg{top:155px;height:95px}}
-@media(prefers-reduced-motion:reduce){.wr-model-figure,.wr-model-garment{animation:none}}
