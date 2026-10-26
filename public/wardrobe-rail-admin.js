@@ -43,7 +43,6 @@
     try {
       const settings = await api("/api/admin/wardrobe-rail");
       form.elements.show.value = settings.show || "all";
-      if (form.elements.model_enabled) form.elements.model_enabled.value = settings.model_enabled || "off";
       showPreview(settings.background || "");
     } catch (error) {
       say(error.message || "Could not load wardrobe rail settings.", true);
@@ -90,10 +89,10 @@
     try {
       const result = await api("/api/admin/wardrobe-rail", {
         method: "PUT",
-        body: { show: form.elements.show.value, background: field.value, model_enabled: form.elements.model_enabled ? form.elements.model_enabled.value : "off" }
+        body: { show: form.elements.show.value, background: field.value }
       });
       showPreview(result.RAIL ? result.RAIL.background : field.value);
-      say("Wardrobe rail settings saved. The storefront will reflect your model setting.");
+      say("Wardrobe rail settings saved.");
     } catch (error) {
       say(error.message || "Could not save wardrobe rail settings.", true);
     } finally {
