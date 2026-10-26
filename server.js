@@ -452,7 +452,11 @@ const defaults = {
   design_radius: "square",
   design_product_columns: "3",
   design_product_ratio: "portrait",
-  design_hero_height: "standard"
+  design_hero_height: "standard",
+  "site.activeLayout": "drop_first",
+  "site.activeTheme": "mono",
+  "site.previousLayout": "",
+  "site.sectionVisibility": "{}"
 };
 // ============================================================
 // INITIAL ADMIN
