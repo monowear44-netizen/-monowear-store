@@ -1,26 +1,34 @@
 /* MONOWEAR global theme: apply the published Studio theme to every interface. */
 (() => {
   "use strict";
-  const palettes = {"monochrome-studio":{"bg":"#FFFFFF","text":"#111111","muted":"#8A8A8A","accent":"#111111","onAccent":"#FFFFFF","tileA":"#EDEDED","onTileA":"#111111","tileB":"#D4D4D4","onTileB":"#111111"},"earth-sand":{"bg":"#F5EFE6","text":"#3B2F26","muted":"#8A7866","accent":"#A0643A","onAccent":"#FFFFFF","tileA":"#D9C7AE","onTileA":"#3B2F26","tileB":"#6B7A5A","onTileB":"#F5EFE6"},"midnight-streetwear":{"bg":"#0D0D0F","text":"#F5F5F5","muted":"#8B8B93","accent":"#C6FF3D","onAccent":"#0D0D0F","tileA":"#1E1E22","onTileA":"#F5F5F5","tileB":"#2E2E35","onTileB":"#F5F5F5"},"soft-pastel":{"bg":"#FFF8F5","text":"#4A3B47","muted":"#9A8794","accent":"#E8A0BF","onAccent":"#4A3B47","tileA":"#BAD7E9","onTileA":"#4A3B47","tileB":"#FFE5B4","onTileB":"#4A3B47"},"ocean-navy":{"bg":"#F4F7FA","text":"#0B2545","muted":"#6B7F99","accent":"#E07A5F","onAccent":"#FFFFFF","tileA":"#8DA9C4","onTileA":"#0B2545","tileB":"#0B2545","onTileB":"#F4F7FA"},"forest-luxe":{"bg":"#F3F1EA","text":"#1F3A2E","muted":"#6F7F75","accent":"#B08D57","onAccent":"#1F3A2E","tileA":"#2F5D46","onTileA":"#F3F1EA","tileB":"#D8D2C0","onTileB":"#1F3A2E"},"sunset-pop":{"bg":"#FFF4E0","text":"#1A1A1A","muted":"#7A6A55","accent":"#FF4D2E","onAccent":"#FFFFFF","tileA":"#FFC933","onTileA":"#1A1A1A","tileB":"#6C4BFF","onTileB":"#FFF4E0"}};
+  const palettes = {
+    dark: { bg:"#111210", ink:"#f4f2ea", muted:"#a6a69d", line:"#34352f", accent:"#c6ff4b", panel:"#1b1c19", soft:"#242520", sidebar:"#151613" },
+    white: { bg:"#ffffff", ink:"#171815", muted:"#77786f", line:"#deded8", accent:"#c6ff4b", panel:"#f7f7f3", soft:"#ededE7", sidebar:"#f0efe9" },
+    emerald: { bg:"#073f32", ink:"#f2f5ef", muted:"#b8d0c5", line:"#286b59", accent:"#57d6a0", panel:"#0c4d3d", soft:"#145a48", sidebar:"#052f26" },
+    gold: { bg:"#171510", ink:"#f6f0df", muted:"#c1b58f", line:"#51452a", accent:"#d5b15a", panel:"#211d14", soft:"#302817", sidebar:"#100f0b" },
+    "blue-gold": { bg:"#071426", ink:"#F5F1E6", muted:"#B7C4D8", line:"#304765", accent:"#D8B65C", panel:"#0D2038", soft:"#162D4B", sidebar:"#050E1D" },
+    wine: { bg:"#2b0b16", ink:"#f8edf0", muted:"#c6a6b0", line:"#603044", accent:"#d87994", panel:"#3a101f", soft:"#481629", sidebar:"#210710" },
+    gothic: { bg:"#0b0b0f", ink:"#e9e5ef", muted:"#aaa2b8", line:"#37313f", accent:"#b7a2d8", panel:"#15131a", soft:"#211d28", sidebar:"#08070b" },
+    afterglow: { bg:"#100e13", ink:"#f5f0f5", muted:"#a69aaa", line:"#342b3a", accent:"#e9a5c7", panel:"#19161e", soft:"#211c27", sidebar:"#100e13" },
+    helpway: { bg:"#211316", ink:"#F6EEE8", muted:"#C8B5B0", line:"#56343A", accent:"#8E3B4A", panel:"#2B191D", soft:"#392126", sidebar:"#180D10" },
+    "helpway-gradient": { bg:"#0B1425", ink:"#EAF1FF", muted:"#A9B9D4", line:"#2D4164", accent:"#4169E1", panel:"#111E34", soft:"#192A47", sidebar:"#080F1D" }
+  };
   function apply(settings) {
-    const theme = String(settings.design_theme || "midnight-streetwear").toLowerCase();
-    const p = palettes[theme] || palettes["midnight-streetwear"];
+    const theme = String(settings.design_theme || "dark").toLowerCase();
+    const p = palettes[theme] || palettes.dark;
     const validColor = (value, fallback) => /^#[0-9a-f]{6}$/i.test(String(value || "")) ? value : fallback;
-    const bg = p.bg;
-    const ink = p.text;
-    const accent = p.accent;
+    const fixedPreset = theme === "helpway" || theme === "helpway-gradient" || theme === "afterglow" || theme === "blue-gold";
+    const bg = fixedPreset ? p.bg : validColor(settings.design_background, p.bg);
+    const ink = fixedPreset ? p.ink : validColor(settings.design_text, p.ink);
+    const accent = fixedPreset ? p.accent : validColor(settings.design_accent, p.accent);
     const root = document.documentElement;
     root.dataset.theme = palettes[theme] ? theme : "dark";
     const vars = {
       "--bg":bg, "--ink":ink, "--text":ink, "--muted":p.muted,
-      "--line":p.tileB, "--accent":accent, "--lime":accent,
-      "--panel":p.tileA, "--panel2":p.tileB, "--surface-soft":p.tileA,
-      "--color-bg":p.bg, "--color-text":p.text, "--color-muted":p.muted,
-      "--color-accent":p.accent, "--color-on-accent":p.onAccent,
-      "--color-tile-a":p.tileA, "--color-on-tile-a":p.onTileA,
-      "--color-tile-b":p.tileB, "--color-on-tile-b":p.onTileB,
+      "--line":p.line, "--accent":accent, "--lime":accent,
+      "--panel":p.panel, "--panel2":p.soft, "--surface-soft":p.soft,
       "--preview-bg":bg, "--preview-ink":ink, "--preview-accent":accent,
-      "--theme-sidebar":p.bg
+      "--theme-sidebar":p.sidebar
     };
     Object.entries(vars).forEach(([name,value]) => root.style.setProperty(name,value));
     root.style.colorScheme = theme === "white" ? "light" : "dark";
