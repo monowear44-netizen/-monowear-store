@@ -1,71 +1,65 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#c6ff4b">
-  <meta name="description" content="Track your MONOWEAR order using your order reference and email address.">
-  <title>Track Your Order — MONOWEAR</title>
-  <style>
-    :root{--bg:#f0efe9;--ink:#141414;--muted:#797970;--line:#d4d2c9;--accent:#c6ff4b}
-    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Manrope,Arial,sans-serif;line-height:1.6}
-    a{color:inherit;text-decoration:none}.announcement{background:var(--accent);text-align:center;padding:10px 16px;font:500 10px monospace;letter-spacing:.15em}
-    header{min-height:78px;padding:16px 5.5%;display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line)}
-    .logo{font-size:26px;font-weight:800;letter-spacing:-.09em}.back{font-size:11px;letter-spacing:.1em}
-    main{width:min(680px,100%);margin:0 auto;padding:52px 22px 80px}.eyebrow{font:11px monospace;letter-spacing:.14em;color:var(--muted)}
-    h1{font-size:clamp(34px,8vw,54px);letter-spacing:-.06em;line-height:1.02;margin:10px 0 14px} .intro{color:var(--muted);font-size:14px;margin-bottom:30px}
-    form,.result{border:1px solid var(--line);padding:24px;background:#fffdf8}
-    label{display:block;font-size:11px;letter-spacing:.08em;margin:0 0 7px}
-    input{width:100%;border:1px solid var(--line);background:var(--bg);padding:14px;margin-bottom:18px;border-radius:0;font:14px Arial,sans-serif}
-    button{width:100%;background:#141414;color:#fff;border:0;padding:16px;font:11px monospace;letter-spacing:.12em}
-    button:disabled{opacity:.55}.message{font-size:13px;margin-top:15px;color:#a32626}.result{margin-top:22px}.result h2{font-size:22px;margin:4px 0}.status{display:inline-block;background:var(--accent);padding:5px 9px;font:11px monospace;text-transform:uppercase}
-    .detail{font-size:13px;color:var(--muted);margin:7px 0}.timeline{border-left:1px solid var(--line);margin:24px 0 0 5px;padding-left:20px}.event{position:relative;padding:0 0 18px}.event:before{content:"";position:absolute;left:-25px;top:7px;width:8px;height:8px;border-radius:50%;background:var(--accent);border:1px solid #141414}.event strong{font-size:13px;text-transform:capitalize}.event p{font-size:12px;color:var(--muted);margin:3px 0}.support{margin-top:26px;font-size:12px;color:var(--muted)}.support a{text-decoration:underline;text-underline-offset:3px}
-    footer{border-top:1px solid var(--line);padding:25px 5.5%;font:10px monospace;letter-spacing:.08em;color:var(--muted)}
-    [hidden]{display:none!important}
-  </style>
-  <link rel="stylesheet" href="/theme.css">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f4f3ef"><meta name="description" content="Track your MONOWEAR shipment. Email is optional.">
+<title>Track Your Order — MONOWEAR</title>
+<style>
+:root{--bg:#f4f3ef;--paper:#fff;--ink:#171816;--muted:#777970;--line:#e5e5df;--accent:#c6ff4b;--done:#283d20}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif;line-height:1.5}a{color:inherit;text-decoration:none}
+.announcement{background:#171816;color:#fff;text-align:center;padding:9px 14px;font:10px monospace;letter-spacing:.16em}header{height:76px;padding:0 5%;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}
+.logo{font-size:24px;font-weight:900;letter-spacing:-.09em}.back{font-size:10px;font-weight:700;letter-spacing:.12em}
+main{width:min(760px,100%);margin:0 auto;padding:36px 18px 70px}.eyebrow{font:10px monospace;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}h1{font-size:clamp(30px,7vw,43px);line-height:1.06;letter-spacing:-.055em;margin:9px 0}.intro{font-size:13px;color:var(--muted);margin:0 0 25px}
+.lookup,.panel{background:var(--paper);border:1px solid var(--line);border-radius:3px;padding:22px}.field label{display:block;font-size:10px;font-weight:700;letter-spacing:.1em;margin:0 0 8px}
+input{width:100%;border:1px solid #dcded5;border-radius:2px;background:#fbfbf8;padding:14px 12px;font-size:14px;margin-bottom:15px;min-height:46px;color:var(--ink)}input:focus{outline:2px solid var(--accent);outline-offset:1px}
+button{width:100%;min-height:48px;background:var(--ink);color:#fff;border:0;border-radius:2px;padding:14px;font:11px monospace;letter-spacing:.13em;font-weight:700;cursor:pointer}button:disabled{opacity:.55}.message{font-size:12px;margin:13px 0 0;color:#a32626}.optional{font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0}
+.panel{margin-top:18px}.topline{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:1px solid var(--line);padding-bottom:17px}.order-ref{font-size:12px;font-weight:700;overflow-wrap:anywhere}
+.status{display:inline-block;background:var(--accent);padding:6px 9px;font:10px monospace;text-transform:uppercase;white-space:nowrap}h2{font-size:21px;letter-spacing:-.035em;margin:6px 0 0}.muted{font-size:12px;color:var(--muted);margin:5px 0}
+.section-title{font-size:10px;letter-spacing:.14em;font-weight:700;margin:20px 0 12px}.items{display:grid;gap:10px}.item{display:flex;align-items:center;gap:13px;padding:10px 0;border-bottom:1px solid var(--line)}.item:last-child{border-bottom:0}
+.item img,.placeholder{width:62px;height:72px;object-fit:cover;background:#f0f0eb;flex:0 0 62px}.placeholder{display:grid;place-items:center;font-size:9px;color:var(--muted)}.item-name{font-size:12px;font-weight:700}.item-meta{font-size:11px;color:var(--muted);margin-top:4px}.item-qty{font-size:11px;margin-left:auto;white-space:nowrap;color:var(--muted)}
+.summary{display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--line);padding-top:13px;font-size:12px}.summary strong{font-size:14px}.progress{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:8px 0 18px}.progress span{height:4px;background:#e6e7e1}.progress span.done{background:var(--done)}.progress span.current{background:var(--accent)}
+.timeline{margin:4px 0 0 5px;padding:0 0 0 22px;border-left:1px solid #d9dcd2}.event{position:relative;padding:0 0 20px}.event:last-child{padding-bottom:2px}.event:before{content:"";position:absolute;left:-27px;top:3px;width:9px;height:9px;border-radius:50%;background:#e5e7df;border:1px solid #cfd2c7}.event.done:before{background:var(--done);border-color:var(--done)}.event.current:before{background:var(--accent);border:2px solid var(--ink)}.event strong{font-size:12px}.event p{font-size:11px;color:var(--muted);margin:3px 0 0}.event time{font-size:10px;color:#888b82}
+.support{margin-top:22px;font-size:11px;color:var(--muted);text-align:center}.support a{text-decoration:underline;text-underline-offset:3px}footer{border-top:1px solid var(--line);padding:22px 5%;font:10px monospace;letter-spacing:.08em;color:var(--muted)}[hidden]{display:none!important}
+@media(max-width:520px){header{height:66px}.logo{font-size:22px}main{padding:27px 14px 54px}.lookup,.panel{padding:17px}.topline{flex-direction:column;align-items:flex-start}.item img,.placeholder{width:54px;height:65px;flex-basis:54px}}
+</style><link rel="stylesheet" href="/theme.css">
 </head>
 <body>
-  <div class="announcement">LIVE THE NAME. WEAR THE MEANING.</div>
-  <header><a class="logo" href="/">MONOWEAR<span style="font-size:10px;vertical-align:top">®</span></a><a class="back" href="/">← BACK TO STORE</a></header>
-  <main>
-    <p class="eyebrow">ORDER CARE / MONOWEAR</p>
-    <h1>Where is your<br>order?</h1>
-    <p class="intro">Enter the order reference from your confirmation and the email address used at checkout. We’ll show the latest status recorded by MONOWEAR.</p>
-    <form id="trackForm">
-      <label for="reference">ORDER REFERENCE</label>
-      <input id="reference" name="reference" autocomplete="off" required placeholder="e.g. MW-XXXXXXXX">
-      <label for="email">EMAIL ADDRESS USED AT CHECKOUT</label>
-      <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com">
-      <button id="submitButton" type="submit">TRACK MY ORDER ↗</button>
-      <p class="message" id="message" role="status" aria-live="polite"></p>
-    </form>
-    <section class="result" id="result" hidden aria-live="polite"></section>
-    <p class="support">Need help with an order? <a href="mailto:monowear44@gmail.com?subject=MONOWEAR%20Order%20Support">Contact MONOWEAR support ↗</a></p>
-  </main>
-  <footer>© <span id="year"></span> MONOWEAR. INDEPENDENT BY DESIGN.</footer>
-  <script>
-    const form=document.getElementById("trackForm"),message=document.getElementById("message"),result=document.getElementById("result"),button=document.getElementById("submitButton");
-    document.getElementById("year").textContent=new Date().getFullYear();
-    const query = new URLSearchParams(window.location.search);
-    if (query.get("reference")) form.reference.value = query.get("reference").slice(0, 100);
-    if (query.get("email")) form.email.value = query.get("email").slice(0, 254);
-    const safe=(v)=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-    const nice=(v)=>String(v||"pending").replace(/[_-]+/g," ");
-    form.addEventListener("submit",async e=>{
-      e.preventDefault();message.textContent="Checking your order…";result.hidden=true;button.disabled=true;
-      const ref=form.reference.value.trim(),email=form.email.value.trim();
-      try{
-        const response=await fetch("/api/orders/track/"+encodeURIComponent(ref)+"?email="+encodeURIComponent(email),{headers:{Accept:"application/json"},cache:"no-store"});
-        const data=await response.json();
-        if(!response.ok)throw new Error(data.error||"We couldn't find that order. Check the reference and email.");
-        const order=data.order||{},events=Array.isArray(data.events)?data.events:[];
-        result.innerHTML='<p class="eyebrow">ORDER '+safe(order.reference||ref)+'</p><h2>'+safe(order.customer_name||"Your order")+'</h2><span class="status">'+safe(nice(order.order_status))+'</span><p class="detail">Payment: '+safe(nice(order.payment_status))+'</p><p class="detail">Placed: '+safe(order.created_at||"Date unavailable")+'</p><div class="timeline">'+(events.length?events.map(ev=>'<div class="event"><strong>'+safe(nice(ev.status))+'</strong><p>'+safe(ev.message||"Order status updated")+'</p><p>'+safe(ev.created_at||"")+'</p></div>').join(""):'<div class="event"><strong>Order received</strong><p>Your order is recorded. Status updates will appear here when available.</p></div>')+'</div>';
-        result.hidden=false;message.textContent="";
-      }catch(err){message.textContent=err.message||"We couldn't retrieve your order. Please try again."}
-      finally{button.disabled=false}
-    });
-  </script>
-  <script src="/theme.js?v=custom-colors-20261015" defer></script>
-</body>
-</html>
+<div class="announcement">LIVE THE NAME. WEAR THE MEANING.</div>
+<header><a class="logo" href="/">MONOWEAR<span style="font-size:9px;vertical-align:top">®</span></a><a class="back" href="/">← BACK TO STORE</a></header>
+<main><p class="eyebrow">ORDER CARE / MONOWEAR</p><h1>Track your shipment.</h1><p class="intro">See your order details and the latest delivery status recorded by MONOWEAR.</p>
+<form class="lookup" id="trackForm">
+<div class="field"><label for="reference">ORDER REFERENCE</label><input id="reference" name="reference" autocomplete="off" required maxlength="120" placeholder="Enter your order reference"></div>
+<div class="field"><label for="email">EMAIL ADDRESS <span class="optional">(OPTIONAL)</span></label><input id="email" name="email" type="email" autocomplete="email" maxlength="254" placeholder="Add email for an extra check"></div>
+<button id="submitButton" type="submit">TRACK MY ORDER ↗</button><p class="message" id="message" role="status" aria-live="polite"></p>
+</form>
+<section class="panel" id="result" hidden aria-live="polite"></section>
+<p class="support">Need help with an order? <a href="mailto:monowear44@gmail.com?subject=MONOWEAR%20Order%20Support">Contact MONOWEAR support ↗</a></p></main>
+<footer>© <span id="year"></span> MONOWEAR. INDEPENDENT BY DESIGN.</footer>
+<script>
+const form=document.getElementById("trackForm"),message=document.getElementById("message"),result=document.getElementById("result"),button=document.getElementById("submitButton");
+document.getElementById("year").textContent=new Date().getFullYear();
+const query=new URLSearchParams(location.search);if(query.get("reference"))form.reference.value=query.get("reference").slice(0,120);if(query.get("email"))form.email.value=query.get("email").slice(0,254);
+const safe=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const nice=v=>String(v||"pending").replace(/[_-]+/g," ").replace(/\b\w/g,c=>c.toUpperCase());
+const money=v=>new Intl.NumberFormat("en-NG",{style:"currency",currency:"NGN",maximumFractionDigits:0}).format(Number(v)||0);
+const stages=[{label:"Order confirmed",desc:"Your order has been received."},{label:"Preparing your order",desc:"Your order is being prepared."},{label:"Shipped / in transit",desc:"Your parcel has been handed over for delivery."},{label:"Delivered",desc:"Your order has been delivered."}];
+function stageIndex(status){const s=String(status||"").toLowerCase().replace(/[_ ]+/g,"-");if(/deliver/.test(s))return 3;if(/out-for-delivery|in-transit|transit|shipped|dispatched|fulfilled/.test(s))return 2;if(/process|prepar|paid|ready|packed/.test(s))return 1;if(/cancel|failed|refund/.test(s))return -1;return 0}
+function displayDate(value){if(!value)return "";const d=new Date(String(value).replace(" ","T")+"Z");return Number.isNaN(d.getTime())?String(value):d.toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"})}
+form.addEventListener("submit",async e=>{
+e.preventDefault();message.textContent="Looking up your order…";result.hidden=true;button.disabled=true;
+const ref=form.reference.value.trim(),email=form.email.value.trim();
+try{
+const response=await fetch("/api/orders/track/"+encodeURIComponent(ref)+"?email="+encodeURIComponent(email),{headers:{Accept:"application/json"},cache:"no-store"});const data=await response.json();
+if(!response.ok)throw new Error(data.error||"We couldn't find that order. Check your reference.");
+const order=data.order||{},events=Array.isArray(data.events)?data.events:[],items=Array.isArray(order.items)?order.items:[],current=stageIndex(order.order_status);
+const progress=stages.map((s,i)=>'<span class="'+(current>=0&&i<current?"done":current===i?"current":"")+'"></span>').join("");
+const itemHtml=items.length?items.map(item=>'<div class="item">'+(item.image?'<img src="'+safe(item.image)+'" alt="'+safe(item.name)+'" loading="lazy" onerror="this.style.display=\'none\'">':'<div class="placeholder">MONO</div>')+'<div><div class="item-name">'+safe(item.name)+'</div><div class="item-meta">'+[item.size?"Size "+item.size:"",item.color?"Colour "+item.color:""].filter(Boolean).map(safe).join(" · ")+'</div></div><div class="item-qty">× '+safe(item.quantity)+'</div></div>').join(""):'<p class="muted">Product details are not available for this order.</p>';
+let timeline="";
+if(current<0)timeline='<div class="event current"><strong>'+safe(nice(order.order_status))+'</strong><p>Please contact MONOWEAR if you need help with this order.</p></div>';
+else timeline=stages.map((s,i)=>{const matches=events.filter(ev=>stageIndex(ev.status)===i),last=matches[matches.length-1],cls=i<current?"done":i===current?"current":"";return '<div class="event '+cls+'"><strong>'+safe(s.label)+'</strong><p>'+safe(last?.message||s.desc)+'</p>'+(last?.created_at?'<time>'+safe(displayDate(last.created_at))+'</time>':"")+'</div>'}).join("");
+result.innerHTML='<div class="topline"><div><div class="eyebrow">ORDER REFERENCE</div><div class="order-ref">'+safe(order.reference||ref)+'</div><h2>Shipment progress</h2><p class="muted">Placed '+safe(displayDate(order.created_at)||"date unavailable")+'</p></div><span class="status">'+safe(nice(order.order_status))+'</span></div><div class="section-title">YOUR ITEMS</div><div class="items">'+itemHtml+'</div><div class="summary"><span>Payment · '+safe(nice(order.payment_status))+'</span><strong>'+safe(money(order.total))+'</strong></div><div class="section-title">DELIVERY PROGRESS</div><div class="progress">'+progress+'</div><div class="timeline">'+timeline+'</div><p class="muted" style="margin-top:18px">Updates reflect the latest information saved by MONOWEAR. Live carrier movement appears only when supported by a carrier integration.</p>';
+result.hidden=false;message.textContent="";
+}catch(err){message.textContent=err.message||"We couldn't retrieve your order. Please try again."}finally{button.disabled=false}
+});
+</script><script src="/theme.js?v=tracking-refresh-20261026" defer></script>
+</body></html>
