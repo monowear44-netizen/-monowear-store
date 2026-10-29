@@ -82,16 +82,11 @@
     $('.wr-add').textContent = e === 'new-drop' ? 'PRE-ORDER +' : 'ADD TO BAG';
     updateRailCountdown();
     var side = $('.wr-side'); side.innerHTML = '';
-    side.classList.add('wr-color-tags');
     p.colors.forEach(function (k, j) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'wr-color-tag' + (j === ci ? ' is-selected' : '');
-      b.textContent = k.name;
-      b.title = 'View ' + k.name;
-      b.setAttribute('aria-pressed', String(j === ci));
-      b.addEventListener('click', function (event) { event.stopPropagation(); swap(j); });
-      side.appendChild(b);
+      if (j === ci) return;
+      var b = document.createElement('button'); b.type = 'button'; b.title = k.name;
+      b.innerHTML = hook('x') + '<img src="' + esc(k.src) + '" alt="' + esc(k.name) + '">';
+      b.addEventListener('click', function (event) { event.stopPropagation(); swap(j); }); side.appendChild(b);
     });
   }
   function openItem(i, colorIndex) { cur = i; ci = Number.isInteger(colorIndex) ? colorIndex : 0; render(); root.classList.add('wr-focus'); clearInterval(timer); timer = setInterval(function () { var v = $('.wr-cdv'); if (!v) return; var t = countdown(P[cur]); if (t) v.textContent = t; else { render(); drawRail(); } }, 1000); }
