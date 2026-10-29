@@ -1211,3 +1211,26 @@ body{font-size:16px}
   .site-header{padding-inline:11px}
   .wordmark{font-size:21px}
 }
+
+
+/* MOBILE COMFORT PASS — keep the storefront airy without oversized panels. */
+@media(max-width:700px){
+  .hero{min-height:clamp(390px,68svh,470px);padding:52px 6% 64px}
+  .hero h1{font-size:clamp(46px,11vw,76px);margin:24px 0 20px}
+  .hero-copy>p:not(.eyebrow){font-size:13px;line-height:1.65}
+  .section-wrap{padding:48px 5%}
+  .manifesto{padding:52px 6% 44px}
+  .newsletter{padding:38px 5%}
+  .product-showcase-carousel{min-height:0}
+  .showcase-side-bag{max-height:30vh;padding:8px}
+}
+@media(max-width:430px){
+  .hero{min-height:410px;padding-top:46px;padding-bottom:56px}
+  .hero h1{font-size:clamp(43px,10.5vw,62px)}
+  .hero-index{bottom:18px}
+  .section-heading h2,.newsletter h2{font-size:clamp(28px,7vw,40px)}
+}
+/* The floating showcase picker should not obscure the storefront on small screens. */
+@media(max-width:700px){
+  .showcase-side-bag{width:min(290px,82vw);right:8px;bottom:8px;max-height:28svh}
+}
