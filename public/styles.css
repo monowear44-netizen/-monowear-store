@@ -162,3 +162,44 @@
 body.payment-is-loading{overflow:hidden}
 @keyframes paymentSpin{to{transform:rotate(360deg)}}@keyframes paymentProgress{to{transform:translateX(140%)}}@keyframes paymentFadeIn{from{opacity:0}to{opacity:1}}
 @media(max-width:520px){.checkout-dialog form{padding:0 18px 20px}.checkout-brand-panel{margin:0 -18px 20px;padding:22px 18px 16px}.checkout-brand-index{font-size:8px}.checkout-dialog .drawer-head h2{font-size:24px}}
+
+
+/* CHECKOUT FIX — keep delivery fields spacious and the full form scrollable on every screen. */
+.checkout-dialog{
+  max-height:calc(100dvh - 24px);
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+}
+.checkout-dialog form{min-width:0}
+.checkout-dialog .drawer-head{position:sticky;top:0;z-index:5;background:#f3f1e9;padding:10px 0 14px}
+.checkout-dialog label{display:block;min-width:0;margin:12px 0 16px;line-height:1.45}
+.checkout-dialog input,.checkout-dialog textarea,.checkout-dialog select{
+  display:block;width:100%;min-width:0;max-width:100%;margin-top:7px;
+  border-radius:3px;line-height:1.4;
+}
+.checkout-dialog textarea{min-height:84px;resize:vertical}
+.checkout-dialog .checkout-order-summary{margin:18px 0;padding:14px;min-width:0}
+.checkout-order-items{min-width:0}
+.checkout-order-item{grid-template-columns:58px minmax(0,1fr) auto;gap:10px}
+.checkout-order-image{width:58px;height:68px;padding:4px;background:#e7e4da}
+.checkout-order-image img{object-fit:contain;object-position:center;width:100%;height:100%}
+.checkout-order-details,.checkout-order-line-total{min-width:0}
+.checkout-dialog .cart-total{gap:12px;align-items:flex-start;margin:12px 0;padding-top:12px}
+.checkout-dialog .cart-total span{min-width:0;line-height:1.5}
+.checkout-dialog .cart-total strong{text-align:right;overflow-wrap:anywhere}
+.checkout-dialog .button-light{white-space:normal;text-align:center;justify-content:center;line-height:1.45;padding:14px}
+@media(max-width:520px){
+  .checkout-dialog{width:calc(100% - 16px);max-height:calc(100dvh - 16px)}
+  .checkout-dialog form{padding:0 16px 18px}
+  .checkout-brand-panel{margin:0 -16px 14px;padding:19px 16px 15px}
+  .checkout-brand-panel>p:not(.eyebrow){margin-bottom:18px;line-height:1.5}
+  .checkout-dialog .drawer-head h2{font-size:22px}
+  .checkout-dialog label{margin:10px 0 13px}
+  .checkout-dialog input,.checkout-dialog textarea,.checkout-dialog select{padding:11px;font-size:16px}
+  .checkout-order-item{grid-template-columns:48px minmax(0,1fr);gap:9px}
+  .checkout-order-image{width:48px;height:58px}
+  .checkout-order-line-total{grid-column:2;text-align:left}
+  .checkout-dialog .cart-total{font-size:12px}
+}
