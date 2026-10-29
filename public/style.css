@@ -1283,3 +1283,21 @@ body{font-size:16px}
 .more-product-image{background:#e2e0d7;display:grid;place-items:center}
 .more-product-image img{object-fit:contain;object-position:center;padding:5%;mix-blend-mode:multiply}
 @media(max-width:700px){.product-image img,.product-detail-image img,.more-product-image img{padding:4%}}
+
+
+/* Full collection product photos: improve visibility without affecting the wardrobe rail. */
+.product-card .product-image{
+  background:#e6e4dc;
+}
+.product-card .product-image img{
+  object-fit:contain;
+  object-position:center;
+  padding:8px;
+  filter:brightness(1.16) contrast(1.08);
+}
+.product-card:hover .product-image img{
+  filter:brightness(1.19) contrast(1.08);
+}
+@media(max-width:700px){
+  .product-card .product-image img{padding:5px;filter:brightness(1.18) contrast(1.08)}
+}
