@@ -203,3 +203,15 @@ body.payment-is-loading{overflow:hidden}
   .checkout-order-line-total{grid-column:2;text-align:left}
   .checkout-dialog .cart-total{font-size:12px}
 }
+
+
+/* Product image framing — show the complete garment instead of cropping edges. */
+.product-image{background:#e2e0d7}
+.product-image img{object-fit:contain;object-position:center;padding:5%;mix-blend-mode:multiply}
+.product-detail-image{background:#e2e0d7;display:grid;place-items:center}
+.product-detail-image img{object-fit:contain;object-position:center;padding:5%;mix-blend-mode:multiply}
+.more-product-image{background:#e2e0d7;display:grid;place-items:center}
+.more-product-image img{object-fit:contain;object-position:center;padding:5%;mix-blend-mode:multiply}
+@media(max-width:700px){
+  .product-image img,.product-detail-image img,.more-product-image img{padding:4%}
+}
