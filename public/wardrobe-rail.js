@@ -48,29 +48,12 @@
       var e = eff(p); if (!e || !p.colors || !p.colors.length) return;
       if (S.show !== 'all' && e !== S.show) return;
       n++;
-      var card = document.createElement('div');
-      card.className = 'wr-color-item';
-      var title = document.createElement('div');
-      title.className = 'wr-color-name';
-      title.textContent = p.name;
-      card.appendChild(title);
-      var chips = document.createElement('div');
-      chips.className = 'wr-color-tags';
-      p.colors.forEach(function (color, j) {
-        var b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'wr-color-tag';
-        b.textContent = color.name;
-        b.setAttribute('aria-label', p.name + ' — ' + color.name);
-        b.title = 'View ' + color.name;
-        b.addEventListener('click', function () { openItem(i, j); });
-        chips.appendChild(b);
-      });
-      card.appendChild(chips);
-      var status = document.createElement('span');
-      status.className = 'wr-tag';
-      status.textContent = LABEL[e];
-      card.appendChild(status);
+      var card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'wr-it' + (p.type === 'cap' ? ' cap' : (p.type === 'jeans' || p.type === 'jean' ? ' jean' : ''));
+      card.setAttribute('aria-label', 'View ' + p.name);
+      card.innerHTML = hook(p.type) + '<img src="' + esc(p.colors[0].src) + '" alt="' + esc(p.name) + '"><small>' + esc(p.name) + '</small><span class="wr-tag">' + LABEL[e] + '</span>';
+      card.addEventListener('click', function () { openItem(i, 0); });
       track.appendChild(card);
     });
     $('.wr-empty').hidden = n > 0;
@@ -99,11 +82,16 @@
     $('.wr-add').textContent = e === 'new-drop' ? 'PRE-ORDER +' : 'ADD TO BAG';
     updateRailCountdown();
     var side = $('.wr-side'); side.innerHTML = '';
+    side.classList.add('wr-color-tags');
     p.colors.forEach(function (k, j) {
-      if (j === ci) return;
-      var b = document.createElement('button'); b.type = 'button'; b.title = k.name;
-      b.innerHTML = hook('x') + '<img src="' + esc(k.src) + '" alt="' + esc(k.name) + '">';
-      b.addEventListener('click', function (event) { event.stopPropagation(); swap(j); }); side.appendChild(b);
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'wr-color-tag' + (j === ci ? ' is-selected' : '');
+      b.textContent = k.name;
+      b.title = 'View ' + k.name;
+      b.setAttribute('aria-pressed', String(j === ci));
+      b.addEventListener('click', function (event) { event.stopPropagation(); swap(j); });
+      side.appendChild(b);
     });
   }
   function openItem(i, colorIndex) { cur = i; ci = Number.isInteger(colorIndex) ? colorIndex : 0; render(); root.classList.add('wr-focus'); clearInterval(timer); timer = setInterval(function () { var v = $('.wr-cdv'); if (!v) return; var t = countdown(P[cur]); if (t) v.textContent = t; else { render(); drawRail(); } }, 1000); }
