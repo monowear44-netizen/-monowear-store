@@ -135,3 +135,8 @@
   .wr-side.wr-color-tags{width:min(34vw,120px);gap:6px}
   .wr-side .wr-color-tag{padding:7px 8px;font-size:9px}
 }
+
+
+/* Colour-tag UI removed completely; keep variant image thumbnails in the product detail view. */
+.wr-side.wr-color-tags{display:flex;flex-wrap:wrap;gap:8px;width:92px;margin-top:-6px;padding-top:0}
+.wr-side .wr-color-tag{display:none}
