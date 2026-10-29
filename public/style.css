@@ -1301,3 +1301,20 @@ body{font-size:16px}
 @media(max-width:700px){
   .product-card .product-image img{padding:5px;filter:brightness(1.18) contrast(1.08)}
 }
+
+
+/* Product catalogue and product-detail images: stop multiply blending, which was darkening garments. */
+.product-card .product-image img,
+.product-detail-image img,
+.more-product-image img,
+.standalone-product-visual img,
+.standalone-related-image img{
+  mix-blend-mode:normal!important;
+  opacity:1!important;
+  filter:brightness(1.28) contrast(1.10) saturate(1.06)!important;
+}
+.product-card .product-image,
+.product-detail-image,
+.more-product-image,
+.standalone-product-visual,
+.standalone-related-image{background:#efeee8!important}
