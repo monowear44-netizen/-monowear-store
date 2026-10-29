@@ -2,7 +2,7 @@
   "use strict";
   if (document.getElementById("monoSupportRoot")) return;
   const root=document.createElement("div");root.id="monoSupportRoot";
-  root.innerHTML=\`
+  root.innerHTML=`
     <button class="mono-support-launcher" id="monoSupportLauncher" type="button" aria-label="Open MONOWEAR support"><span class="mono-support-dot"></span><span>MONO SUPPORT</span><span class="mono-support-launcher-mark">↗</span></button>
     <section class="mono-support-panel" id="monoSupportPanel" role="dialog" aria-label="MONOWEAR customer support" aria-modal="false" hidden>
       <header class="mono-support-head"><div><p class="mono-support-kicker">MONOWEAR / CUSTOMER CARE</p><h2>MONO <i>SUPPORT.</i></h2><p class="mono-support-status"><span></span> ONLINE · AUTOMATED SUPPORT</p></div><button class="mono-support-close" id="monoSupportClose" type="button" aria-label="Close support">×</button></header>
@@ -10,7 +10,7 @@
       <div class="mono-support-messages" id="monoSupportMessages" aria-live="polite"><div class="mono-support-msg assistant"><span>MONO SUPPORT</span>Welcome to MONOWEAR. I can help with products, sizing, delivery, returns, payments and order status. What do you need help with?</div></div>
       <form class="mono-support-track" id="monoSupportTrack" hidden><label>ORDER REFERENCE<input name="reference" autocomplete="off" maxlength="80" placeholder="e.g. MONO-123456" required></label><label>CHECKOUT EMAIL<input name="email" type="email" autocomplete="email" maxlength="180" placeholder="Email used at checkout" required></label><button type="submit">CHECK ORDER ↗</button><p class="mono-support-track-note">Your reference and email must match. We never ask for passwords or OTPs.</p></form>
       <form class="mono-support-compose" id="monoSupportForm"><input id="monoSupportInput" maxlength="1200" autocomplete="off" placeholder="Ask MONO Support…" aria-label="Message MONOWEAR support" required><button type="submit" aria-label="Send message">↑</button></form><footer class="mono-support-foot">Independent style. Real support when you need it.</footer>
-    </section>\`;
+    </section>`;
   document.body.appendChild(root);
   const $=id=>document.getElementById(id);const launcher=$("monoSupportLauncher"),panel=$("monoSupportPanel"),messages=$("monoSupportMessages"),form=$("monoSupportForm"),input=$("monoSupportInput"),trackForm=$("monoSupportTrack");
   let threadId="";try{threadId=localStorage.getItem("monoSupportThread")||"";}catch(e){}let lastAdminMessageCount=0;
