@@ -5068,6 +5068,8 @@ app.put("/api/admin/settings", requireAdmin, (req, res) => {
     });
   }
 });
+require("./support")(app, db, rateLimit);
+
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`MONOWEAR server running on port ${PORT}`);
 });
