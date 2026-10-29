@@ -85,3 +85,22 @@
   .wr-it.jean img{height:184px}
   .wr-it.cap img{height:86px;width:108px;margin-top:24px}
 }
+
+
+/* Color-tag wardrobe: use the Studio-uploaded product variants, not hanging garment thumbnails. */
+.wr-track{align-items:center;gap:clamp(24px,5vw,64px);padding-top:0}
+.wr-track:before{display:none}
+.wr-color-item{position:relative;flex:0 0 auto;min-width:150px;max-width:230px;display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px 14px;text-align:center}
+.wr-color-name{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;max-width:220px;overflow-wrap:anywhere}
+.wr-color-tags{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:230px}
+.wr-color-tag{appearance:none;border:1px solid var(--wr-line);background:transparent;color:var(--wr-fg);padding:8px 11px;border-radius:999px;font:600 9px inherit;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:background .25s,color .25s,border-color .25s,transform .25s}
+.wr-color-tag:hover,.wr-color-tag:focus-visible{background:var(--wr-accent);border-color:var(--wr-accent);color:#111;transform:translateY(-2px);outline:none}
+.wr-color-item .wr-tag{margin-top:0}
+.wr.wr-focus .wr-rail-countdown{opacity:0;visibility:hidden}
+@media(max-width:600px){
+  .wr-track{gap:20px}
+  .wr-color-item{min-width:132px;max-width:190px;padding:14px 8px}
+  .wr-color-name{font-size:10px}
+  .wr-color-tags{gap:6px;max-width:190px}
+  .wr-color-tag{padding:8px 9px;font-size:9px}
+}
