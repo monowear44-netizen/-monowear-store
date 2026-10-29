@@ -450,3 +450,16 @@ body.payment-is-loading{overflow:hidden}
   color: #11120f !important;
   -webkit-text-fill-color: #11120f !important;
 }
+
+
+/* PRODUCT COLOR RESTORE — preserve original uploaded image appearance across the live storefront. */
+.product-image img,
+.product-card .product-image img,
+.product-detail-image img,
+.more-product-image img,
+.standalone-product-visual img,
+.standalone-related-image img {
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  opacity: 1 !important;
+}
