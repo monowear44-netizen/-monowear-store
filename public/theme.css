@@ -514,3 +514,20 @@ html[data-theme] .waitlist-section #newsletterLink {
 }
 .waitlist-section input[type="email"]::placeholder{color:#deded7!important;opacity:1!important}
 .waitlist-section .button{background:#c6ff4b!important;color:#111!important;border-color:#c6ff4b!important}
+
+
+/* Waitlist JOIN button: force readable dark text on the neon-green button. */
+#newsletterForm .newsletter-form-row > button[type="submit"],
+.waitlist-section #newsletterForm button.button,
+html[data-theme] .waitlist-section #newsletterForm button[type="submit"] {
+  background: #C6FF4B !important;
+  color: #10130F !important;
+  -webkit-text-fill-color: #10130F !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+  font-weight: 800 !important;
+  border: 1px solid #C6FF4B !important;
+}
+#newsletterForm .newsletter-form-row > button[type="submit"]::first-line {
+  color: #10130F !important;
+}
