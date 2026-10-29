@@ -432,3 +432,21 @@ body.payment-is-loading{overflow:hidden}
 @media(prefers-reduced-motion:reduce){
   .more-product-card,.more-product-image img{transition:none}
 }
+
+
+/* WAITLIST CTA — readable text on neon-green button */
+.waitlist-section .newsletter-form-row .button,
+.waitlist-section form button,
+.waitlist-section .button {
+  color: #11120f !important;
+  -webkit-text-fill-color: #11120f !important;
+  font-weight: 800 !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+}
+.waitlist-section .newsletter-form-row .button:hover,
+.waitlist-section form button:hover,
+.waitlist-section .button:hover {
+  color: #11120f !important;
+  -webkit-text-fill-color: #11120f !important;
+}
