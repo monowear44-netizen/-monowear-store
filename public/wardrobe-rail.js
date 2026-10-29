@@ -47,9 +47,31 @@
     P.forEach(function (p, i) {
       var e = eff(p); if (!e || !p.colors || !p.colors.length) return;
       if (S.show !== 'all' && e !== S.show) return;
-      n++; var b = document.createElement('button'); b.type = 'button'; b.className = 'wr-it ' + (p.type === 'jean' || p.type === 'cap' ? p.type : 'top');
-      b.innerHTML = hook(p.type) + '<img alt="' + esc(p.name) + '" src="' + esc(p.colors[0].src) + '"><small>' + esc(p.name) + '</small><span class="wr-tag">' + LABEL[e] + '</span>';
-      b.addEventListener('click', function () { openItem(i); }); track.appendChild(b);
+      n++;
+      var card = document.createElement('div');
+      card.className = 'wr-color-item';
+      var title = document.createElement('div');
+      title.className = 'wr-color-name';
+      title.textContent = p.name;
+      card.appendChild(title);
+      var chips = document.createElement('div');
+      chips.className = 'wr-color-tags';
+      p.colors.forEach(function (color, j) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'wr-color-tag';
+        b.textContent = color.name;
+        b.setAttribute('aria-label', p.name + ' — ' + color.name);
+        b.title = 'View ' + color.name;
+        b.addEventListener('click', function () { openItem(i, j); });
+        chips.appendChild(b);
+      });
+      card.appendChild(chips);
+      var status = document.createElement('span');
+      status.className = 'wr-tag';
+      status.textContent = LABEL[e];
+      card.appendChild(status);
+      track.appendChild(card);
     });
     $('.wr-empty').hidden = n > 0;
   }
@@ -84,7 +106,7 @@
       b.addEventListener('click', function (event) { event.stopPropagation(); swap(j); }); side.appendChild(b);
     });
   }
-  function openItem(i) { cur = i; ci = 0; render(); root.classList.add('wr-focus'); clearInterval(timer); timer = setInterval(function () { var v = $('.wr-cdv'); if (!v) return; var t = countdown(P[cur]); if (t) v.textContent = t; else { render(); drawRail(); } }, 1000); }
+  function openItem(i, colorIndex) { cur = i; ci = Number.isInteger(colorIndex) ? colorIndex : 0; render(); root.classList.add('wr-focus'); clearInterval(timer); timer = setInterval(function () { var v = $('.wr-cdv'); if (!v) return; var t = countdown(P[cur]); if (t) v.textContent = t; else { render(); drawRail(); } }, 1000); }
   function swap(j) { var im = $('.wr-main img'); if (!im) return; im.classList.add('out'); setTimeout(function () { ci = j; render(); var n = $('.wr-main img'); if (n) { n.classList.add('out'); requestAnimationFrame(function () { requestAnimationFrame(function () { n.classList.remove('out'); }); }); } }, 260); }
   function closeItem() { root.classList.remove('wr-focus'); clearInterval(timer); }
   $('.wr-back').addEventListener('click', closeItem);
