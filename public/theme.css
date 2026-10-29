@@ -490,3 +490,27 @@ html[data-theme] .waitlist-section .button,
 html[data-theme] .waitlist-section #newsletterLink {
   text-shadow: none;
 }
+
+
+/* Final waitlist readability fix: put a real dark overlay between its background image and all copy. */
+.waitlist-section{position:relative!important;isolation:isolate!important;overflow:hidden!important}
+.waitlist-section::before{
+  content:""!important;
+  position:absolute!important;
+  inset:0!important;
+  z-index:0!important;
+  pointer-events:none!important;
+  background:linear-gradient(100deg,rgba(5,8,6,.94) 0%,rgba(5,8,6,.88) 55%,rgba(5,8,6,.82) 100%)!important;
+}
+.waitlist-section>*{position:relative!important;z-index:1!important}
+.waitlist-section .newsletter-copy .eyebrow,
+.waitlist-section .newsletter-copy h2,
+.waitlist-section .newsletter-copy>p:last-child,
+.waitlist-section form label,
+.waitlist-section #newsletterMessage,
+.waitlist-section #newsletterLink{color:#fff!important}
+.waitlist-section input[type="email"]{
+  background:#10130f!important;color:#fff!important;border:1px solid #f2f2ed!important;
+}
+.waitlist-section input[type="email"]::placeholder{color:#deded7!important;opacity:1!important}
+.waitlist-section .button{background:#c6ff4b!important;color:#111!important;border-color:#c6ff4b!important}
