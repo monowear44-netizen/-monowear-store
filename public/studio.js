@@ -705,14 +705,24 @@ backgroundRemovalButton?.addEventListener("click", async () => {
   if (backgroundRemovalStatus) backgroundRemovalStatus.textContent = "Loading the background-removal engine. First use may take a little while and downloads its model to your browser.";
 
   try {
-    const { removeBackground } = await getBackgroundRemovalModule();
+    const backgroundModule = await getBackgroundRemovalModule();
+    const removeBackground = backgroundModule.default || backgroundModule.removeBackground;
+    if (typeof removeBackground !== "function") throw new Error("The background-removal module did not expose its processor.");
     const processed = [];
     for (let i = 0; i < files.length; i++) {
-      if (backgroundRemovalStatus) backgroundRemovalStatus.textContent = `Removing background from image ${i + 1} of ${files.length}… Keep this page open.`;
+      if (backgroundRemovalStatus) backgroundRemovalStatus.textContent = `Processing image ${i + 1} of ${files.length}. The first run may download an AI model; keep this page open.`;
       const blob = await removeBackground(files[i], {
-        output: { format: "image/png", quality: 1 }
+        model: "isnet_quint8",
+        device: "cpu",
+        output: { format: "image/png", quality: 1 },
+        progress: (key, current, total) => {
+          if (backgroundRemovalStatus && total > 0) {
+            const percent = Math.min(100, Math.round(current / total * 100));
+            backgroundRemovalStatus.textContent = `Loading AI background-removal assets: ${percent}% — image ${i + 1} of ${files.length}.`;
+          }
+        }
       });
-      const safeName = files[i].name.replace(/\\.[^.]+$/, "") || `product-${i + 1}`;
+      const safeName = files[i].name.replace(/\.[^.]+$/, "") || `product-${i + 1}`;
       processed.push(new File([blob], `${safeName}-transparent.png`, { type: "image/png", lastModified: Date.now() }));
     }
     const transfer = new DataTransfer();
@@ -723,7 +733,7 @@ backgroundRemovalButton?.addEventListener("click", async () => {
     backgroundRemovalButton.textContent = "BACKGROUNDS REMOVED ✓";
   } catch (error) {
     console.error("Product background removal failed:", error);
-    if (backgroundRemovalStatus) backgroundRemovalStatus.textContent = "Background removal failed to load or process. Check your connection and try again; your original selected photos are unchanged.";
+    if (backgroundRemovalStatus) backgroundRemovalStatus.textContent = "Background removal could not complete. Check your connection, wait for the AI model to load, and try again. Your original selected photos are unchanged. Details are available in the browser console.";
     backgroundRemovalButton.textContent = originalLabel;
   } finally {
     backgroundRemovalButton.disabled = false;
