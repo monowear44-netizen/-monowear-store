@@ -680,7 +680,14 @@ async function uploadImages(files) {
 let backgroundRemovalModulePromise = null;
 async function getBackgroundRemovalModule() {
   if (!backgroundRemovalModulePromise) {
-    backgroundRemovalModulePromise = import("https://esm.sh/@imgly/background-removal@1.5.5");
+    // Use jsDelivr's ESM endpoint first; fall back to esm.sh if that CDN is
+    // unavailable. Keep the model/WASM asset origin explicit below.
+    backgroundRemovalModulePromise = import("https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.5/+esm")
+      .catch(() => import("https://esm.sh/@imgly/background-removal@1.5.5"))
+      .catch((error) => {
+        backgroundRemovalModulePromise = null;
+        throw new Error(`Could not load the background-removal engine from either CDN: ${error.message}`);
+      });
   }
   return backgroundRemovalModulePromise;
 }
@@ -712,8 +719,12 @@ backgroundRemovalButton?.addEventListener("click", async () => {
     for (let i = 0; i < files.length; i++) {
       if (backgroundRemovalStatus) backgroundRemovalStatus.textContent = `Processing image ${i + 1} of ${files.length}. The first run may download an AI model; keep this page open.`;
       const blob = await removeBackground(files[i], {
+        // Pin model/WASM downloads to IMG.LY's matching 1.5.5 asset bundle.
+        publicPath: "https://staticimgly.com/@imgly/background-removal-data/1.5.5/dist/",
         model: "isnet_quint8",
         device: "cpu",
+        proxyToWorker: false,
+        debug: true,
         output: { format: "image/png", quality: 1 },
         progress: (key, current, total) => {
           if (backgroundRemovalStatus && total > 0) {
@@ -733,7 +744,8 @@ backgroundRemovalButton?.addEventListener("click", async () => {
     backgroundRemovalButton.textContent = "BACKGROUNDS REMOVED ✓";
   } catch (error) {
     console.error("Product background removal failed:", error);
-    if (backgroundRemovalStatus) backgroundRemovalStatus.textContent = "Background removal could not complete. Check your connection, wait for the AI model to load, and try again. Your original selected photos are unchanged. Details are available in the browser console.";
+    const detail = error && error.message ? error.message : String(error);
+    if (backgroundRemovalStatus) backgroundRemovalStatus.textContent = `Background removal failed: ${detail}. Your original selected photos are unchanged. Check your connection and try again.`;
     backgroundRemovalButton.textContent = originalLabel;
   } finally {
     backgroundRemovalButton.disabled = false;
