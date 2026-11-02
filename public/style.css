@@ -1295,3 +1295,94 @@ body{font-size:16px}
   opacity:1!important;
   filter:none!important;
 }
+
+
+/* CHECKOUT ORDER LIST — prevent product rows from collapsing/overlapping
+   when the customer adds several different pieces. */
+.checkout-dialog .checkout-order-summary{
+  display:block;
+  min-width:0;
+  overflow:visible;
+}
+.checkout-dialog .checkout-order-items{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:0;
+  width:100%;
+  max-height:none !important;
+  min-width:0;
+  overflow:visible;
+}
+.checkout-dialog .checkout-order-item{
+  display:grid;
+  grid-template-columns:64px minmax(0,1fr);
+  align-items:center;
+  column-gap:12px;
+  row-gap:5px;
+  width:100%;
+  min-width:0;
+  padding:12px 0;
+  border-bottom:1px solid #dedbd1;
+}
+.checkout-dialog .checkout-order-image{
+  grid-column:1;
+  grid-row:1 / span 2;
+  display:grid;
+  place-items:center;
+  width:64px;
+  height:76px;
+  min-width:0;
+  overflow:hidden;
+}
+.checkout-dialog .checkout-order-image img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.checkout-dialog .checkout-order-details{
+  grid-column:2;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:4px;
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+.checkout-dialog .checkout-order-details strong{
+  display:block;
+  max-width:100%;
+  font-size:13px;
+  line-height:1.35;
+  overflow-wrap:anywhere;
+}
+.checkout-dialog .checkout-order-details small{
+  display:block;
+  max-width:100%;
+  font-size:11px;
+  line-height:1.45;
+  overflow-wrap:anywhere;
+}
+.checkout-dialog .checkout-order-line-total{
+  grid-column:2;
+  justify-self:start;
+  min-width:0;
+  font-size:12px;
+  line-height:1.4;
+  white-space:nowrap;
+}
+@media(max-width:520px){
+  .checkout-dialog .checkout-order-item{
+    grid-template-columns:54px minmax(0,1fr);
+    column-gap:10px;
+    padding:11px 0;
+  }
+  .checkout-dialog .checkout-order-image{
+    width:54px;
+    height:66px;
+  }
+  .checkout-dialog .checkout-order-details strong{font-size:12px}
+  .checkout-dialog .checkout-order-details small{font-size:10px}
+  .checkout-dialog .checkout-order-line-total{font-size:11px}
+}
