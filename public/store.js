@@ -378,7 +378,7 @@
      Featured pieces stay first. Other products are paged below.
   ========================================================= */
   let productPage = 1;
-  const PRODUCTS_PER_PAGE = 8;
+  const PRODUCTS_PER_PAGE = 12;
 
   function renderPagination(totalPages) {
     const pagination = $("productPagination");
