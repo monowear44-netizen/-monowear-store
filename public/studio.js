@@ -860,7 +860,14 @@ bulkApplyButton?.addEventListener("click", async () => {
     for (let start = 0; start < processed.length; start += 10) {
       const batch = processed.slice(start, start + 10);
       const files = batch.map((item, index) => new File([item.resultBlob], `monowear-transparent-${start + index + 1}.png`, { type: "image/png" }));
-      const urls = await uploadImages(files);
+      const formData = new FormData();
+      for (const file of files) {
+        if (file.size > 8 * 1024 * 1024) throw new Error("A processed PNG is larger than the server's 8 MB upload limit.");
+        formData.append("images", file);
+      }
+      const uploadResult = await api("/api/admin/upload", { method:"POST", body:formData });
+      const urls = Array.isArray(uploadResult.urls) ? uploadResult.urls : (uploadResult.files || []).map(file => file.url).filter(Boolean);
+      if (urls.length !== batch.length) throw new Error("The server did not confirm every processed image upload.");
       batch.forEach((item, index) => urlMap.set(item.url, urls[index]));
       bulkSetStatus(`Uploaded ${Math.min(start + batch.length, processed.length)} of ${processed.length} transparent image(s)…`);
     }
