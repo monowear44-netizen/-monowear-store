@@ -809,9 +809,18 @@ bulkScanButton?.addEventListener("click", async () => {
     if (!item.productNames.includes(product.name)) item.productNames.push(product.name);
     if (!item.productIds.includes(Number(product.id))) item.productIds.push(Number(product.id));
   }));
-  const all = [...references.values()]; let transparent = 0, unreadable = 0;
+  const all = [...references.values()]; let transparent = 0, unreadable = 0, shared = 0;
   for (let i = 0; i < all.length; i++) {
     const item = all[i]; bulkSetStatus(`Checking saved image ${i + 1} of ${all.length}…`);
+    // A single file referenced by multiple product records may represent
+    // distinct colour variants or a deliberately shared gallery asset.
+    // Never replace it globally through bulk cleanup: that can overwrite
+    // another product's image with the wrong cut-out.
+    if (item.productIds.length > 1) {
+      shared++;
+      item.shared = true;
+      continue;
+    }
     try {
       item.blob = await bulkReadBlob(item.url);
       if (await bulkHasTransparency(item.blob)) transparent++;
@@ -820,7 +829,7 @@ bulkScanButton?.addEventListener("click", async () => {
   }
   bulkScanButton.disabled = false;
   bulkProcessButton.disabled = bulkBackgroundState.candidates.length === 0;
-  bulkSetStatus(`Scan complete: ${all.length} unique image(s); ${transparent} already transparent and skipped; ${bulkBackgroundState.candidates.length} need removal; ${unreadable} could not be read.`);
+  bulkSetStatus(`Scan complete: ${all.length} unique image(s); ${transparent} already transparent and skipped; ${shared} shared across multiple products and protected; ${bulkBackgroundState.candidates.length} safe single-product image(s) need removal; ${unreadable} could not be read. Shared images must be handled separately in each product editor.`);
 });
 
 bulkProcessButton?.addEventListener("click", async () => {
@@ -871,6 +880,15 @@ bulkApplyButton?.addEventListener("click", async () => {
       batch.forEach((item, index) => urlMap.set(item.url, urls[index]));
       bulkSetStatus(`Uploaded ${Math.min(start + batch.length, processed.length)} of ${processed.length} transparent image(s)…`);
     }
+    // Re-check references immediately before writing. If any selected URL has
+    // become shared since scanning, abort instead of changing several products.
+    const currentReferences = new Map();
+    currentProducts.forEach(product => bulkImageReferences(product).forEach(url => {
+      if (!currentReferences.has(url)) currentReferences.set(url, new Set());
+      currentReferences.get(url).add(Number(product.id));
+    }));
+    const newlyShared = [...urlMap.keys()].filter(url => (currentReferences.get(url)?.size || 0) > 1);
+    if (newlyShared.length) throw new Error("A selected image is now shared by multiple products. No product records were updated; scan again.");
     const affected = currentProducts.filter(product => bulkImageReferences(product).some(url => urlMap.has(url)));
     for (let i = 0; i < affected.length; i++) {
       const p = affected[i], replace = value => urlMap.get(String(value || "")) || value;
