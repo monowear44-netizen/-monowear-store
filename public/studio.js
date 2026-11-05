@@ -987,6 +987,21 @@ async function loadProducts() {
   }
 }
 
+
+function setProductsLayout(layout) {
+  const container = $("productsList");
+  if (!container) return;
+  const columns = layout === "columns";
+  container.classList.toggle("products-columns", columns);
+  container.classList.toggle("products-rows", !columns);
+  $("productsRowsButton")?.setAttribute("aria-pressed", String(!columns));
+  $("productsColumnsButton")?.setAttribute("aria-pressed", String(columns));
+  try { localStorage.setItem("studio-products-layout", columns ? "columns" : "rows"); } catch {}
+}
+
+$("productsRowsButton")?.addEventListener("click", () => setProductsLayout("rows"));
+$("productsColumnsButton")?.addEventListener("click", () => setProductsLayout("columns"));
+
 function renderProducts() {
   const container = $("productsList");
   if (!container) return;
