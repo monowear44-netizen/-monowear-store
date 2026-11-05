@@ -1388,46 +1388,4 @@ body{font-size:16px}
 }
 
 
-/* CONVERSION CLARITY — keep delivery and policy details visible before checkout. */
-.purchase-reassurance{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:22px;
-  padding:28px 7%;
-  background:#e6e4dc;
-  border-bottom:1px solid var(--line);
-}
-.purchase-reassurance-item{min-width:0}
-.purchase-reassurance-item>span,
-.purchase-reassurance-item>a{
-  display:block;
-  font:10px 'DM Mono',monospace;
-  letter-spacing:.1em;
-}
-.purchase-reassurance-item>span{color:var(--muted);margin-bottom:10px}
-.purchase-reassurance-item strong{display:block;font-size:14px;letter-spacing:-.02em}
-.purchase-reassurance-item p{margin:7px 0 0;color:#68685f;font-size:12px;line-height:1.6}
-.purchase-reassurance-item>a{margin-top:9px;text-decoration:underline;text-underline-offset:3px}
-.cart-delivery-note{margin:0 0 16px;color:var(--muted);font-size:10px;line-height:1.65}
-.cart-delivery-note a{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
-.product-purchase-notes{
-  display:grid;
-  gap:8px;
-  margin:18px 0 4px;
-  padding:15px 0;
-  border-top:1px solid var(--line);
-  border-bottom:1px solid var(--line);
-}
-.product-purchase-notes span,
-.product-purchase-notes a{
-  font:10px/1.6 'DM Mono',monospace;
-  letter-spacing:.045em;
-}
-.product-purchase-notes a{text-decoration:underline;text-underline-offset:3px}
-@media(max-width:700px){
-  .purchase-reassurance{grid-template-columns:1fr;gap:17px;padding:23px 5%}
-  .purchase-reassurance-item{display:grid;grid-template-columns:1fr;gap:2px}
-  .purchase-reassurance-item>span{margin-bottom:3px}
-  .purchase-reassurance-item p{margin-top:4px}
-  .purchase-reassurance-item>a{margin-top:5px}
-}
+
