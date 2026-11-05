@@ -753,6 +753,152 @@ backgroundRemovalButton?.addEventListener("click", async () => {
 });
 
 // ============================================================
+// BULK BACKGROUND REMOVAL FOR SAVED PRODUCT PHOTOS
+const bulkBackgroundState = { candidates: [], processed: [] };
+const bulkScanButton = $("scanSavedBackgrounds");
+const bulkProcessButton = $("processSavedBackgrounds");
+const bulkApplyButton = $("applySavedBackgrounds");
+const bulkStatus = $("bulkBackgroundStatus");
+const bulkPreview = $("bulkBackgroundPreview");
+
+function bulkImageReferences(product) {
+  const urls = [product.image, ...(Array.isArray(product.images) ? product.images : []),
+    ...Object.values(product.color_images && typeof product.color_images === "object" ? product.color_images : {})];
+  return [...new Set(urls.map(value => String(value || "").trim()).filter(Boolean))];
+}
+function bulkSetStatus(message) { if (bulkStatus) bulkStatus.textContent = message; }
+
+function bulkRenderPreview() {
+  if (!bulkPreview) return;
+  bulkPreview.innerHTML = bulkBackgroundState.processed.map((item, index) => `
+    <article class="bulk-background-card">
+      <div class="bulk-background-images">
+        <figure><img src="${esc(item.url)}" alt="Original product photo"><figcaption>ORIGINAL</figcaption></figure>
+        <figure><img src="${item.previewUrl}" alt="Transparent background preview"><figcaption>TRANSPARENT PREVIEW</figcaption></figure>
+      </div>
+      <strong>${esc(item.productNames.join(", "))}</strong>
+      <small class="muted">${esc(item.url.split("/").pop() || "Product image")} · preview ${index + 1}</small>
+    </article>`).join("");
+}
+async function bulkReadBlob(url) {
+  const response = await fetch(url, { credentials: "same-origin" });
+  if (!response.ok) throw new Error("Could not read image (" + response.status + ").");
+  return response.blob();
+}
+async function bulkHasTransparency(blob) {
+  const bitmap = await createImageBitmap(blob);
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.min(bitmap.width, 256); canvas.height = Math.min(bitmap.height, 256);
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+    for (let i = 3; i < pixels.length; i += 4) if (pixels[i] < 250) return true;
+    return false;
+  } finally { bitmap.close?.(); }
+}
+
+bulkScanButton?.addEventListener("click", async () => {
+  if (!Array.isArray(currentProducts) || !currentProducts.length) { bulkSetStatus("Load the product catalogue first, then scan again."); return; }
+  bulkScanButton.disabled = true; bulkProcessButton.disabled = true; bulkApplyButton.disabled = true;
+  bulkBackgroundState.candidates = []; bulkBackgroundState.processed = []; bulkPreview.innerHTML = "";
+  const references = new Map();
+  currentProducts.forEach(product => bulkImageReferences(product).forEach(url => {
+    if (!references.has(url)) references.set(url, { url, productNames: [], productIds: [] });
+    const item = references.get(url);
+    if (!item.productNames.includes(product.name)) item.productNames.push(product.name);
+    if (!item.productIds.includes(Number(product.id))) item.productIds.push(Number(product.id));
+  }));
+  const all = [...references.values()]; let transparent = 0, unreadable = 0;
+  for (let i = 0; i < all.length; i++) {
+    const item = all[i]; bulkSetStatus(`Checking saved image ${i + 1} of ${all.length}…`);
+    try {
+      item.blob = await bulkReadBlob(item.url);
+      if (await bulkHasTransparency(item.blob)) transparent++;
+      else bulkBackgroundState.candidates.push(item);
+    } catch (error) { unreadable++; item.unreadable = true; }
+  }
+  bulkScanButton.disabled = false;
+  bulkProcessButton.disabled = bulkBackgroundState.candidates.length === 0;
+  bulkSetStatus(`Scan complete: ${all.length} unique image(s); ${transparent} already transparent and skipped; ${bulkBackgroundState.candidates.length} need removal; ${unreadable} could not be read.`);
+});
+
+bulkProcessButton?.addEventListener("click", async () => {
+  const candidates = bulkBackgroundState.candidates;
+  if (!candidates.length) return;
+  bulkProcessButton.disabled = true; bulkScanButton.disabled = true; bulkApplyButton.disabled = true;
+  bulkBackgroundState.processed = [];
+  try {
+    const module = await getBackgroundRemovalModule();
+    const removeBackground = module.default || module.removeBackground;
+    if (typeof removeBackground !== "function") throw new Error("Background-removal processor unavailable.");
+    for (let i = 0; i < candidates.length; i++) {
+      const item = candidates[i];
+      bulkSetStatus(`Removing background from image ${i + 1} of ${candidates.length}. Keep Studio open…`);
+      const resultBlob = await removeBackground(item.blob, {
+        publicPath: "https://staticimgly.com/@imgly/background-removal-data/1.5.5/dist/",
+        model: "isnet_quint8", device: "cpu", proxyToWorker: false, debug: false,
+        output: { format: "image/png", quality: 1 }
+      });
+      item.resultBlob = resultBlob; item.previewUrl = URL.createObjectURL(resultBlob);
+      bulkBackgroundState.processed.push(item); bulkRenderPreview();
+    }
+    bulkSetStatus(`Preview ready for ${bulkBackgroundState.processed.length} image(s). Review them below. Nothing is saved until you apply.`);
+    bulkApplyButton.disabled = !bulkBackgroundState.processed.length;
+  } catch (error) {
+    bulkSetStatus("Background removal stopped: " + (error.message || String(error)) + ". Completed previews remain available; nothing has been applied.");
+    bulkApplyButton.disabled = !bulkBackgroundState.processed.length;
+  } finally { bulkProcessButton.disabled = false; bulkScanButton.disabled = false; }
+});
+
+bulkApplyButton?.addEventListener("click", async () => {
+  const processed = bulkBackgroundState.processed;
+  if (!processed.length || !window.confirm(`Apply ${processed.length} transparent image(s) to the live catalogue? Only matching image references will be replaced.`)) return;
+  bulkApplyButton.disabled = true; bulkScanButton.disabled = true; bulkProcessButton.disabled = true;
+  const urlMap = new Map();
+  try {
+    for (let start = 0; start < processed.length; start += 10) {
+      const batch = processed.slice(start, start + 10);
+      const files = batch.map((item, index) => new File([item.resultBlob], `monowear-transparent-${start + index + 1}.png`, { type: "image/png" }));
+      const formData = new FormData();
+      for (const file of files) {
+        if (file.size > 8 * 1024 * 1024) throw new Error("A processed PNG is larger than the server's 8 MB upload limit.");
+        formData.append("images", file);
+      }
+      const uploadResult = await api("/api/admin/upload", { method:"POST", body:formData });
+      const urls = Array.isArray(uploadResult.urls) ? uploadResult.urls : (uploadResult.files || []).map(file => file.url).filter(Boolean);
+      if (urls.length !== batch.length) throw new Error("The server did not confirm every processed image upload.");
+      batch.forEach((item, index) => urlMap.set(item.url, urls[index]));
+      bulkSetStatus(`Uploaded ${Math.min(start + batch.length, processed.length)} of ${processed.length} transparent image(s)…`);
+    }
+    const affected = currentProducts.filter(product => bulkImageReferences(product).some(url => urlMap.has(url)));
+    for (let i = 0; i < affected.length; i++) {
+      const p = affected[i], replace = value => urlMap.get(String(value || "")) || value;
+      const body = {
+        name:p.name, slug:p.slug, description:p.description || "", price:Number(p.price || 0),
+        compare_price:Number(p.compare_price || 0), image:replace(p.image),
+        images:(Array.isArray(p.images) ? p.images : []).map(replace), category:p.category || "",
+        sizes:Array.isArray(p.sizes) ? p.sizes : [], colors:Array.isArray(p.colors) ? p.colors : [],
+        color_images:Object.fromEntries(Object.entries(p.color_images || {}).map(([key,value]) => [key,replace(value)])),
+        rail_status:p.rail_status || "", rail_drop_date:p.rail_drop_date || "", rail_type:p.rail_type || "top",
+        stock:Number(p.stock || 0), published:!!p.published, featured:!!p.featured,
+        sort_order:Number(p.sort_order || 0), collection_ids:(p.collections || []).map(c => Number(c.id))
+      };
+      await api(`/api/admin/products/${p.id}`, { method:"PUT", body:JSON.stringify(body) });
+      bulkSetStatus(`Updating product ${i + 1} of ${affected.length}: ${p.name}`);
+    }
+    await loadProducts();
+    processed.forEach(item => URL.revokeObjectURL(item.previewUrl));
+    bulkBackgroundState.candidates = []; bulkBackgroundState.processed = []; bulkPreview.innerHTML = "";
+    bulkSetStatus(`Done. Applied ${urlMap.size} transparent image(s) across ${affected.length} product(s). Images already transparent were left untouched.`);
+  } catch (error) {
+    bulkSetStatus("Could not finish applying every image: " + (error.message || String(error)) + ". Some uploads may have completed; scan again before retrying.");
+  } finally {
+    bulkApplyButton.disabled = true; bulkScanButton.disabled = false;
+    bulkProcessButton.disabled = bulkBackgroundState.candidates.length === 0;
+  }
+});
+
 // SHARED HELPERS (added)
 // ============================================================
 

@@ -211,6 +211,16 @@
       >
     </div>
     <div id="productsList" class="products-list"></div>
+    <section class="panel bulk-background-panel" aria-labelledby="bulkBackgroundTitle">
+      <div class="editor-head"><div><p class="eyebrow">IMAGE CLEANUP</p><h3 id="bulkBackgroundTitle">Remove backgrounds from saved products</h3><p class="muted">Scan existing product photos, skip images that already have transparency, preview the cut-outs, then apply them to the catalogue.</p></div></div>
+      <div class="bulk-background-actions">
+        <button class="secondary" id="scanSavedBackgrounds" type="button">SCAN SAVED PRODUCT IMAGES</button>
+        <button class="quiet" id="processSavedBackgrounds" type="button" disabled>REMOVE BACKGROUNDS &amp; PREVIEW</button>
+        <button class="primary" id="applySavedBackgrounds" type="button" disabled>APPLY TRANSPARENT IMAGES</button>
+      </div>
+      <p id="bulkBackgroundStatus" class="muted" role="status" aria-live="polite">This works on saved main photos, gallery photos and colour-variant photos. Nothing in the catalogue changes until you apply the previews.</p>
+      <div id="bulkBackgroundPreview" class="bulk-background-preview"></div>
+    </section>
     <!-- PRODUCT EDITOR -->
     <form
       id="productForm"
