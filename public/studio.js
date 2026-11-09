@@ -1658,6 +1658,90 @@ $("sendCampaignEmail")?.addEventListener("click",async()=>{
   finally { button.disabled=false;button.textContent="SEND CAMPAIGN THROUGH RESEND ↗"; }
 });
 
+// Persistent campaign drafts: each campaign is stored independently in the Studio database.
+let activeCampaignDraftId = null;
+function campaignPayload() {
+  return {
+    name: $("emailCampaignName")?.value.trim() || "Untitled campaign",
+    request: $("emailCampaignRequest")?.value || "",
+    tone: $("emailCampaignTone")?.value || "",
+    subject: $("emailCampaignSubject")?.value || "",
+    preview: $("emailCampaignPreview")?.value || "",
+    body: $("emailCampaignBody")?.value || "",
+    cta_label: $("emailCampaignCtaLabel")?.value || "",
+    cta_url: $("emailCampaignCtaUrl")?.value || ""
+  };
+}
+function fillCampaignDraft(draft) {
+  activeCampaignDraftId = draft.id || null;
+  $("emailCampaignName").value = draft.name || "";
+  $("emailCampaignRequest").value = draft.request || "";
+  $("emailCampaignTone").value = draft.tone || "cinematic, confident, concise";
+  $("emailCampaignSubject").value = draft.subject || "";
+  $("emailCampaignPreview").value = draft.preview || "";
+  $("emailCampaignBody").value = draft.body || "";
+  $("emailCampaignCtaLabel").value = draft.cta_label || "";
+  $("emailCampaignCtaUrl").value = draft.cta_url || "";
+  $("savedCampaignDrafts").value = activeCampaignDraftId ? String(activeCampaignDraftId) : "";
+  $("deleteCampaignDraft").disabled = !activeCampaignDraftId;
+  resetCampaignConfirmation();
+}
+async function loadCampaignDrafts(selectId) {
+  const select = $("savedCampaignDrafts");
+  if (!select) return;
+  try {
+    const drafts = await api("/api/admin/email-drafts");
+    select.innerHTML = '<option value="">Choose a saved draft…</option>' + drafts.map(d =>
+      '<option value="' + Number(d.id) + '">' + esc(d.name || "Untitled campaign") + ' · ' + esc(d.updated_at || "") + '</option>'
+    ).join("");
+    if (selectId) select.value = String(selectId);
+  } catch (error) {
+    setCampaignMessage("campaignSaveMessage", "Could not load saved drafts: " + error.message, true);
+  }
+}
+$("saveCampaignDraft")?.addEventListener("click", async () => {
+  const payload = campaignPayload();
+  if (!payload.name.trim()) return setCampaignMessage("campaignSaveMessage", "Give this campaign a name first.", true);
+  if (!payload.subject.trim() && !payload.body.trim() && !payload.request.trim()) return setCampaignMessage("campaignSaveMessage", "Add a prompt or write some email content before saving.", true);
+  const button = $("saveCampaignDraft"); button.disabled = true; button.textContent = "SAVING…";
+  try {
+    const saved = await api(activeCampaignDraftId ? "/api/admin/email-drafts/" + activeCampaignDraftId : "/api/admin/email-drafts", {
+      method: activeCampaignDraftId ? "PUT" : "POST", body: JSON.stringify(payload)
+    });
+    fillCampaignDraft(saved);
+    await loadCampaignDrafts(saved.id);
+    setCampaignMessage("campaignSaveMessage", "Draft saved. You can return to it, edit it or duplicate it later.");
+  } catch (error) { setCampaignMessage("campaignSaveMessage", error.message, true); }
+  finally { button.disabled = false; button.textContent = "SAVE DRAFT"; }
+});
+$("savedCampaignDrafts")?.addEventListener("change", async event => {
+  if (!event.target.value) return;
+  try {
+    const draft = await api("/api/admin/email-drafts/" + encodeURIComponent(event.target.value));
+    fillCampaignDraft(draft);
+    setCampaignMessage("campaignSaveMessage", "Saved draft loaded. Changes won't overwrite it until you save.");
+    setCampaignMessage("campaignDraftMessage", "");
+    setCampaignMessage("campaignSendMessage", "");
+  } catch (error) { setCampaignMessage("campaignSaveMessage", error.message, true); }
+});
+$("newCampaignDraft")?.addEventListener("click", () => {
+  fillCampaignDraft({name:"",request:"",tone:"cinematic, confident, concise"});
+  ["emailCampaignSubject","emailCampaignPreview","emailCampaignBody","emailCampaignCtaLabel","emailCampaignCtaUrl","emailCampaignConfirm"].forEach(id => { if ($(id)) $(id).value = ""; });
+  $("emailCampaignReviewed").checked = false;
+  setCampaignMessage("campaignSaveMessage", "New campaign ready. Your other saved drafts are untouched.");
+  setCampaignMessage("campaignDraftMessage", "");
+  setCampaignMessage("campaignSendMessage", "");
+});
+$("deleteCampaignDraft")?.addEventListener("click", async () => {
+  if (!activeCampaignDraftId || !window.confirm("Delete this saved campaign draft? This cannot be undone.")) return;
+  try {
+    await api("/api/admin/email-drafts/" + activeCampaignDraftId, {method:"DELETE"});
+    fillCampaignDraft({name:"",tone:"cinematic, confident, concise"});
+    await loadCampaignDrafts();
+    setCampaignMessage("campaignSaveMessage", "Saved draft deleted.");
+  } catch (error) { setCampaignMessage("campaignSaveMessage", error.message, true); }
+});
+loadCampaignDrafts();
 function audienceDate(value) {
   if (!value) return "—";
   const parsed = new Date(String(value).replace(" ", "T") + (String(value).includes("Z") ? "" : "Z"));
