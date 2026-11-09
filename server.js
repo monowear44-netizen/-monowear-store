@@ -2980,7 +2980,7 @@ function campaignDraftInput(body) {
 app.post("/api/admin/email-drafts", requireAdmin, (req, res) => {
   const d = campaignDraftInput(req.body || {});
   if (!d.request.trim() && !d.subject.trim() && !d.body.trim()) return res.status(400).json({error:"Add a prompt or email content before saving."});
-  if (d.cta_url && !/^https?:\\/\\//i.test(d.cta_url)) return res.status(400).json({error:"The button link must start with https:// or http://."});
+  if (d.cta_url && !/^https?:\/\//i.test(d.cta_url)) return res.status(400).json({error:"The button link must start with https:// or http://."});
   const result = db.prepare("INSERT INTO email_campaign_drafts (name,request,tone,subject,preview,body,cta_label,cta_url) VALUES (@name,@request,@tone,@subject,@preview,@body,@cta_label,@cta_url)").run(d);
   res.status(201).json(db.prepare("SELECT * FROM email_campaign_drafts WHERE id = ?").get(result.lastInsertRowid));
 });
