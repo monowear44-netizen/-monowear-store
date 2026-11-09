@@ -199,6 +199,19 @@ db.exec(`
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
+  CREATE TABLE IF NOT EXISTS email_campaign_drafts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL DEFAULT 'Untitled campaign',
+    request TEXT NOT NULL DEFAULT '',
+    tone TEXT NOT NULL DEFAULT 'cinematic, confident, concise',
+    subject TEXT NOT NULL DEFAULT '',
+    preview TEXT NOT NULL DEFAULT '',
+    body TEXT NOT NULL DEFAULT '',
+    cta_label TEXT NOT NULL DEFAULT '',
+    cta_url TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
   CREATE TABLE IF NOT EXISTS admin_notifications (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     type TEXT NOT NULL DEFAULT 'info',
@@ -2860,6 +2873,15 @@ function monowearFreeEmailDraft(request) {
       cta_url: "https://monowears.com"
     };
   }
+  if (/(official drop|drop day|launch day|now live|available now|live today)/.test(text)) {
+    return {
+      subject: "HELP IS ON THE WAY — OUT NOW.",
+      preview: "The wait is over. The official MONOWEAR drop is live.",
+      body: "HELP IS ON THE WAY.\n\nThe official MONOWEAR drop is now live.\n\nA collection built around pressure, persistence, and finding a way through. Every piece carries a reminder that even in the darkest stretch, a light can still be growing.\n\nExplore the collection and find your piece.\n\nLIVE THE NAME. WEAR THE MEANING.",
+      cta_label: "SHOP THE OFFICIAL DROP",
+      cta_url: "https://monowears.com"
+    };
+  }
   if (/drop|launch|collection|release|help is on the way|archive/.test(text)) {
     return {
       subject: "MONOWEAR — a new drop is approaching.",
@@ -2932,6 +2954,47 @@ app.post("/api/admin/email-draft", requireAdmin, async (req, res) => {
     console.error("MONOWEAR AI email draft error:",error.message);
     return freeDraft();
   }
+});
+
+function campaignDraftFromRow(row) { return row || null; }
+app.get("/api/admin/email-drafts", requireAdmin, (req, res) => {
+  res.json(db.prepare("SELECT id,name,subject,updated_at FROM email_campaign_drafts ORDER BY updated_at DESC,id DESC").all());
+});
+app.get("/api/admin/email-drafts/:id", requireAdmin, (req, res) => {
+  const row = db.prepare("SELECT * FROM email_campaign_drafts WHERE id = ?").get(Number(req.params.id));
+  if (!row) return res.status(404).json({error:"Saved campaign draft not found."});
+  res.json(campaignDraftFromRow(row));
+});
+function campaignDraftInput(body) {
+  return {
+    name: String(body.name || "Untitled campaign").trim().slice(0,120) || "Untitled campaign",
+    request: String(body.request || "").slice(0,1200),
+    tone: String(body.tone || "cinematic, confident, concise").slice(0,100),
+    subject: String(body.subject || "").slice(0,180),
+    preview: String(body.preview || "").slice(0,220),
+    body: String(body.body || "").slice(0,10000),
+    cta_label: String(body.cta_label || "").slice(0,80),
+    cta_url: String(body.cta_url || "").slice(0,500)
+  };
+}
+app.post("/api/admin/email-drafts", requireAdmin, (req, res) => {
+  const d = campaignDraftInput(req.body || {});
+  if (!d.request.trim() && !d.subject.trim() && !d.body.trim()) return res.status(400).json({error:"Add a prompt or email content before saving."});
+  if (d.cta_url && !/^https?:\\/\\//i.test(d.cta_url)) return res.status(400).json({error:"The button link must start with https:// or http://."});
+  const result = db.prepare("INSERT INTO email_campaign_drafts (name,request,tone,subject,preview,body,cta_label,cta_url) VALUES (@name,@request,@tone,@subject,@preview,@body,@cta_label,@cta_url)").run(d);
+  res.status(201).json(db.prepare("SELECT * FROM email_campaign_drafts WHERE id = ?").get(result.lastInsertRowid));
+});
+app.put("/api/admin/email-drafts/:id", requireAdmin, (req, res) => {
+  const d = campaignDraftInput(req.body || {});
+  const id = Number(req.params.id);
+  const result = db.prepare("UPDATE email_campaign_drafts SET name=@name,request=@request,tone=@tone,subject=@subject,preview=@preview,body=@body,cta_label=@cta_label,cta_url=@cta_url,updated_at=CURRENT_TIMESTAMP WHERE id=@id").run({...d,id});
+  if (!result.changes) return res.status(404).json({error:"Saved campaign draft not found."});
+  res.json(db.prepare("SELECT * FROM email_campaign_drafts WHERE id = ?").get(id));
+});
+app.delete("/api/admin/email-drafts/:id", requireAdmin, (req, res) => {
+  const result = db.prepare("DELETE FROM email_campaign_drafts WHERE id = ?").run(Number(req.params.id));
+  if (!result.changes) return res.status(404).json({error:"Saved campaign draft not found."});
+  res.json({success:true});
 });
 
 app.post("/api/admin/email-campaign", requireAdmin, async (req, res) => {
