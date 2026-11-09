@@ -1086,6 +1086,18 @@
         <div><p class="eyebrow">AI CAMPAIGN STUDIO</p><h2>AI Email Assistant</h2><p class="muted">Describe what you want to announce. The AI writes a draft for you to review and edit. Nothing sends until you confirm.</p></div>
         <span class="status-pill">DRAFT FIRST · SEND BY APPROVAL</span>
       </div>
+      <div class="campaign-draft-manager">
+        <div class="email-assistant-fields">
+          <div><label for="emailCampaignName">Campaign name</label><input id="emailCampaignName" type="text" maxlength="120" placeholder="e.g. HELP IS ON THE WAY — Official Drop"></div>
+          <div><label for="savedCampaignDrafts">Saved drafts</label><select id="savedCampaignDrafts"><option value="">Choose a saved draft…</option></select></div>
+        </div>
+        <div class="toolbar-actions email-assistant-actions">
+          <button class="primary" type="button" id="saveCampaignDraft">SAVE DRAFT</button>
+          <button class="secondary" type="button" id="newCampaignDraft">+ NEW CAMPAIGN</button>
+          <button class="quiet" type="button" id="deleteCampaignDraft" disabled>DELETE SAVED DRAFT</button>
+        </div>
+        <p id="campaignSaveMessage" class="message" role="status" aria-live="polite">Create and keep as many campaign drafts as you need. Drafts stay private in Studio until you send them.</p>
+      </div>
       <label for="emailCampaignRequest">What should this email say?</label>
       <textarea id="emailCampaignRequest" rows="3" maxlength="1200" placeholder="Example: Announce that HELP IS ON THE WAY launches soon. Keep it cinematic, personal and concise."></textarea>
       <div class="email-assistant-fields">
