@@ -11,12 +11,14 @@
   <link rel="manifest" href="/studio-manifest.json?v=studio-identity-20261024">
   <link rel="apple-touch-icon" href="/studio-icon.svg?v=studio-identity-20261024">
   <title>MONOWEAR Studio</title>
-  <link rel="stylesheet" href="/studio.css">\n  <link rel="stylesheet" href="/studio-layouts.css?v=layouts-20261026-1">
+  <link rel="stylesheet" href="/studio.css">
+  <link rel="stylesheet" href="/studio-layouts.css?v=layouts-20261026-1">
   <link rel="stylesheet" href="/studio-extra.css?v=bluegold-bottomnav-20261017">
   <link rel="stylesheet" href="/theme.css?v=bluegold-theme-20261017">
   <link rel="stylesheet" href="/studio-dashboard.css?v=bottom-nav-dock-20261017">
   <link rel="stylesheet" href="/studio-modes.css?v=audience-layout-ai-model-fix-20261017">
-<style>.products-list.products-rows{display:flex;flex-direction:column;gap:12px}.products-list.products-columns{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}.products-list.products-columns .product-row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"photo photo" "details details" "price actions";align-items:start;gap:12px;min-width:0;padding:14px}.products-list.products-columns .product-row>.thumb{grid-area:photo;width:100%!important;height:220px!important;min-width:0!important;box-sizing:border-box}.products-list.products-columns .product-row>.thumb img{object-fit:contain!important}.products-list.products-columns .product-row>div:nth-child(2){grid-area:details;min-width:0;overflow-wrap:anywhere}.products-list.products-columns .product-row>.price{grid-area:price;align-self:center}.products-list.products-columns .product-row>.row-actions{grid-area:actions;align-self:center;justify-self:end}.product-view-switch button[aria-pressed="true"]{background:var(--accent,#39ff14);color:#111;border-color:transparent}</style>\n</head>
+<style>.products-list.products-rows{display:flex;flex-direction:column;gap:12px}.products-list.products-columns{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}.products-list.products-columns .product-row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"photo photo" "details details" "price actions";align-items:start;gap:12px;min-width:0;padding:14px}.products-list.products-columns .product-row>.thumb{grid-area:photo;width:100%!important;height:220px!important;min-width:0!important;box-sizing:border-box}.products-list.products-columns .product-row>.thumb img{object-fit:contain!important}.products-list.products-columns .product-row>div:nth-child(2){grid-area:details;min-width:0;overflow-wrap:anywhere}.products-list.products-columns .product-row>.price{grid-area:price;align-self:center}.products-list.products-columns .product-row>.row-actions{grid-area:actions;align-self:center;justify-self:end}.product-view-switch button[aria-pressed="true"]{background:var(--accent,#39ff14);color:#111;border-color:transparent}</style>
+</head>
 <body>
 
   <div id="studioLoader" role="status" aria-live="polite" aria-label="Loading MONOWEAR Studio">
@@ -202,7 +204,11 @@
         + ADD PRODUCT
       </button>
     </div>
-    <div class="product-view-switch" role="group" aria-label="Product display layout" style="display:flex;gap:8px;justify-content:flex-end;margin:0 0 12px;">\n      <button type="button" class="small-button" id="productsRowsButton" aria-pressed="true">ROWS</button>\n      <button type="button" class="small-button" id="productsColumnsButton" aria-pressed="false">COLUMNS</button>\n    </div>\n    <div class="filter-bar">
+    <div class="product-view-switch" role="group" aria-label="Product display layout" style="display:flex;gap:8px;justify-content:flex-end;margin:0 0 12px;">
+      <button type="button" class="small-button" id="productsRowsButton" aria-pressed="true">ROWS</button>
+      <button type="button" class="small-button" id="productsColumnsButton" aria-pressed="false">COLUMNS</button>
+    </div>
+    <div class="filter-bar">
       <input
         id="productSearch"
         type="search"
@@ -1436,9 +1442,10 @@
   <script src="/studio-color-mode.js?v=studio-modes-20261017b" defer></script>
   <script src="/theme.js?v=bluegold-theme-20261017" defer></script>
 <script src="/wardrobe-rail-admin.js?v=rail-admin-20261025-1" defer></script>
-<script src="/admin-product-rail.js?v=wardrobe-product-admin-20261025-2" defer></script>\n<script src="/studio-layouts.js?v=layouts-20261026-1" defer></script>
+<script src="/admin-product-rail.js?v=wardrobe-product-admin-20261025-2" defer></script>
+<script src="/studio-layouts.js?v=layouts-20261026-1" defer></script>
 
-<style>.mono-support-studio-link{position:fixed;right:18px;bottom:18px;z-index:9998;background:#0b0c0b;color:#f4f2eb;border:1px solid #39ff14;padding:13px 15px;font:700 9px monospace;letter-spacing:.12em;text-decoration:none;box-shadow:0 8px 30px #0003}.mono-support-studio-link:hover{background:#39ff14;color:#111}</style>
+<style>.mono-support-studio-link{position:fixed;right:18px;bottom:calc(96px + env(safe-area-inset-bottom));z-index:9998;background:#0b0c0b;color:#f4f2eb;border:1px solid #39ff14;padding:11px 12px;font:700 9px monospace;letter-spacing:.12em;text-decoration:none;box-shadow:0 8px 30px #0003}.mono-support-studio-link:hover{background:#39ff14;color:#111}</style>
 <a class="mono-support-studio-link" href="/support-inbox.html">SUPPORT INBOX ↗</a>
 </body>
 </html>
