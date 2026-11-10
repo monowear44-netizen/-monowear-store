@@ -437,7 +437,7 @@
     const newDropMarkup = newDrop.length ? `
       <section class="product-category-section new-arrivals-section new-drop-section" aria-labelledby="new-drop-heading">
         <div class="product-subheading product-category-heading">
-          <p class="eyebrow">THE CURRENT DROP / COUNTDOWN + PRE-ORDER</p>
+          <p class="eyebrow">NEW ARRIVALS</p>
           <h3 id="new-drop-heading">New <i>drop.</i></h3>
         </div>
         <div class="product-grid product-showcase-carousel">${renderProductCards(newDrop)}</div>
