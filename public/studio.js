@@ -1033,7 +1033,7 @@ function renderProducts() {
 
     return `
     <article class="product-row">
-      <div class="thumb" style="width:88px;height:88px;min-width:88px;display:grid;place-items:center;overflow:hidden;background:#171717;border-radius:10px;color:#aaa;font-size:12px;">
+      <div class="thumb">
         ${product.image ? `<img src="${esc(product.image)}" alt="${esc(product.name)}" loading="eager" decoding="async" fetchpriority="low" style="display:block;width:100%;height:100%;object-fit:contain;">` : "NO IMAGE"}
       </div>
       <div>
