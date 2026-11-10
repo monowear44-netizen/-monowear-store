@@ -1474,7 +1474,8 @@ async function loadSettings() {
 
     for (const [key, value] of Object.entries(currentSettings)) {
       if (form.elements[key]) {
-        form.elements[key].value = value ?? "";
+        if (form.elements[key].type === "checkbox") form.elements[key].checked = String(value) === "true";
+        else form.elements[key].value = value ?? "";
       }
     }
 
@@ -1557,6 +1558,7 @@ $("settingsForm").addEventListener("submit", async (event) => {
 
   try {
     const body = Object.fromEntries(new FormData(form));
+    body.preorder_discount_auto_restore = form.elements.preorder_discount_auto_restore?.checked ? "true" : "false";
 
     for (const setting of imageSettings) {
       body[setting.key] =
