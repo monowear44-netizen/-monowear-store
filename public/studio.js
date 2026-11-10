@@ -1001,6 +1001,8 @@ function setProductsLayout(layout) {
 
 $("productsRowsButton")?.addEventListener("click", () => setProductsLayout("rows"));
 $("productsColumnsButton")?.addEventListener("click", () => setProductsLayout("columns"));
+// Open the catalogue in visual grid mode by default.
+setProductsLayout("columns");
 
 function renderProducts() {
   const container = $("productsList");
@@ -1034,7 +1036,7 @@ function renderProducts() {
     return `
     <article class="product-row">
       <div class="thumb">
-        ${product.image ? `<img src="${esc(product.image)}" alt="${esc(product.name)}" loading="eager" decoding="async" fetchpriority="low" style="display:block;width:100%;height:100%;object-fit:contain;">` : "NO IMAGE"}
+        ${product.image ? `<img src="${esc(product.image)}" alt="${esc(product.name)}" loading="${list.indexOf(product) < 8 ? "eager" : "lazy"}" decoding="async" fetchpriority="${list.indexOf(product) < 4 ? "high" : "auto"}">` : "NO IMAGE"}
       </div>
       <div>
         <h3>${esc(product.name)} ${stockBadge}</h3>
