@@ -1621,7 +1621,7 @@ function renderHistoricalRecords() {
     const phone = record.customer_phone ? '<span class="muted">' + esc(record.customer_phone) + '</span>' : "";
     const date = record.record_date ? esc(record.record_date) : "Date not supplied";
     const details = record.details ? '<p class="muted">' + esc(record.details) + '</p>' : "";
-    const reference = record.reference ? '<p class="muted">Reference: ' + esc(record.reference) + '</p>' : "";
+    const reference = record.reference ? '<p class="muted">Record ID: ' + esc(record.reference) + '</p>' : "";
     const status = record.status ? '<span class="muted">' + esc(record.status.replace(/_/g, " ")) + '</span>' : "";
     return '<article class="panel" style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap"><div style="min-width:0;flex:1"><p class="eyebrow">' + esc(labels[record.record_type] || record.record_type) + ' · ' + esc(record.category || "Uncategorised") + '</p><h3 style="margin:6px 0">' + esc(record.description) + '</h3><p class="muted">' + date + ' · ' + status + '</p>' + name + ' ' + phone + details + reference + '</div><strong style="white-space:nowrap">' + signed + (amount ? money(amount) : "—") + '</strong></div></article>';
   }).join("");
