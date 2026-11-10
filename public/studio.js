@@ -1574,7 +1574,8 @@ $("settingsForm").addEventListener("submit", async (event) => {
 
     for (const [key, value] of Object.entries(currentSettings)) {
       if (form.elements[key]) {
-        form.elements[key].value = value ?? "";
+        if (form.elements[key].type === "checkbox") form.elements[key].checked = String(value) === "true";
+        else form.elements[key].value = value ?? "";
       }
     }
 
