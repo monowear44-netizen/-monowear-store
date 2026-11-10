@@ -315,7 +315,7 @@
             <h3><a class="product-name-link" href="/product.html?slug=${encodeURIComponent(product.slug || "")}&id=${id}">${escapeHTML(product.name || "MONOWEAR Piece")}</a></h3>
             <span class="price">${discounted ? '<del class="original-price">' + money(originalPrice) + '</del> ' : ''}${money(product.price)}</span>
           </div>
-          ${isDropProduct ? `<div class="drop-countdown"><span data-drop-label>${phase.label}</span><strong data-drop-countdown>${phase.target ? countdownText(phase.target) : "AVAILABLE NOW"}</strong><small>${phase.phase === "countdown" ? "Pre-orders begin " + escapeHTML(dropDates().preorderDate) : phase.phase === "preorder" ? "Official drop " + escapeHTML(dropDates().launchDate) : "The drop is live"}</small></div>` : ""}
+          ${isDropProduct ? `<div class="drop-countdown"><span data-drop-label>${phase.label}</span><strong data-drop-countdown>${phase.target ? countdownText(phase.target) : "AVAILABLE NOW"}</strong><small>${phase.phase === "countdown" ? "Pre-orders begin " + escapeHTML(dropDates().preorderDate) : phase.phase === "preorder" ? "Official drop " + escapeHTML(dropDates().launchDate) : ""}</small></div>` : ""}
           <div class="product-category">
             ${escapeHTML(product.category || "MONOWEAR")}
             ${stock > 0 ? ` · ${stock} available` : ""}
