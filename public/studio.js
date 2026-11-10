@@ -2546,7 +2546,7 @@ function renderHistoricalRecords() {
       ? '<p class="muted">Imported to Completed &amp; shipped as a historical paid order. Not a current Paystack transaction.</p>'
       : (record.details ? '<p class="muted">' + esc(record.details) + '</p>' : "");
     const amountLine = record.record_type === "customer" && !amount ? "" : '<strong>' + signed + money(amount) + '</strong>';
-    return '<article class="order-card"><div><p class="eyebrow">' + esc(labels[record.record_type] || record.record_type) + ' · ' + date + '</p><h3>' + esc(record.description) + '</h3><p>' + name + ' ' + phone + '</p>' + details + (record.reference ? '<p class="muted">Reference: ' + esc(record.reference) + '</p>' : '') + '</div><div>' + amountLine + (record.status ? '<p>' + badge(String(record.status).toUpperCase(), record.status === "needs_review" ? "warn" : "") + '</p>' : '') + '</div></article>';
+    return '<article class="order-card"><div><p class="eyebrow">' + esc(labels[record.record_type] || record.record_type) + ' · ' + date + '</p><h3>' + esc(record.description) + '</h3><p>' + name + ' ' + phone + '</p>' + details + (record.reference ? '<p class="muted">Record ID: ' + esc(record.reference) + '</p>' : '') + '</div><div>' + amountLine + (record.status ? '<p>' + badge(String(record.status).toUpperCase(), record.status === "needs_review" ? "warn" : "") + '</p>' : '') + '</div></article>';
   }).join("");
 }
 $("refreshHistory")?.addEventListener("click", loadHistoricalRecords);
