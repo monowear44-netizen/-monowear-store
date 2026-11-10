@@ -1036,7 +1036,7 @@ function renderProducts() {
     return `
     <article class="product-row">
       <div class="thumb">
-        ${product.image ? `<img src="${esc(product.image)}" alt="${esc(product.name)}" loading="${list.indexOf(product) < 8 ? "eager" : "lazy"}" decoding="async" fetchpriority="${list.indexOf(product) < 4 ? "high" : "auto"}">` : "NO IMAGE"}
+        ${product.image ? `<img src="${esc(product.image)}" alt="${esc(product.name)}" loading="${list.indexOf(product) < 12 ? "eager" : "lazy"}" decoding="async" fetchpriority="${list.indexOf(product) < 8 ? "high" : "auto"}">` : "NO IMAGE"}
       </div>
       <div>
         <h3>${esc(product.name)} ${stockBadge}</h3>
