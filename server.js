@@ -291,8 +291,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_site_visits_visitor_time ON site_visits(visitor_id, visited_at);
 `);
 db.prepare("DELETE FROM site_visits WHERE visited_at < datetime('now', '-400 days')").run();
-// Remove any older URL-level analytics: the dashboard tracks totals only, never product views.
-db.prepare("UPDATE site_visits SET page_path = '/' WHERE page_path <> '/'").run();
+// Keep product-level paths for the per-product viewer counts shown in Studio.
 
 // ============================================================
 // HISTORICAL LABELD RECORDS — idempotent seed, separate from live orders.
@@ -951,8 +950,23 @@ app.use((req, res, next) => {
       res.append("Set-Cookie", "mw_visitor=" + visitorId + "; Max-Age=31536000; Path=/; SameSite=Lax; HttpOnly; Secure");
     }
 
-    // Count visits only. Do not persist the URL or product slug a visitor opened.
-    db.prepare("INSERT INTO site_visits (visitor_id, page_path) VALUES (?, '/')").run(visitorId);
+    // Record product detail visits against a numeric product ID only. Other
+    // storefront pages remain aggregated at "/"; no full URLs or slugs are stored.
+    let pagePath = "/";
+    if (pathname === "/product.html") {
+      let productId = Number(req.query.id || 0);
+      if (!Number.isInteger(productId) || productId < 1) {
+        const slug = String(req.query.slug || "").slice(0, 120);
+        const match = slug ? db.prepare("SELECT id FROM products WHERE slug = ? AND published = 1").get(slug) : null;
+        productId = Number(match?.id || 0);
+      }
+      if (productId > 0 && db.prepare("SELECT id FROM products WHERE id = ? AND published = 1").get(productId)) {
+        pagePath = "/product/" + productId;
+      } else {
+        return next();
+      }
+    }
+    db.prepare("INSERT INTO site_visits (visitor_id, page_path) VALUES (?, ?)").run(visitorId, pagePath);
   } catch (error) {
     // Analytics must never interrupt storefront requests.
     console.warn("Website analytics skipped:", error.message);
@@ -2364,8 +2378,16 @@ app.get("/api/admin/products", requireAdmin, (req, res) => {
     SELECT * FROM products
     ORDER BY sort_order ASC, id DESC
   `).all();
+  const countViewers = db.prepare(`
+    SELECT COUNT(DISTINCT visitor_id) AS viewers
+    FROM site_visits
+    WHERE page_path = ?
+  `);
 
-  res.json(products.map((product) => productWithCollections(product, true)));
+  res.json(products.map((product) => ({
+    ...productWithCollections(product, true),
+    viewers: Number(countViewers.get("/product/" + product.id)?.viewers || 0)
+  })));
 });
 
 app.post("/api/admin/products", requireAdmin, (req, res) => {
