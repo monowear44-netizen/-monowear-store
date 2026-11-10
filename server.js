@@ -493,6 +493,7 @@ const defaults = {
   announcement: "HELP IS ON THE WAY — COMING SOON",
   drop_preorder_date: "2026-10-21",
   drop_launch_date: "2026-11-10",
+  preorder_discount_auto_restore: "true",
   wardrobe_section_label: "Featured / Next Drop",
   wardrobe_rail: JSON.stringify({ show: "all", background: "" }),
   x: "https://x.com/monowear44",
@@ -1006,13 +1007,39 @@ function parseJSON(value, fallback = []) {
   }
 }
 
-function safeProduct(product) {
+function isDropProductForPreorderPricing(product) {
+  if (!product) return false;
+  if (Number(product.featured) === 1 || String(product.new_arrival_until || "").trim()) return true;
+  if (["featured", "new-drop", "new-arrival"].includes(String(product.rail_status || ""))) return true;
+  const linkedDrop = db.prepare(`
+    SELECT 1 FROM product_collections pc
+    JOIN collections c ON c.id = pc.collection_id
+    WHERE pc.product_id = ?
+      AND (LOWER(COALESCE(c.slug,'')) LIKE '%help-is-on-the-way%'
+        OR LOWER(COALESCE(c.slug,'')) LIKE '%drop%'
+        OR c.release_date = ?)
+    LIMIT 1
+  `).get(Number(product.id), String(getSetting("drop_preorder_date", "2026-10-21")));
+  return Boolean(linkedDrop);
+}
+function customerFacingProductPrice(product) {
+  const salePrice = Number(product?.price || 0);
+  const regularPrice = Number(product?.compare_price || 0);
+  if (String(getSetting("preorder_discount_auto_restore", "true")) !== "true") return salePrice;
+  if (!(regularPrice > salePrice) || !isDropProductForPreorderPricing(product)) return salePrice;
+  const launchDate = String(getSetting("drop_launch_date", "2026-11-10") || "");
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(launchDate)) return salePrice;
+  const launchAt = new Date(launchDate + "T00:00:00+01:00").getTime();
+  return Number.isFinite(launchAt) && Date.now() >= launchAt ? regularPrice : salePrice;
+}
+
+function safeProduct(product, applyPreorderPrice = true) {
   if (!product) return null;
 
   return {
     ...product,
-    price: Number(product.price || 0),
-    compare_price: Number(product.compare_price || 0),
+    price: applyPreorderPrice ? customerFacingProductPrice(product) : Number(product.price || 0),
+    compare_price: applyPreorderPrice && customerFacingProductPrice(product) !== Number(product.price || 0) ? 0 : Number(product.compare_price || 0),
     stock: Number(product.stock || 0),
     published: Boolean(product.published),
     featured: Boolean(product.featured),
@@ -1110,11 +1137,11 @@ function getCollectionProducts(collectionId, includeUnpublished = false) {
     WHERE pc.collection_id = ?
     ${publishedFilter}
     ORDER BY pc.sort_order ASC, p.sort_order ASC, p.id DESC
-  `).all(collectionId).map(safeProduct);
+  `).all(collectionId).map((product) => safeProduct(product));
 }
 
 function productWithCollections(product, includeHidden = false) {
-  const safe = safeProduct(product);
+  const safe = safeProduct(product, !includeHidden);
   if (!safe) return null;
 
   safe.collections = getProductCollections(product.id, includeHidden);
@@ -3206,7 +3233,7 @@ function normalizeCheckoutItems(items) {
       name: product.name,
       slug: product.slug,
       image: product.image,
-      price: Number(product.price),
+      price: customerFacingProductPrice(product),
       quantity: line.quantity,
       size: line.size,
       color: line.color,
