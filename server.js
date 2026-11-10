@@ -4990,7 +4990,7 @@ app.get("/", (req, res, next) => {
       const description = "Independent streetwear from Nigeria. Explore MONOWEAR: a state of mind built on self-reliance, intention and independence.";
       const escapeAttr = (value) => String(value || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       let image = String(socialSettings.logo_image || "");
-      if (image && !/^https?:\\/\\//i.test(image)) image = baseUrl + (image.startsWith("/") ? "" : "/") + image;
+      if (image && !image.startsWith("https://") && !image.startsWith("http://")) image = baseUrl + (image.startsWith("/") ? "" : "/") + image;
       const tags = {
         "og:title": title,
         "og:description": description,
