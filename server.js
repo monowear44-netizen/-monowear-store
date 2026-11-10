@@ -4981,44 +4981,16 @@ app.get("/", (req, res, next) => {
   if (fs.existsSync(indexFile)) {
     try {
       let html = fs.readFileSync(indexFile, "utf8");
-      const now = Date.now();
-      const featured = db.prepare(
-        "SELECT * FROM products WHERE published = 1 AND featured = 1 ORDER BY sort_order ASC, id DESC LIMIT 1"
-      ).get();
-      // Prefer a featured product. If none exists, promote the newest published
-      // product so shared links still show a current drop item and countdown.
-      const product = featured || db.prepare(
-        "SELECT * FROM products WHERE published = 1 ORDER BY COALESCE(updated_at, created_at) DESC, id DESC LIMIT 1"
-      ).get();
       const settingRows = db.prepare("SELECT key, value FROM settings").all();
       const socialSettings = Object.fromEntries(settingRows.map((row) => [row.key, row.value]));
       const baseUrl = "https://monowears.com";
-      const preorderDate = String(socialSettings.drop_preorder_date || "2026-10-21");
-      const launchDate = String(socialSettings.drop_launch_date || "2026-11-10");
-      const preorderAt = new Date(preorderDate + "T00:00:00+01:00").getTime();
-      const launchAt = new Date(launchDate + "T00:00:00+01:00").getTime();
-      const targetAt = now < preorderAt ? preorderAt : now < launchAt ? launchAt : 0;
-      const targetLabel = now < preorderAt ? "PRE-ORDERS OPEN IN" : now < launchAt ? "DROP GOES LIVE IN" : "DROP LIVE";
-      const daysLeft = targetAt ? Math.max(0, Math.ceil((targetAt - now) / 86400000)) : 0;
-      const countdown = targetAt ? daysLeft + (daysLeft === 1 ? " DAY" : " DAYS") : "AVAILABLE NOW";
-      const productName = product && product.name ? String(product.name) : "Help Is On The Way";
-      const title = product
-        ? "MONOWEARS — " + productName + " | " + targetLabel + " " + countdown
-        : "MONOWEARS — Help Is On The Way | " + targetLabel + " " + countdown;
-      const description = product
-        ? (featured ? "Featured piece: " : "New drop: ") + productName + ". " + targetLabel + (targetAt ? " " + countdown + ". " : ". ") + "Discover the Monowears drop."
-        : "Help Is On The Way by MONOWEARS. " + targetLabel + (targetAt ? " " + countdown + ". " : ". ") + "Independent streetwear from Nigeria. Live the name. Wear the meaning.";
+      // Shared homepage links should represent the MONOWEAR brand, never a
+      // rotating product. Keep the preview stable and use only the brand logo.
+      const title = "MONOWEAR — Live the Name. Wear the Meaning.";
+      const description = "Independent streetwear from Nigeria. Explore MONOWEAR: a state of mind built on self-reliance, intention and independence.";
       const escapeAttr = (value) => String(value || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-      let image = featured && featured.image ? String(featured.image) : "";
-      if (!image && featured && featured.images) {
-        try {
-          const images = Array.isArray(featured.images) ? featured.images : JSON.parse(featured.images);
-          image = Array.isArray(images) ? String(images[0] || "") : "";
-        } catch {}
-      }
-      // Use the selected product image, or the brand logo if no product image exists.
-      if (!image) image = String(socialSettings.logo_image || "");
-      if (image && !/^https?:\/\//i.test(image)) image = baseUrl + (image.startsWith("/") ? "" : "/") + image;
+      let image = String(socialSettings.logo_image || "");
+      if (image && !/^https?:\\/\\//i.test(image)) image = baseUrl + (image.startsWith("/") ? "" : "/") + image;
       const tags = {
         "og:title": title,
         "og:description": description,
