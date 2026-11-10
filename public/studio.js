@@ -974,7 +974,7 @@ function emailBadge(status) {
 
 async function loadProducts() {
   try {
-    currentProducts = await api("/api/admin/products");
+    currentProducts = (await api("/api/admin/products")).filter((product) => String(product.name || "").trim());
 
     if ($("productCount")) {
       $("productCount").textContent = currentProducts.length;
