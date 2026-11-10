@@ -1910,7 +1910,7 @@ $("manualSaleForm")?.addEventListener("submit", async (event) => {
   button.disabled = true; if (message) message.textContent = "Recording sale…";
   try {
     const result = await api("/api/admin/manual-sales", { method: "POST", body: JSON.stringify(data) });
-    if (message) message.textContent = result.message + " Reference: " + result.reference;
+    if (message) message.textContent = result.message + " Transaction ID: " + result.reference;
     toast(result.message); form.reset(); manualSaleSelectedProductIds.clear(); syncManualSaleProductSelection(); renderManualSaleProductPicker();
     if ($("manualSaleQuantity")) $("manualSaleQuantity").value = "1";
     if ($("manualSaleAmount")) { $("manualSaleAmount").value = ""; $("manualSaleAmount").dataset.edited = ""; }
