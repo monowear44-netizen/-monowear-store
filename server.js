@@ -1242,7 +1242,7 @@ const upload = multer({
   }
 });
 
-app.use("/uploads", express.static(UPLOAD_DIR));
+app.use("/uploads", express.static(UPLOAD_DIR, { maxAge: "1y", immutable: true, etag: true, lastModified: true }));
 
 // ============================================================
 // EMAIL
