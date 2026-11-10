@@ -531,3 +531,48 @@ html[data-theme] .waitlist-section #newsletterForm button[type="submit"] {
 #newsletterForm .newsletter-form-row > button[type="submit"]::first-line {
   color: #10130F !important;
 }
+
+/* WHITE THEME — waitlist must follow the light storefront, not the legacy dark campaign skin. */
+html[data-theme="white"] .waitlist-section {
+  background: #ffffff !important;
+  background-image: none !important;
+  color: #171815 !important;
+  border-top: 1px solid #e5e5df !important;
+  border-bottom: 1px solid #e5e5df !important;
+}
+html[data-theme="white"] .waitlist-section::before {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+}
+html[data-theme="white"] .waitlist-section .newsletter-copy .eyebrow,
+html[data-theme="white"] .waitlist-section .newsletter-copy h2,
+html[data-theme="white"] .waitlist-section .newsletter-copy > p:last-child,
+html[data-theme="white"] .waitlist-section form label,
+html[data-theme="white"] .waitlist-section #newsletterMessage,
+html[data-theme="white"] .waitlist-section #newsletterLink {
+  color: #171815 !important;
+  text-shadow: none !important;
+}
+html[data-theme="white"] .waitlist-section .newsletter-copy > p:last-child {
+  opacity: .72;
+}
+html[data-theme="white"] .waitlist-section input[type="email"] {
+  background: #ffffff !important;
+  color: #171815 !important;
+  border: 1px solid #cfcfc7 !important;
+  box-shadow: none !important;
+}
+html[data-theme="white"] .waitlist-section input[type="email"]::placeholder {
+  color: #777970 !important;
+}
+html[data-theme="white"] .waitlist-section #newsletterForm button[type="submit"] {
+  background: var(--accent, #c6ff4b) !important;
+  color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
+  border: 1px solid var(--accent, #c6ff4b) !important;
+  text-shadow: none !important;
+}
+html[data-theme="white"] .waitlist-section #newsletterLink {
+  border-color: #cfcfc7 !important;
+}
