@@ -1389,7 +1389,7 @@ async function sendOrderConfirmation(order) {
     <h2 style="margin:0 0 12px;font-size:22px">Order confirmed.</h2>
     <p>Hi ${escapeHTML(order.customer_name)}, thank you for shopping with MONOWEAR.
        Your payment has been received and your order is being processed.</p>
-    <p><strong>Order reference:</strong> ${escapeHTML(order.reference)}</p>
+    <p style="margin:18px 0;padding:14px 16px;background:#f4f4f1;border-left:3px solid #164A36"><strong>Order tracking number:</strong><br><span style="font-size:18px;letter-spacing:1px">${escapeHTML(order.reference)}</span><br><span style="color:#666;font-size:12px">Keep this number to check your order progress with MONOWEAR.</span></p>
 
     <table style="width:100%;border-collapse:collapse;margin-top:8px">${rows}</table>
 
