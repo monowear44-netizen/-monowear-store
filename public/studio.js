@@ -2020,6 +2020,7 @@ function renderOrders() {
           ${esc(order.shipping_state)}
         </p>
         <p class="muted">Dispatch from: ${esc(order.dispatch_location || "Ikorodu, Lagos")}</p>
+        ${order.shipment_carrier || order.shipment_tracking_number ? '<p class="muted">Courier: ' + esc(order.shipment_carrier || "Not specified") + ' · Tracking: ' + esc(order.shipment_tracking_number || "Not provided") + (order.shipment_tracking_url ? ' · <a href="' + esc(order.shipment_tracking_url) + '" target="_blank" rel="noopener">Open tracking ↗</a>' : '') + '</p>' : ''}
 
         <p>
           Subtotal ${money(order.subtotal)}
@@ -2113,9 +2114,22 @@ window.resendConfirmation = async (id) => {
 
 window.updateOrder = async (id, status) => {
   try {
+    const order = currentOrders.find(item => Number(item.id) === Number(id));
+    const shipment = {};
+    if (status === "shipped") {
+      const carrier = prompt("Delivery company / logistics provider (optional):", order?.shipment_carrier || "");
+      if (carrier === null) { await loadOrders(); return; }
+      const tracking = prompt("Tracking number / waybill (optional):", order?.shipment_tracking_number || "");
+      if (tracking === null) { await loadOrders(); return; }
+      const trackingUrl = prompt("Direct tracking link (optional):", order?.shipment_tracking_url || "");
+      if (trackingUrl === null) { await loadOrders(); return; }
+      shipment.shipment_carrier = carrier.trim();
+      shipment.shipment_tracking_number = tracking.trim();
+      shipment.shipment_tracking_url = trackingUrl.trim();
+    }
     const result = await api(`/api/admin/orders/${id}/status`, {
       method: "PUT",
-      body: JSON.stringify({ status })
+      body: JSON.stringify({ status, ...shipment })
     });
 
     await loadOrders();
@@ -2129,6 +2143,10 @@ window.updateOrder = async (id, status) => {
       } else {
         toast("Order status updated.");
       }
+    } else if (status === "shipped") {
+      toast(result.shipped_email_sent
+        ? "Marked shipped. Shipping email sent to customer."
+        : "Marked shipped. Tracking details saved; shipping email could not be sent.");
     } else {
       toast("Order status updated.");
     }
