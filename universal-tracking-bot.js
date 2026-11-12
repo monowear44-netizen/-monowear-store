@@ -86,9 +86,23 @@ async function submitTrackingPage(page, trackingNumber) {
     };
     const input = page.locator(selectorFor(candidates[0])).first();
     await input.fill(String(trackingNumber), { timeout: 12000 });
+    // Some courier sites place a download-app popup over the tracking button.
+    // Dismiss that overlay and use a forced click as a fallback, just as a user
+    // would after closing the obstruction.
+    await page.locator("#downloadPopup, .download-app-pop-up, [id*='downloadPopup'], [class*='download-app-pop-up']")
+      .evaluateAll(elements => elements.forEach(el => {
+        el.style.setProperty("display", "none", "important");
+        el.style.setProperty("visibility", "hidden", "important");
+        el.style.setProperty("pointer-events", "none", "important");
+      })).catch(() => {});
     const buttons = page.getByRole("button", { name: /track|trace|search|find|submit|go/i });
     if (await buttons.count()) {
-      await buttons.first().click({ timeout: 15000 });
+      const button = buttons.first();
+      try {
+        await button.click({ timeout: 8000 });
+      } catch {
+        await button.click({ timeout: 8000, force: true });
+      }
     } else {
       const submit = page.locator("form").first();
       if (await submit.count()) {
