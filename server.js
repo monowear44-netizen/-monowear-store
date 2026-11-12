@@ -14,7 +14,7 @@ const crypto = require("crypto");
 const { Resend } = require("resend");
 const webpush = require("web-push");
 const archiver = require("archiver");
-const { startUniversalTrackingBot } = require("./universal-tracking-bot");
+const { startGigTrackingBot } = require("./gig-tracking-bot");
 
 // ============================================================
 // MONOWEAR STORE SERVER
@@ -4801,13 +4801,6 @@ app.get("/api/admin/payments", requireAdmin, (req, res) => {
         failed: paymentTotals("payment_status = 'failed'"),
         refunded: paymentTotals("payment_status = 'refunded'")
       },
-      // MONO PAY is a bank-transfer collection method, not a custodial wallet.
-      // Confirmed transfers are counted only after the admin verifies receipt.
-      monoPay: {
-        received: paymentTotals(`payment_status = 'paid' AND payment_method = 'mono_pay' AND COALESCE(record_type, 'real_order') = 'real_order'`),
-        pending: paymentTotals("payment_status = 'pending' AND payment_method = 'mono_pay'"),
-        refunded: paymentTotals("payment_status = 'refunded' AND payment_method = 'mono_pay'")
-      },
       history
     });
   } catch (error) {
@@ -5325,21 +5318,11 @@ app.put("/api/admin/settings", requireAdmin, (req, res) => {
     });
   }
 });
-// Purge GIG marketing/testimonial text accidentally saved as shipment events.
-db.prepare(`
-  DELETE FROM order_events
-  WHERE LOWER(message) LIKE '%the giggo app by gig logistics%'
-     OR LOWER(message) LIKE '%game-changer for my business%'
-     OR LOWER(message) LIKE '%request item pickups right from my store%'
-     OR LOWER(message) LIKE '%international shipping services to reach more%'
-     OR LOWER(message) LIKE '%join millions of satisfied customers who trust gig logistics%'
-`).run();
-
 require("./support")(app, db, rateLimit);
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`MONOWEAR server running on port ${PORT}`);
-  startUniversalTrackingBot(db);
+  startGigTrackingBot(db);
 
   // Send the requested catch-up shipping guide for the already-shipped order.
   // The database claim makes this one-time and safe across restarts.
