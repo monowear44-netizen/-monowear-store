@@ -24,16 +24,32 @@ function parseDateNear(lines, index) {
   return null;
 }
 
+function isPromotionalOrArticleText(line) {
+  return /mailroom|correspondence|outsourc|transform(?:ed|ing)? our|customer testimonial|trusted brand|our customers|we provide|gadget business|delivery experience|on time|learn more|read more|click here|contact us|frequently asked|customer service|privacy policy|terms (?:and|&) conditions/i.test(line);
+}
+
 function extractTrackingEvents(bodyText) {
   const lines = cleanLines(bodyText);
   const events = [];
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     if (!STATUS_PATTERN.test(line)) continue;
+
+    // A carrier page often includes marketing articles and testimonials in its
+    // main body. Never treat those paragraphs as shipment history just because
+    // they contain words such as "delivered" or "processing".
+    if (line.length > 150 || isPromotionalOrArticleText(line)) continue;
     if (/track (?:another|new)|tracking number|waybill number|shipment tracking|frequently asked|customer service/i.test(line)) continue;
-    const message = line.slice(0, 240);
+
+    // Keep only concise status-like rows. Reject full prose/sentences and
+    // require a nearby date/time so page copy cannot become an order event.
+    const statusLead = /^(?:shipment created|order created|label created|booked|booking confirmed|picked up|pick up|collected|received|accepted|dispatched|departed|arrived|in transit|transit|out for delivery|with delivery|delivery attempted|attempted delivery|delivered|delivery confirmed|delivery failed|unsuccessful delivery|exception|held|on hold|returned|return to sender|rts|customs|clearance|processed|processing|sorted|at facility|at service cent(?:er|re)|handed over|handover|cancelled|canceled)\b/i.test(line);
+    const nearbyDate = parseDateNear(lines, i);
+    if (!statusLead || !nearbyDate) continue;
+
+    const message = line.slice(0, 150);
     if (!events.some(event => event.message.toLowerCase() === message.toLowerCase())) {
-      events.push({ message, created_at: parseDateNear(lines, i) });
+      events.push({ message, created_at: nearbyDate });
     }
   }
   return events.slice(-40);
