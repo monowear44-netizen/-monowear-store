@@ -458,6 +458,7 @@ ensureColumn("orders", "shipment_carrier", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipment_tracking_number", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipment_tracking_url", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipped_email_status", "TEXT DEFAULT ''");
+ensureColumn("orders", "shipped_admin_copy_status", "TEXT DEFAULT ''");
 
 /*
  * One-time shipment detail repair for an already-shipped MONOWEAR order.
@@ -1585,7 +1586,7 @@ async function sendOrderDeliveredEmail(order) {
 
 // Claims the delivery email atomically to prevent duplicate messages.
 // If a send fails, marking the same order Delivered again retries it.
-async function sendOrderShippedEmail(order) {
+async function sendOrderShippedEmail(order, recipient = order && order.customer_email, subjectPrefix = "") {
   if (!order || order.payment_status !== "paid" || !order.customer_email || !resend) {
     return { sent: false, reason: "email_unavailable" };
   }
@@ -1606,8 +1607,31 @@ async function sendOrderShippedEmail(order) {
     details + guidance +
     '<p style="margin:22px 0"><a href="' + escapeHTML(orderTrackUrl) + '" style="display:inline-block;background:#c6ff4b;color:#141414;padding:13px 20px;text-decoration:none;font-weight:bold">TRACK MY MONOWEAR ORDER</a></p>' +
     '<p>If you need help, reply to this email and include your MONOWEAR order reference.</p>';
-  const result = await sendEmail(order.customer_email, 'Your MONOWEAR order has shipped — ' + order.reference, emailShell(body));
+  const result = await sendEmail(recipient, subjectPrefix + 'Your MONOWEAR order has shipped — ' + order.reference, emailShell(body));
   return { sent: Boolean(result && result.ok), error: result && result.error ? result.error : null };
+}
+
+// Send the same shipping guidance to the MONOWEAR admin once per order.
+async function sendOrderShippedAdminCopyOnce(orderId) {
+  const order = getOrderById(orderId);
+  if (!order || order.payment_status !== "paid" || !resend) return { sent: false, reason: "email_unavailable" };
+  if (order.shipped_admin_copy_status === "sent" || order.shipped_admin_copy_status === "sending") {
+    return { sent: false, reason: order.shipped_admin_copy_status };
+  }
+  const claim = db.prepare(`
+    UPDATE orders SET shipped_admin_copy_status = 'sending'
+    WHERE id = ?
+      AND (shipped_admin_copy_status IS NULL OR shipped_admin_copy_status IN ('', 'pending', 'failed'))
+  `).run(order.id);
+  if (!claim.changes) return { sent: false, reason: "already_claimed" };
+  const result = await sendOrderShippedEmail(order, "monowear44@gmail.com", "ADMIN COPY — ");
+  db.prepare("UPDATE orders SET shipped_admin_copy_status = ? WHERE id = ?")
+    .run(result.sent ? "sent" : "failed", order.id);
+  recordOrderEvent(order.id, "shipped", result.sent
+    ? "Shipping guidance email copy sent to MONOWEAR admin."
+    : "Shipping guidance admin copy failed: " + (result.error || result.reason || "unknown error"));
+  console.log("[Shipping email admin copy]", order.reference + ":", result.sent ? "sent" : (result.error || result.reason || "failed"));
+  return result;
 }
 
 // Atomically claim the notification so repeated Studio actions or restarts
@@ -1616,6 +1640,7 @@ async function sendOrderShippedEmailOnce(orderId) {
   const order = getOrderById(orderId);
   if (!order || order.payment_status !== "paid") return { sent: false, reason: "order_not_paid_or_missing" };
   if (["sent", "sending", "legacy", "skipped"].includes(order.shipped_email_status)) {
+    if (order.shipped_email_status === "sent") await sendOrderShippedAdminCopyOnce(order.id);
     return { sent: false, reason: order.shipped_email_status };
   }
   const claim = db.prepare(`
@@ -1630,6 +1655,7 @@ async function sendOrderShippedEmailOnce(orderId) {
   recordOrderEvent(order.id, "shipped", result.sent
     ? "Shipping guidance email sent to customer."
     : "Shipping guidance email could not be sent: " + (result.error || result.reason || "unknown error"));
+  if (result.sent) await sendOrderShippedAdminCopyOnce(order.id);
   return result;
 }
 
