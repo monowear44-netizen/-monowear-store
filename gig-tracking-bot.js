@@ -59,7 +59,9 @@ async function fetchGIGScans(page, waybill) {
   if (/no shipment found|invalid waybill|waybill not found/i.test(body)) {
     throw new Error("GIG tracker returned no shipment for this waybill.");
   }
-  const scans = extractScans(body);
+  const marker = body.lastIndexOf("Track Shipment");
+  const resultPanel = marker >= 0 ? body.slice(marker) : body;
+  const scans = extractScans(resultPanel);
   if (!scans.length) {
     throw new Error("GIG returned the tracking panel, but no shipment scan could be read. No status was invented.");
   }
