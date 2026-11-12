@@ -29,14 +29,21 @@ function extractTrackingEvents(bodyText) {
   const events = [];
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    if (!STATUS_PATTERN.test(line)) continue;
-    if (/track (?:another|new)|tracking number|waybill number|shipment tracking|frequently asked|customer service/i.test(line)) continue;
-    const message = line.slice(0, 240);
+    // Ignore marketing, testimonials, FAQs and other carrier-page content.
+    if (line.length > 120 || !STATUS_PATTERN.test(line)) continue;
+    if (/track (?:another|new)|tracking number|waybill number|shipment tracking|frequently asked|customer service|mailroom service|trusted brand|our customers|customer experience|transform(?:ed|ing)?|we provide|helped us|puts you in control/i.test(line)) continue;
+    const message = line.slice(0, 120);
     if (!events.some(event => event.message.toLowerCase() === message.toLowerCase())) {
       events.push({ message, created_at: parseDateNear(lines, i) });
     }
   }
   return events.slice(-40);
+}
+
+function isConfirmedDeliveredEvent(message) {
+  // Only a concise, explicit timeline status may mark an order delivered.
+  const status = String(message || "").replace(/^\s*(?:\d{1,2}\s+[A-Za-z]{3,9}\s+20\d{2}(?:\s+at\s+\d{1,2}:\d{2})?|20\d{2}[-/]\d{1,2}[-/]\d{1,2})\s*/i, "").trim();
+  return /^(?:delivered|shipment delivered|parcel delivered|successfully delivered|delivery confirmed)(?:\b|\s*[:.-])/i.test(status);
 }
 
 function makeTrackingUrl(rawUrl, trackingNumber) {
@@ -226,7 +233,7 @@ async function runUniversalTrackingCheck(db) {
           for (const event of events) {
             const result = insert.run(order.id, event.message, event.created_at, order.id, event.message);
             added += result.changes;
-            if (/\bdelivered\b|delivery confirmed/i.test(event.message)) {
+            if (isConfirmedDeliveredEvent(event.message)) {
               db.prepare("UPDATE orders SET order_status = 'delivered', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(order.id);
             }
           }
