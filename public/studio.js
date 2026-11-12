@@ -1549,6 +1549,32 @@ for (const setting of imageSettings) {
   }
 }
 
+const monoPaySettingsForm = $("monoPaySettingsForm");
+if (monoPaySettingsForm) {
+  api("/api/store").then(data => {
+    const settings = data.settings || {};
+    for (const key of ["mono_pay_bank_name", "mono_pay_account_name", "mono_pay_account_number"]) {
+      if (monoPaySettingsForm.elements[key]) monoPaySettingsForm.elements[key].value = settings[key] || "";
+    }
+  }).catch(error => showError("monoPaySettingsMessage", error.message));
+  monoPaySettingsForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    const button = monoPaySettingsForm.querySelector('button[type="submit"]');
+    if (button) button.disabled = true;
+    try {
+      const body = Object.fromEntries(new FormData(monoPaySettingsForm));
+      const result = await api("/api/admin/settings", { method: "PUT", body: JSON.stringify(body) });
+      currentSettings = { ...currentSettings, ...(result.settings || body) };
+      showError("monoPaySettingsMessage", "MONO PAY bank details saved. They will appear at checkout.");
+      toast("MONO PAY details saved.");
+    } catch (error) {
+      showError("monoPaySettingsMessage", "Could not save bank details: " + error.message);
+    } finally {
+      if (button) button.disabled = false;
+    }
+  });
+}
+
 $("settingsForm").addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -2053,6 +2079,12 @@ function renderOrders() {
             ` : ""}
           `
         ) : `
+          ${order.payment_method === "mono_pay" && !isPaid ? `
+            <p class="muted"><strong>MONO PAY · BANK TRANSFER AWAITING CONFIRMATION</strong></p>
+            <button class="small-button resend-button" type="button" onclick="confirmMonoPay(${Number(order.id)})">
+              CONFIRM TRANSFER + MARK PAID
+            </button>
+          ` : ""}
           <label class="eyebrow">ORDER STATUS</label>
           <select onchange="updateOrder(${Number(order.id)}, this.value)">
             ${statuses.map((value) => `
@@ -2093,6 +2125,24 @@ window.updateOrderRecordType = async (id, record_type) => {
     await loadOrders(); await loadSummary();
     toast(record_type === "abandoned_cart" ? "Moved to abandoned carts." : "Moved to real orders.");
   } catch (error) { toast(error.message); await loadOrders(); }
+};
+
+window.confirmMonoPay = async (id) => {
+  const order = currentOrders.find(item => Number(item.id) === Number(id));
+  if (!order || order.payment_method !== "mono_pay") return;
+  if (!confirm("Only continue after checking your bank account and confirming that the exact amount has arrived. Mark this MONO PAY order as paid?")) return;
+  const transferReference = prompt("Bank transfer narration/reference (optional):", order.reference);
+  if (transferReference === null) return;
+  try {
+    const result = await api("/api/admin/orders/" + id + "/confirm-mono-pay", {
+      method: "PUT",
+      body: JSON.stringify({ transfer_reference: transferReference.trim() })
+    });
+    await Promise.all([loadOrders(), loadSummary()]);
+    toast(result.confirmation_email_sent ? "Transfer confirmed. Order marked paid and customer emailed." : "Transfer confirmed and order marked paid. Confirmation email may need attention.");
+  } catch (error) {
+    toast(error.message);
+  }
 };
 
 window.resendConfirmation = async (id) => {
