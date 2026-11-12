@@ -4801,6 +4801,13 @@ app.get("/api/admin/payments", requireAdmin, (req, res) => {
         failed: paymentTotals("payment_status = 'failed'"),
         refunded: paymentTotals("payment_status = 'refunded'")
       },
+      // MONO PAY is a bank-transfer collection method, not a custodial wallet.
+      // Confirmed transfers are counted only after the admin verifies receipt.
+      monoPay: {
+        received: paymentTotals(`payment_status = 'paid' AND payment_method = 'mono_pay' AND COALESCE(record_type, 'real_order') = 'real_order'`),
+        pending: paymentTotals("payment_status = 'pending' AND payment_method = 'mono_pay'"),
+        refunded: paymentTotals("payment_status = 'refunded' AND payment_method = 'mono_pay'")
+      },
       history
     });
   } catch (error) {
