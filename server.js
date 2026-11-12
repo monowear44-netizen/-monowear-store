@@ -453,6 +453,10 @@ ensureColumn("orders", "shipping_request_token", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipping_courier_id", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipping_service_code", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipping_courier_name", "TEXT DEFAULT ''");
+ensureColumn("orders", "shipment_carrier", "TEXT DEFAULT ''");
+ensureColumn("orders", "shipment_tracking_number", "TEXT DEFAULT ''");
+ensureColumn("orders", "shipment_tracking_url", "TEXT DEFAULT '');
+ensureColumn("orders", "shipped_email_status", "TEXT DEFAULT '');
 
 ensureColumn("orders", "preorder_email_status", "TEXT DEFAULT ''");
 
@@ -1561,6 +1565,25 @@ async function sendOrderDeliveredEmail(order) {
 
 // Claims the delivery email atomically to prevent duplicate messages.
 // If a send fails, marking the same order Delivered again retries it.
+async function sendOrderShippedEmail(order) {
+  if (!order || order.payment_status !== "paid" || !order.customer_email || !resend) {
+    return { sent: false, reason: "email_unavailable" };
+  }
+  const carrier = String(order.shipment_carrier || "").trim();
+  const tracking = String(order.shipment_tracking_number || "").trim();
+  const trackingLink = String(order.shipment_tracking_url || "").trim();
+  const details = [
+    carrier ? '<p><strong>Delivery company:</strong> ' + escapeHTML(carrier) + '</p>' : "",
+    tracking ? '<p><strong>Tracking / waybill number:</strong> <span style="font-size:18px;letter-spacing:1px">' + escapeHTML(tracking) + '</span></p>' : "",
+    trackingLink ? '<p><a href="' + escapeHTML(trackingLink) + '" style="display:inline-block;padding:12px 18px;background:#171816;color:#fff;text-decoration:none">TRACK YOUR SHIPMENT ↗</a></p>' : ""
+  ].filter(Boolean).join("");
+  const body = '<h2 style="margin:0 0 12px;font-size:22px">Your MONOWEAR order is on its way.</h2>' +
+    '<p>Hi ' + escapeHTML(order.customer_name) + ', your order <strong>' + escapeHTML(order.reference) + '</strong> has been handed over for delivery.</p>' +
+    details + '<p>You can also check your order progress through MONOWEAR order tracking.</p>';
+  const result = await sendEmail(order.customer_email, 'MONOWEAR order shipped — ' + order.reference, emailShell(body));
+  return { sent: Boolean(result && result.ok), error: result && result.error ? result.error : null };
+}
+
 async function sendOrderDeliveredEmailOnce(orderId) {
   const order = getOrderById(orderId);
   if (!order || order.payment_status !== "paid") {
@@ -4102,6 +4125,9 @@ app.get("/api/orders/track/:reference", checkoutLimiter, (req, res) => {
       created_at: order.created_at,
       payment_status: order.payment_status,
       order_status: order.order_status,
+      shipment_carrier: order.shipment_carrier || "",
+      shipment_tracking_number: order.shipment_tracking_number || "",
+      shipment_tracking_url: order.shipment_tracking_url || "",
       total: Number(order.total || 0),
       items
     },
@@ -4369,13 +4395,29 @@ app.put("/api/admin/orders/:id/status", requireAdmin, async (req, res) => {
     });
   }
 
+  const carrier = String(req.body.shipment_carrier || order.shipment_carrier || "").trim().slice(0, 100);
+  const trackingNumber = String(req.body.shipment_tracking_number || order.shipment_tracking_number || "").trim().slice(0, 120);
+  const trackingUrl = String(req.body.shipment_tracking_url || order.shipment_tracking_url || "").trim().slice(0, 500);
+  if (trackingUrl) {
+    try {
+      const parsed = new URL(trackingUrl);
+      if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("invalid protocol");
+    } catch {
+      return res.status(400).json({ error: "Enter a valid https:// or http:// tracking link." });
+    }
+  }
+
   // Admin status updates never mark payment as paid; only verified Paystack does that.
   db.prepare(`
     UPDATE orders
     SET order_status = ?,
+        shipment_carrier = ?,
+        shipment_tracking_number = ?,
+        shipment_tracking_url = ?,
+        shipped_email_status = CASE WHEN ? = 'shipped' AND shipped_email_status = '' THEN 'pending' ELSE shipped_email_status END,
         updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `).run(status, id);
+  `).run(status, carrier, trackingNumber, trackingUrl, status, id);
 
   // A refund must still be issued separately in Paystack.
   if (status === "refunded" && order.payment_status === "paid") {
@@ -4392,6 +4434,16 @@ app.put("/api/admin/orders/:id/status", requireAdmin, async (req, res) => {
     );
   }
 
+  let shippedEmailResult = null;
+  if (status === "shipped" && order.payment_status === "paid" && order.shipped_email_status !== "sent") {
+    shippedEmailResult = await sendOrderShippedEmail(getOrderById(id));
+    db.prepare("UPDATE orders SET shipped_email_status = ? WHERE id = ?")
+      .run(shippedEmailResult.sent ? "sent" : "failed", id);
+    recordOrderEvent(id, "shipped", shippedEmailResult.sent
+      ? "Shipping notification email sent to customer."
+      : "Shipping notification email could not be sent.");
+  }
+
   let deliveryEmailResult = null;
   if (status === "delivered" && order.payment_status === "paid") {
     deliveryEmailResult = await sendOrderDeliveredEmailOnce(id);
@@ -4400,6 +4452,10 @@ app.put("/api/admin/orders/:id/status", requireAdmin, async (req, res) => {
   res.json({
     success: true,
     order: safeOrder(getOrderById(id)),
+    ...(status === "shipped" ? {
+      shipped_email_sent: Boolean(shippedEmailResult && shippedEmailResult.sent),
+      shipped_email_error: shippedEmailResult?.error || null
+    } : {}),
     ...(status === "delivered" ? {
       delivery_email_sent: Boolean(deliveryEmailResult && deliveryEmailResult.sent),
       delivery_email_error: deliveryEmailResult?.error || null
