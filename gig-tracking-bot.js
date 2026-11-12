@@ -50,10 +50,12 @@ async function fetchGIGScans(page, waybill) {
   page.removeAllListeners("request");
   page.removeAllListeners("response");
   page.on("request", req => {
-    if (/track|shipment|waybill/i.test(req.url()) || req.method() === "POST") {
-      network.push(req.method() + " " + req.url());
+    if (/track|shipment|waybill/i.test(req.url()) || req.method() === "POST" || ["xhr", "fetch"].includes(req.resourceType())) {
+      network.push(req.method() + " " + req.resourceType() + " " + req.url());
     }
   });
+  page.on("pageerror", error => network.push("PAGEERROR " + error.message));
+  page.on("console", message => { if (message.type() === "error") network.push("CONSOLE " + message.text()); });
   page.on("response", res => {
     if (/track|shipment|waybill/i.test(res.url())) network.push("RESPONSE " + res.status() + " " + res.url());
   });
@@ -62,22 +64,17 @@ async function fetchGIGScans(page, waybill) {
   await input.waitFor({ state: "visible", timeout: 20000 });
   const inputDetails = await input.evaluate(el => ({ html: el.outerHTML, parent: el.parentElement?.outerHTML?.slice(0, 1200) }));
   await input.fill(String(waybill));
-  await input.press("Enter").catch(() => {});
-  await page.waitForTimeout(2500);
+  await page.locator("#trackNowBtn").click({ force: true, timeout: 15000 });
+  await page.waitForTimeout(9000);
   let body = await page.locator("body").innerText({ timeout: 15000 });
-  if (!body.includes(String(waybill)) && !/shipment origin/i.test(body)) {
-    const submit = page.getByRole("button", { name: /track now/i }).first();
-    if (await submit.count()) await submit.click({ timeout: 15000 }).catch(() => {});
-    else await page.getByText(/track now/i).first().click({ timeout: 15000 }).catch(() => {});
-    await page.waitForTimeout(7000);
-    body = await page.locator("body").innerText({ timeout: 15000 });
-  }
   if (!body.includes(String(waybill)) && !/shipment origin/i.test(body)) {
     const trackTarget = await page.getByText(/track now/i).first().evaluate(el => ({ tag: el.tagName, html: el.outerHTML, parent: el.parentElement?.outerHTML?.slice(0, 1600) })).catch(() => null);
     const inputs = await page.locator("input").evaluateAll(els => els.map(e => ({ html: e.outerHTML, value: e.value, visible: !!(e.offsetWidth || e.offsetHeight || e.getClientRects().length) })));
     const forms = await page.locator("form").evaluateAll(els => els.map(e => e.outerHTML.slice(0, 1800)));
+    const scripts = await page.locator("script[src]").evaluateAll(els => els.map(e => e.src));
+    const buttonState = await page.locator("#trackNowBtn").evaluate(el => ({ disabled: el.disabled, html: el.outerHTML, onclick: String(el.onclick) }));
     const excerptAt = body.toLowerCase().lastIndexOf("track shipment");
-    throw new Error("GIG tracker response missing. URL=" + page.url() + " TITLE=" + await page.title() + " INPUTDETAILS=" + JSON.stringify(inputDetails) + " INPUTS=" + JSON.stringify(inputs) + " FORMS=" + JSON.stringify(forms) + " TRACKTARGET=" + JSON.stringify(trackTarget) + " NETWORK=" + JSON.stringify(network) + " RESULTTEXT=" + body.slice(Math.max(0, excerptAt - 300), excerptAt + 1400).replace(/\\s+/g, " "));
+    throw new Error("GIG tracker response missing. URL=" + page.url() + " TITLE=" + await page.title() + " INPUTDETAILS=" + JSON.stringify(inputDetails) + " INPUTS=" + JSON.stringify(inputs) + " BUTTON=" + JSON.stringify(buttonState) + " FORMS=" + JSON.stringify(forms) + " TRACKTARGET=" + JSON.stringify(trackTarget) + " SCRIPTS=" + JSON.stringify(scripts) + " NETWORK=" + JSON.stringify(network) + " RESULTTEXT=" + body.slice(Math.max(0, excerptAt - 300), excerptAt + 1400).replace(/\\s+/g, " "));
   }
   if (/no shipment found|invalid waybill|waybill not found/i.test(body)) {
     throw new Error("GIG tracker returned no shipment for this waybill.");
