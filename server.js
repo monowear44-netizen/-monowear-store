@@ -455,7 +455,7 @@ ensureColumn("orders", "shipping_service_code", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipping_courier_name", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipment_carrier", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipment_tracking_number", "TEXT DEFAULT ''");
-ensureColumn("orders", "shipment_tracking_url", "TEXT DEFAULT '');
+ensureColumn("orders", "shipment_tracking_url", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipped_email_status", "TEXT DEFAULT '');
 
 ensureColumn("orders", "preorder_email_status", "TEXT DEFAULT ''");
