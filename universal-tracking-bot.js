@@ -105,12 +105,15 @@ async function submitTrackingPage(page, trackingNumber) {
     const buttons = page.getByRole("button", { name: /track|trace|search|find|submit|go/i });
     if (await buttons.count()) {
       const button = buttons.first();
+      // Some carrier sites animate promotional overlays over the form.
+      // Force the submit click after attempting to remove those overlays.
       try {
-        await button.click({ timeout: 5000 });
+        await button.click({ timeout: 2500, force: true });
       } catch {
-        // Trigger the actual button handler directly if the carrier's overlay
-        // or custom layout still intercepts pointer events.
-        await button.evaluate(el => el.click()).catch(async () => {
+        await button.evaluate(el => {
+          el.scrollIntoView({ block: "center" });
+          el.click();
+        }).catch(async () => {
           await input.press("Enter").catch(() => {});
         });
       }
