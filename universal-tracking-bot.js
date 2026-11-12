@@ -257,7 +257,7 @@ async function runUniversalTrackingCheck(db) {
         if (/gig/i.test(String(order.shipment_carrier || ""))) {
           db.prepare(`
             DELETE FROM order_events
-            WHERE order_id = ? AND status = 'carrier_update'
+            WHERE order_id = ?
               AND (
                 LOWER(message) LIKE '%mailroom%'
                 OR LOWER(message) LIKE '%correspondence%'

@@ -5325,6 +5325,16 @@ app.put("/api/admin/settings", requireAdmin, (req, res) => {
     });
   }
 });
+// Purge GIG marketing/testimonial text accidentally saved as shipment events.
+db.prepare(`
+  DELETE FROM order_events
+  WHERE LOWER(message) LIKE '%the giggo app by gig logistics%'
+     OR LOWER(message) LIKE '%game-changer for my business%'
+     OR LOWER(message) LIKE '%request item pickups right from my store%'
+     OR LOWER(message) LIKE '%international shipping services to reach more%'
+     OR LOWER(message) LIKE '%join millions of satisfied customers who trust gig logistics%'
+`).run();
+
 require("./support")(app, db, rateLimit);
 
 app.listen(PORT, "0.0.0.0", () => {
