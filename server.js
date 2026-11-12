@@ -1579,7 +1579,7 @@ async function sendOrderShippedEmail(order) {
   ].filter(Boolean).join("");
   const body = '<h2 style="margin:0 0 12px;font-size:22px">Your MONOWEAR order is on its way.</h2>' +
     '<p>Hi ' + escapeHTML(order.customer_name) + ', your order <strong>' + escapeHTML(order.reference) + '</strong> has been handed over for delivery.</p>' +
-    details + '<p>You can also check your order progress through MONOWEAR order tracking.</p>';
+    details + '<p><a href="' + escapeHTML((BASE_URL || "") + "/track.html?reference=" + encodeURIComponent(order.reference)) + '" style="color:#171816;text-decoration:underline">VIEW YOUR MONOWEAR ORDER ↗</a></p>';
   const result = await sendEmail(order.customer_email, 'MONOWEAR order shipped — ' + order.reference, emailShell(body));
   return { sent: Boolean(result && result.ok), error: result && result.error ? result.error : null };
 }
