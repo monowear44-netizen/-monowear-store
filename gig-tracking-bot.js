@@ -86,9 +86,17 @@ async function fetchGIGScans(page, waybill) {
     const inputs = await page.locator("input").evaluateAll(els => els.map(e => ({ html: e.outerHTML, value: e.value, visible: !!(e.offsetWidth || e.offsetHeight || e.getClientRects().length) })));
     const forms = await page.locator("form").evaluateAll(els => els.map(e => e.outerHTML.slice(0, 1800)));
     const scripts = await page.locator("script[src]").evaluateAll(els => els.map(e => e.src));
+    const blobScripts = await page.evaluate(async () => {
+      const urls = Array.from(document.scripts).map(s => s.src).filter(src => src.startsWith("blob:"));
+      const out = [];
+      for (const url of urls) {
+        try { const source = await (await fetch(url)).text(); out.push({ url, source: source.slice(0, 3500) }); } catch (e) { out.push({ url, error: e.message }); }
+      }
+      return out;
+    });
     const buttonState = await page.locator("#trackNowBtn").evaluate(el => ({ disabled: el.disabled, html: el.outerHTML, onclick: String(el.onclick) }));
     const excerptAt = body.toLowerCase().lastIndexOf("track shipment");
-    throw new Error("GIG tracker response missing. URL=" + page.url() + " TITLE=" + await page.title() + " INPUTDETAILS=" + JSON.stringify(inputDetails) + " INPUTS=" + JSON.stringify(inputs) + " BUTTON=" + JSON.stringify(buttonState) + " FORMS=" + JSON.stringify(forms) + " TRACKTARGET=" + JSON.stringify(trackTarget) + " SCRIPTS=" + JSON.stringify(scripts) + " JSINSPECTION=" + JSON.stringify(jsInspection) + " NETWORK=" + JSON.stringify(network) + " RESULTTEXT=" + body.slice(Math.max(0, excerptAt - 300), excerptAt + 1400).replace(/\\s+/g, " "));
+    throw new Error("GIG tracker response missing. URL=" + page.url() + " TITLE=" + await page.title() + " INPUTDETAILS=" + JSON.stringify(inputDetails) + " INPUTS=" + JSON.stringify(inputs) + " BUTTON=" + JSON.stringify(buttonState) + " FORMS=" + JSON.stringify(forms) + " TRACKTARGET=" + JSON.stringify(trackTarget) + " SCRIPTS=" + JSON.stringify(scripts) + " BLOBS=" + JSON.stringify(blobScripts) + " JSINSPECTION=" + JSON.stringify(jsInspection) + " NETWORK=" + JSON.stringify(network) + " RESULTTEXT=" + body.slice(Math.max(0, excerptAt - 300), excerptAt + 1400).replace(/\\s+/g, " "));
   }
   if (/no shipment found|invalid waybill|waybill not found/i.test(body)) {
     throw new Error("GIG tracker returned no shipment for this waybill.");
