@@ -535,6 +535,9 @@ const defaults = {
   design_font: "Manrope",
   design_hero_alignment: "left",
   design_radius: "square",
+  mono_pay_bank_name: "",
+  mono_pay_account_name: "",
+  mono_pay_account_number: "",
   design_product_columns: "3",
   design_product_ratio: "portrait",
   design_hero_height: "standard",
@@ -3740,13 +3743,15 @@ app.post(
   checkoutLimiter,
   async (req, res) => {
     try {
-      if (!PAYSTACK_SECRET_KEY) {
-        return res.status(503).json({
-          error: "Online payment is not configured yet."
-        });
-      }
-
       const body = req.body || {};
+      const paymentMethod = String(body.payment_method || "paystack").toLowerCase() === "mono_pay" ? "mono_pay" : "paystack";
+      const paymentSettings = Object.fromEntries(db.prepare("SELECT key, value FROM settings WHERE key IN ('mono_pay_bank_name','mono_pay_account_name','mono_pay_account_number')").all().map(row => [row.key, row.value]));
+      if (paymentMethod === "paystack" && !PAYSTACK_SECRET_KEY) {
+        return res.status(503).json({ error: "Online payment is not configured yet." });
+      }
+      if (paymentMethod === "mono_pay" && (!paymentSettings.mono_pay_bank_name || !paymentSettings.mono_pay_account_name || !/^\d{10}$/.test(String(paymentSettings.mono_pay_account_number || "")))) {
+        return res.status(503).json({ error: "MONO PAY bank transfer details are not ready yet. Please contact MONOWEAR." });
+      }
 
       const customerName = String(body.customer_name || body.name || "").trim();
       const customerEmail = String(body.customer_email || body.email || "")
@@ -3833,7 +3838,7 @@ app.post(
           shipping_service_code,
           shipping_courier_name
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', 'paystack', 'abandoned_cart', ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending', ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         reference,
         customerName,
@@ -3849,6 +3854,8 @@ app.post(
         actualShipping,
         discount,
         total,
+        paymentMethod,
+        paymentMethod === "mono_pay" ? "real_order" : "abandoned_cart",
         selectedRate.courier_name,
         selectedRate.request_token,
         selectedRate.courier_id,
@@ -3861,8 +3868,21 @@ app.post(
       recordOrderEvent(
         orderId,
         "pending",
-        "Order created. Awaiting payment."
+        paymentMethod === "mono_pay" ? "Order placed. Awaiting bank transfer and manual payment confirmation." : "Order created. Awaiting payment."
       );
+
+      if (paymentMethod === "mono_pay") {
+        return res.json({
+          success: true,
+          payment_method: "mono_pay",
+          reference,
+          total,
+          bank_name: paymentSettings.mono_pay_bank_name,
+          account_name: paymentSettings.mono_pay_account_name,
+          account_number: paymentSettings.mono_pay_account_number,
+          instructions: "Transfer the exact amount and use your MONOWEAR order reference as the transfer narration. Your order will be processed after MONOWEAR confirms the payment."
+        });
+      }
 
       let payment;
 
@@ -4314,8 +4334,10 @@ app.get("/api/admin/orders", requireAdmin, (req, res) => {
       ) AS attention
     FROM orders
     WHERE COALESCE(record_type, 'real_order') = 'real_order'
-      AND payment_status = 'paid'
-      AND LOWER(COALESCE(order_status, 'pending')) NOT IN ('shipped', 'delivered')
+      AND (
+        (payment_status = 'paid' AND LOWER(COALESCE(order_status, 'pending')) NOT IN ('shipped', 'delivered'))
+        OR (payment_method = 'mono_pay' AND payment_status = 'pending')
+      )
     ORDER BY id DESC
     LIMIT 500
   `).all();
@@ -4414,6 +4436,24 @@ app.get("/api/admin/orders/:id", requireAdmin, (req, res) => {
     ...safeOrder(order),
     events
   });
+});
+
+app.put("/api/admin/orders/:id/confirm-mono-pay", requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  const order = getOrderById(id);
+  if (!order) return res.status(404).json({ error: "Order not found." });
+  if (String(order.payment_method || "") !== "mono_pay") return res.status(400).json({ error: "This order is not a MONO PAY bank-transfer order." });
+  if (String(order.payment_status || "") === "paid") return res.json({ success: true, already_paid: true, order: safeOrder(order) });
+  if (String(order.payment_status || "") !== "pending") return res.status(409).json({ error: "This order is not awaiting payment." });
+  try {
+    const transferReference = String(req.body.transfer_reference || order.reference).trim().slice(0, 120);
+    const finalized = finalizePaidOrder(order.reference, transferReference, { channel: "bank_transfer" });
+    const emailResult = await sendOrderConfirmationOnce(finalized.order.id);
+    return res.json({ success: true, order: safeOrder(finalized.order), confirmation_email_sent: Boolean(emailResult && emailResult.sent), confirmation_email_error: emailResult?.error || null, stock_shortfalls: finalized.shortfalls || [] });
+  } catch (error) {
+    console.error("MONO PAY confirmation error:", error);
+    return res.status(500).json({ error: error.message || "Could not confirm this bank transfer." });
+  }
 });
 
 app.put("/api/admin/orders/:id/status", requireAdmin, async (req, res) => {
