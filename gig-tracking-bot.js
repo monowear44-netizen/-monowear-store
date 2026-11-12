@@ -101,7 +101,9 @@ async function fetchGIGScans(page, waybill) {
       }
       return out;
     });
-    const buttonState = await page.locator("#trackNowBtn").evaluate(el => ({ disabled: el.disabled, html: el.outerHTML, onclick: String(el.onclick) }));
+    const buttonState = await page.locator("#trackNowBtn").count()
+      ? await page.locator("#trackNowBtn").evaluate(el => ({ disabled: el.disabled, html: el.outerHTML, onclick: String(el.onclick) }))
+      : await page.locator("button").evaluateAll(els => els.map(el => ({ disabled: el.disabled, html: el.outerHTML.slice(0, 500) })));
     const excerptAt = body.toLowerCase().lastIndexOf("track shipment");
     throw new Error("GIG tracker response missing. URL=" + page.url() + " TITLE=" + await page.title() + " INPUTDETAILS=" + JSON.stringify(inputDetails) + " INPUTS=" + JSON.stringify(inputs) + " BUTTON=" + JSON.stringify(buttonState) + " FORMS=" + JSON.stringify(forms) + " TRACKTARGET=" + JSON.stringify(trackTarget) + " SCRIPTS=" + JSON.stringify(scripts) + " BLOBS=" + JSON.stringify(blobScripts) + " JSINSPECTION=" + JSON.stringify(jsInspection) + " NETWORK=" + JSON.stringify(network) + " RESULTTEXT=" + body.slice(Math.max(0, excerptAt - 300), excerptAt + 1400).replace(/\\s+/g, " "));
   }
