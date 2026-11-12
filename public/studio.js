@@ -231,7 +231,7 @@ function switchTab(tab) {
     abandoned: "Abandoned carts",
     completed: "Completed & shipped",
     collections: "Collections",
-    payments: "Payments",
+    payments: "MONO PAY / Wallet",
     history: "LabelD History",
     audience: "Waitlist & Subscribers"
   };
@@ -2639,6 +2639,16 @@ async function loadPayments() {
     );
 
     const { all, month, today } = data.revenue;
+    const monoPay = data.monoPay || {};
+    const monoReceived = monoPay.received || { gross: 0, orders: 0 };
+    const monoPending = monoPay.pending || { gross: 0, orders: 0 };
+    const monoRefunded = monoPay.refunded || { gross: 0, orders: 0 };
+    setText("monoPayReceived", money(monoReceived.gross));
+    setText("monoPayReceivedOrders", `${monoReceived.orders || 0} verified transfer(s)`);
+    setText("monoPayPending", money(monoPending.gross));
+    setText("monoPayPendingOrders", `${monoPending.orders || 0} awaiting confirmation`);
+    setText("monoPayRefunded", money(monoRefunded.gross));
+    setText("monoPayRefundedOrders", `${monoRefunded.orders || 0} refunded transfer(s)`);
 
     setText("revToday", money(today.gross));
     setText("revTodayOrders", `${today.orders} paid order${today.orders === 1 ? "" : "s"}`);

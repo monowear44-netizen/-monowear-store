@@ -86,27 +86,41 @@ async function submitTrackingPage(page, trackingNumber) {
     };
     const input = page.locator(selectorFor(candidates[0])).first();
     await input.fill(String(trackingNumber), { timeout: 12000 });
-    // Some courier sites place a download-app popup over the tracking button.
-    // Dismiss that overlay and use a forced click as a fallback, just as a user
-    // would after closing the obstruction.
-    await page.locator("#downloadPopup, .download-app-pop-up, [id*='downloadPopup'], [class*='download-app-pop-up']")
-      .evaluateAll(elements => elements.forEach(el => {
-        el.style.setProperty("display", "none", "important");
-        el.style.setProperty("visibility", "hidden", "important");
-        el.style.setProperty("pointer-events", "none", "important");
-      })).catch(() => {});
+    // GIG's page re-inserts its promotional download overlay. Remove it and
+    // keep removing it while the tracking form is being submitted.
+    const removePromotionalOverlay = () => {
+      document.querySelectorAll("#downloadPopup, .download-app-pop-up, [id*='downloadPopup'], [class*='download-app-pop-up']")
+        .forEach(el => el.remove());
+    };
+    await page.evaluate(removePromotionalOverlay).catch(() => {});
+    await page.evaluate(() => {
+      if (!window.__monoTrackingOverlayObserver) {
+        window.__monoTrackingOverlayObserver = new MutationObserver(() => {
+          document.querySelectorAll("#downloadPopup, .download-app-pop-up, [id*='downloadPopup'], [class*='download-app-pop-up']")
+            .forEach(el => el.remove());
+        });
+        window.__monoTrackingOverlayObserver.observe(document.documentElement, { childList: true, subtree: true });
+      }
+    }).catch(() => {});
     const buttons = page.getByRole("button", { name: /track|trace|search|find|submit|go/i });
     if (await buttons.count()) {
       const button = buttons.first();
       try {
-        await button.click({ timeout: 8000 });
+        await button.click({ timeout: 5000 });
       } catch {
-        await button.click({ timeout: 8000, force: true });
+        // Trigger the actual button handler directly if the carrier's overlay
+        // or custom layout still intercepts pointer events.
+        await button.evaluate(el => el.click()).catch(async () => {
+          await input.press("Enter").catch(() => {});
+        });
       }
     } else {
-      const submit = page.locator("form").first();
-      if (await submit.count()) {
-        await input.press("Enter").catch(() => {});
+      const form = page.locator("form").filter({ has: input }).first();
+      if (await form.count()) {
+        await form.evaluate(el => {
+          if (el.requestSubmit) el.requestSubmit();
+          else el.submit();
+        }).catch(async () => input.press("Enter").catch(() => {}));
       } else {
         await input.press("Enter").catch(() => {});
       }
