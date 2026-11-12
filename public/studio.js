@@ -2171,7 +2171,7 @@ window.updateOrder = async (id, status) => {
       if (carrier === null) { await loadOrders(); return; }
       const tracking = prompt("Tracking number / waybill (optional):", order?.shipment_tracking_number || "");
       if (tracking === null) { await loadOrders(); return; }
-      const trackingUrl = prompt("Direct tracking link (optional):", order?.shipment_tracking_url || "");
+      const trackingUrl = prompt("Carrier tracking website URL (optional — leave blank and the bot will search for the carrier tracking page):", order?.shipment_tracking_url || "");
       if (trackingUrl === null) { await loadOrders(); return; }
       shipment.shipment_carrier = carrier.trim();
       shipment.shipment_tracking_number = tracking.trim();
