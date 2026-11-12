@@ -104,18 +104,45 @@ async function submitTrackingPage(page, trackingNumber) {
   return await page.locator("body").innerText({ timeout: 15000 });
 }
 
+async function discoverCarrierTrackingUrl(page, carrier) {
+  const query = encodeURIComponent(String(carrier || "courier") + " official parcel tracking page");
+  await page.goto("https://www.bing.com/search?q=" + query, { waitUntil: "domcontentloaded", timeout: 30000 });
+  const results = await page.locator("li.b_algo h2 a").evaluateAll(links => links.map(link => ({
+    title: (link.innerText || "").trim(),
+    href: link.href
+  })));
+  const valid = results.filter(item => {
+    try {
+      const url = new URL(item.href);
+      return ["http:", "https:"].includes(url.protocol)
+        && !/(bing\.com|microsoft\.com|msn\.com|google\.com)$/i.test(url.hostname);
+    } catch { return false; }
+  });
+  const words = String(carrier || "").toLowerCase().split(/[^a-z0-9]+/).filter(word => word.length > 2);
+  valid.sort((a, b) => {
+    const score = item => {
+      const haystack = (item.title + " " + item.href).toLowerCase();
+      return words.reduce((sum, word) => sum + (haystack.includes(word) ? 3 : 0), 0)
+        + (/track|tracking|trace|waybill|shipment|parcel/i.test(item.title + " " + item.href) ? 4 : 0);
+    };
+    return score(b) - score(a);
+  });
+  if (!valid.length) throw new Error("Could not find a public tracking page for " + carrier + ". Add its tracking website URL in Studio.");
+  return valid[0].href;
+}
+
 async function readCarrierTracking(page, order) {
   const trackingNumber = String(order.shipment_tracking_number || "").trim();
   const carrier = String(order.shipment_carrier || "Carrier").trim();
+  if (!trackingNumber) throw new Error("Tracking number is empty.");
   const rawUrl = order.shipment_tracking_url || (/gig/i.test(carrier) ? GIG_FALLBACK_URL : "");
-  if (!rawUrl) throw new Error("Add the carrier's public tracking website URL to this order in Studio.");
-  const url = makeTrackingUrl(rawUrl, trackingNumber);
+  const url = makeTrackingUrl(rawUrl || await discoverCarrierTrackingUrl(page, carrier), trackingNumber);
   let parsed;
   try {
     parsed = new URL(url);
     if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("unsupported protocol");
   } catch {
-    throw new Error("The saved tracking website URL is invalid.");
+    throw new Error("The carrier tracking website URL is invalid.");
   }
 
   await page.goto(parsed.toString(), { waitUntil: "domcontentloaded", timeout: 45000 });
@@ -128,7 +155,7 @@ async function readCarrierTracking(page, order) {
   if (!events.length) {
     throw new Error("The carrier page opened, but no readable shipment updates were found. No status was guessed.");
   }
-  return events;
+  return { events, trackingUrl: parsed.toString() };
 }
 
 async function runUniversalTrackingCheck(db) {
@@ -149,7 +176,12 @@ async function runUniversalTrackingCheck(db) {
 
     for (const order of orders) {
       try {
-        const events = await readCarrierTracking(page, order);
+        const trackingResult = await readCarrierTracking(page, order);
+        const events = trackingResult.events;
+        if (!order.shipment_tracking_url && trackingResult.trackingUrl) {
+          db.prepare("UPDATE orders SET shipment_tracking_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+            .run(trackingResult.trackingUrl, order.id);
+        }
         const insert = db.prepare(`
           INSERT INTO order_events (order_id, status, message, created_at)
           SELECT ?, 'carrier_update', ?, COALESCE(?, CURRENT_TIMESTAMP)
@@ -205,5 +237,6 @@ module.exports = {
   runUniversalTrackingCheck,
   extractTrackingEvents,
   makeTrackingUrl,
-  readCarrierTracking
+  readCarrierTracking,
+  discoverCarrierTrackingUrl
 };
