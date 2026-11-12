@@ -23,7 +23,7 @@ function parseDateNear(lines, index) {
     const match = value.match(DATE_PATTERN);
     if (!match) continue;
     // GIG displays timestamps as "12 Nov 2026 at 18:56".
-    const parsed = new Date(match[0].replace(/\\s+at\\s+/i, " "));
+    const parsed = new Date(match[0].replace(/\s+at\s+/i, " "));
     if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().replace("T", " ").replace("Z", "");
   }
   return null;
