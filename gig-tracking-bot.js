@@ -54,12 +54,26 @@ async function fetchGIGScans(page, waybill) {
       network.push(req.method() + " " + req.resourceType() + " " + req.url());
     }
   });
-  page.on("pageerror", error => network.push("PAGEERROR " + error.message));
+  page.on("pageerror", error => network.push("PAGEERROR " + error.stack));
   page.on("console", message => { if (message.type() === "error") network.push("CONSOLE " + message.text()); });
   page.on("response", res => {
     if (/track|shipment|waybill/i.test(res.url())) network.push("RESPONSE " + res.status() + " " + res.url());
   });
   await page.goto(TRACKER_URL, { waitUntil: "domcontentloaded", timeout: 45000 });
+  await page.waitForTimeout(12000);
+  const jsInspection = await page.evaluate(async () => {
+    const urls = Array.from(document.scripts).map(s => s.src).filter(Boolean);
+    const hits = [];
+    for (const url of urls) {
+      try {
+        const response = await fetch(url);
+        const source = await response.text();
+        const match = source.search(/trackNowBtn|waybillInput|trackShipment/i);
+        if (match >= 0) hits.push({ url, snippet: source.slice(Math.max(0, match - 500), match + 1800) });
+      } catch {}
+    }
+    return hits.slice(0, 5);
+  });
   const input = page.getByPlaceholder(/waybill/i).first();
   await input.waitFor({ state: "visible", timeout: 20000 });
   const inputDetails = await input.evaluate(el => ({ html: el.outerHTML, parent: el.parentElement?.outerHTML?.slice(0, 1200) }));
@@ -74,7 +88,7 @@ async function fetchGIGScans(page, waybill) {
     const scripts = await page.locator("script[src]").evaluateAll(els => els.map(e => e.src));
     const buttonState = await page.locator("#trackNowBtn").evaluate(el => ({ disabled: el.disabled, html: el.outerHTML, onclick: String(el.onclick) }));
     const excerptAt = body.toLowerCase().lastIndexOf("track shipment");
-    throw new Error("GIG tracker response missing. URL=" + page.url() + " TITLE=" + await page.title() + " INPUTDETAILS=" + JSON.stringify(inputDetails) + " INPUTS=" + JSON.stringify(inputs) + " BUTTON=" + JSON.stringify(buttonState) + " FORMS=" + JSON.stringify(forms) + " TRACKTARGET=" + JSON.stringify(trackTarget) + " SCRIPTS=" + JSON.stringify(scripts) + " NETWORK=" + JSON.stringify(network) + " RESULTTEXT=" + body.slice(Math.max(0, excerptAt - 300), excerptAt + 1400).replace(/\\s+/g, " "));
+    throw new Error("GIG tracker response missing. URL=" + page.url() + " TITLE=" + await page.title() + " INPUTDETAILS=" + JSON.stringify(inputDetails) + " INPUTS=" + JSON.stringify(inputs) + " BUTTON=" + JSON.stringify(buttonState) + " FORMS=" + JSON.stringify(forms) + " TRACKTARGET=" + JSON.stringify(trackTarget) + " SCRIPTS=" + JSON.stringify(scripts) + " JSINSPECTION=" + JSON.stringify(jsInspection) + " NETWORK=" + JSON.stringify(network) + " RESULTTEXT=" + body.slice(Math.max(0, excerptAt - 300), excerptAt + 1400).replace(/\\s+/g, " "));
   }
   if (/no shipment found|invalid waybill|waybill not found/i.test(body)) {
     throw new Error("GIG tracker returned no shipment for this waybill.");
