@@ -46,6 +46,17 @@ function extractScans(bodyText) {
 }
 
 async function fetchGIGScans(page, waybill) {
+  const network = [];
+  page.removeAllListeners("request");
+  page.removeAllListeners("response");
+  page.on("request", req => {
+    if (/track|shipment|waybill/i.test(req.url()) || req.method() === "POST") {
+      network.push(req.method() + " " + req.url());
+    }
+  });
+  page.on("response", res => {
+    if (/track|shipment|waybill/i.test(res.url())) network.push("RESPONSE " + res.status() + " " + res.url());
+  });
   await page.goto(TRACKER_URL, { waitUntil: "domcontentloaded", timeout: 45000 });
   const input = page.getByPlaceholder(/waybill/i).first();
   await input.waitFor({ state: "visible", timeout: 20000 });
@@ -56,11 +67,13 @@ async function fetchGIGScans(page, waybill) {
   if (!body.includes(String(waybill)) && !/shipment origin/i.test(body)) {
     const submit = page.getByRole("button", { name: /track now/i }).first();
     if (await submit.count()) await submit.click({ timeout: 15000 }).catch(() => {});
-    await page.waitForTimeout(5000);
+    else await page.getByText(/track now/i).first().click({ timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(7000);
     body = await page.locator("body").innerText({ timeout: 15000 });
   }
   if (!body.includes(String(waybill)) && !/shipment origin/i.test(body)) {
-    throw new Error("GIG tracker response missing. URL=" + page.url() + " TITLE=" + await page.title() + " PAGE=" + body.slice(-1800).replace(/\\s+/g, " "));
+    const controls = await page.locator("input,button,a").evaluateAll(els => els.map(e => ({ tag: e.tagName, text: (e.innerText || e.value || "").trim().slice(0, 80), placeholder: e.getAttribute("placeholder"), type: e.getAttribute("type"), href: e.getAttribute("href") })).slice(0, 30));
+    throw new Error("GIG tracker response missing. URL=" + page.url() + " TITLE=" + await page.title() + " CONTROLS=" + JSON.stringify(controls) + " NETWORK=" + JSON.stringify(network) + " PAGE=" + body.slice(-900).replace(/\\s+/g, " "));
   }
   if (/no shipment found|invalid waybill|waybill not found/i.test(body)) {
     throw new Error("GIG tracker returned no shipment for this waybill.");
