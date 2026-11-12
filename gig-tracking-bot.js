@@ -3,7 +3,7 @@ const { chromium: playwrightChromium } = require("playwright-core");
 const chromiumBinary = require("@sparticuz/chromium");
 
 const INTERVAL_MS = 15 * 60 * 1000;
-const TRACKER_URL = "https://gigagilitysystems.com/public/track";
+const TRACKER_URL = "https://web2.giglogistics.com/?LSCWP_CTRL=before_optm";
 const KNOWN_SCAN = [
   "SHIPMENT CREATED AT SERVICE CENTER", "SHIPMENT CREATED",
   "SHIPMENT RECEIVED FROM THE STORE", "SHIPMENT ARRIVED SERVICE CENTRE",
