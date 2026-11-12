@@ -78,7 +78,7 @@
   Completed &amp; shipped
 </button>
 <button class="nav" data-tab="payments" type="button">
-  Payments
+  MONO PAY / Wallet
 </button>
 <button class="nav" data-tab="history" type="button">LabelD History</button>
 <div class="side-bottom">
@@ -1181,7 +1181,15 @@
   <!-- PAYMENTS -->
   <section class="tab-panel" id="tab-payments" hidden>
     <div class="panel">
-      <p class="eyebrow">MONO PAY / BANK TRANSFER</p>
+      <p class="eyebrow">MONO PAY / WALLET</p>
+      <h2>MONO PAY wallet overview</h2>
+      <p class="muted">This wallet is your Studio record of verified MONO PAY bank transfers. Customer transfers go directly into the bank account below; MONOWEAR does not hold the funds or move money from this screen.</p>
+      <div class="stats-grid">
+        <div class="stat"><span>CONFIRMED MONO PAY RECEIVED</span><strong id="monoPayReceived">—</strong><small id="monoPayReceivedOrders"></small></div>
+        <div class="stat"><span>AWAITING BANK CONFIRMATION</span><strong id="monoPayPending">—</strong><small id="monoPayPendingOrders"></small></div>
+        <div class="stat"><span>REFUNDED MONO PAY</span><strong id="monoPayRefunded">—</strong><small id="monoPayRefundedOrders"></small></div>
+      </div>
+      <p class="muted">To confirm a transfer, open Orders and use “CONFIRM TRANSFER + MARK PAID” only after the money appears in your bank app. Bank withdrawals are made from your bank app, not from this Studio wallet.</p>
       <h2>Bank account for customer transfers</h2>
       <p class="muted">Customers will see these details after placing an order. Enter the MONOWEAR account where transfers should arrive. Orders stay pending until you verify the money in your bank app and confirm them below.</p>
       <form id="monoPaySettingsForm" class="form-grid">
@@ -1195,7 +1203,7 @@
     <div class="toolbar">
       <div>
         <p class="eyebrow">MONEY</p>
-        <h2>Payments</h2>
+        <h2>MONO PAY wallet &amp; payment activity</h2>
         <p class="muted">
           Revenue includes Paystack-verified payments and MONO PAY transfers you manually confirm in your bank account.
         </p>
