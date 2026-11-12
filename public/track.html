@@ -65,7 +65,7 @@ const railType=(name)=>/jean|trouser|pant|flare/i.test(String(name||""))?"jean":
 const itemHtml=items.length?items.map(item=>'<button class="wr-it '+railType(item.name)+'" type="button" aria-label="'+safe(item.name)+' quantity '+safe(item.quantity)+'">'+railHook(railType(item.name))+(item.image?'<img src="'+safe(item.image)+'" alt="'+safe(item.name)+'" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{className:\'order-rail-placeholder\',textContent:\'MONO\'}))">':'<div class="order-rail-placeholder">MONO</div>')+'<small>'+safe(item.name)+'</small><span class="wr-tag">QTY × '+safe(item.quantity)+'</span></button>').join(""):'<p class="muted">Product details are not available for this order.</p>';
 let timeline="";
 const carrierEvents=events.filter(ev=>String(ev.status||"").toLowerCase()==="carrier_update").sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));
-const carrierDelivered=carrierEvents.filter(ev=>/\\bdelivered\\b|delivery confirmed/i.test(String(ev.message||"")));
+const carrierDelivered=carrierEvents.filter(ev=>/\bdelivered\b|delivery confirmed/i.test(String(ev.message||"")));
 if(current<0)timeline='<div class="event current"><strong>'+safe(nice(order.order_status))+'</strong><p>Please contact MONOWEAR if you need help with this order.</p></div>';
 else timeline=stages.map((s,i)=>{
   const matches=events.filter(ev=>String(ev.status||"").toLowerCase()!=="carrier_update"&&stageIndex(ev.status)===i);
@@ -74,7 +74,7 @@ else timeline=stages.map((s,i)=>{
   let message=last?.message||s.desc;
   let time=last?.created_at?'<time>'+safe(displayDate(last.created_at))+'</time>':"";
   if(i===2){
-    const inTransitScans=carrierEvents.filter(ev=>!/\\bdelivered\\b|delivery confirmed/i.test(String(ev.message||"")));
+    const inTransitScans=carrierEvents.filter(ev=>!/\bdelivered\b|delivery confirmed/i.test(String(ev.message||"")));
     if(inTransitScans.length){
       message=inTransitScans[0].message;
       time=inTransitScans[0].created_at?'<time>'+safe(displayDate(inTransitScans[0].created_at))+'</time>':"";
