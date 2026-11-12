@@ -225,6 +225,24 @@ async function runUniversalTrackingCheck(db) {
 
     for (const order of orders) {
       try {
+        // Remove previously saved GIG website marketing copy so the customer
+        // timeline is not polluted by the old overly-broad text extractor.
+        if (/gig/i.test(String(order.shipment_carrier || ""))) {
+          db.prepare(`
+            DELETE FROM order_events
+            WHERE order_id = ? AND status = 'carrier_update'
+              AND (
+                LOWER(message) LIKE '%mailroom%'
+                OR LOWER(message) LIKE '%correspondence%'
+                OR LOWER(message) LIKE '%trusted brand%'
+                OR LOWER(message) LIKE '%customer testimonial%'
+                OR LOWER(message) LIKE '%delivery experience%'
+                OR LOWER(message) LIKE '%gadget business%'
+                OR LOWER(message) LIKE '%our customers%'
+                OR LOWER(message) LIKE '%we provide%'
+              )
+          `).run(order.id);
+        }
         const trackingResult = await readCarrierTracking(page, order);
         const events = trackingResult.events;
         if (!order.shipment_tracking_url && trackingResult.trackingUrl) {
