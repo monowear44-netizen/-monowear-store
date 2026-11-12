@@ -104,7 +104,7 @@ async function runGigTrackingCheck(db) {
           for (const scan of scans) {
             const result = insert.run(order.id, scan.message, scan.created_at, order.id, scan.message);
             added += result.changes;
-            if (/^DELIVERED$|SHIPMENT DELIVERED/i.test(scan.message)) {
+            if (/\bdelivered\b|delivery confirmed/i.test(scan.message)) {
               db.prepare("UPDATE orders SET order_status = 'delivered', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(order.id);
             }
           }
