@@ -14,6 +14,7 @@ const crypto = require("crypto");
 const { Resend } = require("resend");
 const webpush = require("web-push");
 const archiver = require("archiver");
+const { startGigTrackingBot } = require("./gig-tracking-bot");
 
 // ============================================================
 // MONOWEAR STORE SERVER
@@ -5231,4 +5232,5 @@ require("./support")(app, db, rateLimit);
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`MONOWEAR server running on port ${PORT}`);
+  startGigTrackingBot(db);
 });
