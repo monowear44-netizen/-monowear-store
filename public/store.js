@@ -987,7 +987,7 @@ if (checkoutForm) {
       shipping_courier_id: currentShippingCourier ? currentShippingCourier.courier_id : "",
       shipping_service_code: currentShippingCourier ? currentShippingCourier.service_code : "",
       shipping_request_token: currentShippingRequestToken,
-
+      payment_method: "mono_pay",
 
       items: cart.map((item) => ({
         product_id: Number(item.id),
@@ -1047,6 +1047,28 @@ if (checkoutForm) {
         throw new Error(
           result.error || "Could not start payment."
         );
+      }
+
+      if (result.payment_method === "mono_pay") {
+        hidePaymentLoading();
+        if (checkoutDialog && !checkoutDialog.open) checkoutDialog.showModal();
+        if (message) {
+          message.textContent = "MONO PAY — BANK TRANSFER\n" +
+            "Order: " + result.reference + "\n" +
+            "Amount: " + money(result.total) + "\n\n" +
+            "Bank: " + result.bank_name + "\n" +
+            "Account name: " + result.account_name + "\n" +
+            "Account number: " + result.account_number + "\n\n" +
+            result.instructions + "\n\n" +
+            "Keep your order reference. Your order remains pending until MONOWEAR confirms the transfer in Studio.";
+          message.style.whiteSpace = "pre-line";
+        }
+        if (submitButton) {
+          submitButton.textContent = "TRANSFER DETAILS SHOWN";
+          submitButton.disabled = true;
+        }
+        redirectingToPaystack = true;
+        return;
       }
 
       if (!result.authorization_url) {
