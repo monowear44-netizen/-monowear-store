@@ -1594,14 +1594,43 @@ async function sendOrderShippedEmail(order) {
   const trackingLink = /^gig/i.test(carrier) ? "" : String(order.shipment_tracking_url || "").trim();
   const details = [
     carrier ? '<p><strong>Delivery company:</strong> ' + escapeHTML(carrier) + '</p>' : "",
-    tracking ? '<p><strong>Tracking / waybill number:</strong> <span style="font-size:18px;letter-spacing:1px">' + escapeHTML(tracking) + '</span></p>' : "",
+    tracking ? '<p><strong>' + (/^gig/i.test(carrier) ? "GIG waybill number" : "Tracking number") + ':</strong><br><span style="font-size:20px;letter-spacing:1px;font-weight:bold">' + escapeHTML(tracking) + '</span></p>' : "",
     trackingLink ? '<p><a href="' + escapeHTML(trackingLink) + '" style="display:inline-block;padding:12px 18px;background:#171816;color:#fff;text-decoration:none">TRACK YOUR SHIPMENT ↗</a></p>' : ""
   ].filter(Boolean).join("");
-  const body = '<h2 style="margin:0 0 12px;font-size:22px">Your MONOWEAR order is on its way.</h2>' +
-    '<p>Hi ' + escapeHTML(order.customer_name) + ', your order <strong>' + escapeHTML(order.reference) + '</strong> has been handed over for delivery.</p>' +
-    details + '<p><a href="' + escapeHTML((BASE_URL || "") + "/track.html?reference=" + encodeURIComponent(order.reference)) + '" style="color:#171816;text-decoration:underline">VIEW YOUR MONOWEAR ORDER ↗</a></p>';
-  const result = await sendEmail(order.customer_email, 'MONOWEAR order shipped — ' + order.reference, emailShell(body));
+  const orderTrackUrl = (BASE_URL || "") + "/track.html?reference=" + encodeURIComponent(order.reference);
+  const guidance = /^gig/i.test(carrier)
+    ? '<div style="margin:18px 0;padding:16px;background:#f4f4f1;border-radius:8px"><strong>How to follow your delivery</strong><ol style="padding-left:20px;line-height:1.7"><li>Open MONOWEAR order tracking using the button below. Enter your <strong>MONOWEAR order reference</strong>, not the GIG waybill.</li><li>Your GIG waybill is the separate number shown above. It identifies your parcel with GIG Logistics.</li><li>If GIG initially shows “Shipment Created”, the waybill has been registered. Further scan updates appear as GIG records them, so please check again later.</li><li>Tracking can take time to update. No new scan does not mean your order is lost.</li></ol></div>'
+    : '<div style="margin:18px 0;padding:16px;background:#f4f4f1;border-radius:8px"><strong>How to follow your delivery</strong><p>Use the button below to view your MONOWEAR order. Your MONOWEAR order reference identifies your purchase; the carrier tracking number above identifies the parcel. Carrier scans may take time to appear.</p></div>';
+  const body = '<h2 style="margin:0 0 12px;font-size:22px">Your MONOWEAR order has shipped.</h2>' +
+    '<p>Hi ' + escapeHTML(order.customer_name || "there") + ', your order <strong>' + escapeHTML(order.reference) + '</strong> has been marked as shipped.</p>' +
+    details + guidance +
+    '<p style="margin:22px 0"><a href="' + escapeHTML(orderTrackUrl) + '" style="display:inline-block;background:#c6ff4b;color:#141414;padding:13px 20px;text-decoration:none;font-weight:bold">TRACK MY MONOWEAR ORDER</a></p>' +
+    '<p>If you need help, reply to this email and include your MONOWEAR order reference.</p>';
+  const result = await sendEmail(order.customer_email, 'Your MONOWEAR order has shipped — ' + order.reference, emailShell(body));
   return { sent: Boolean(result && result.ok), error: result && result.error ? result.error : null };
+}
+
+// Atomically claim the notification so repeated Studio actions or restarts
+// cannot send duplicate shipping emails.
+async function sendOrderShippedEmailOnce(orderId) {
+  const order = getOrderById(orderId);
+  if (!order || order.payment_status !== "paid") return { sent: false, reason: "order_not_paid_or_missing" };
+  if (["sent", "sending", "legacy", "skipped"].includes(order.shipped_email_status)) {
+    return { sent: false, reason: order.shipped_email_status };
+  }
+  const claim = db.prepare(`
+    UPDATE orders SET shipped_email_status = 'sending'
+    WHERE id = ?
+      AND (shipped_email_status IS NULL OR shipped_email_status IN ('', 'pending', 'failed'))
+  `).run(order.id);
+  if (!claim.changes) return { sent: false, reason: "already_claimed" };
+  const result = await sendOrderShippedEmail(getOrderById(order.id));
+  db.prepare("UPDATE orders SET shipped_email_status = ? WHERE id = ?")
+    .run(result.sent ? "sent" : "failed", order.id);
+  recordOrderEvent(order.id, "shipped", result.sent
+    ? "Shipping guidance email sent to customer."
+    : "Shipping guidance email could not be sent: " + (result.error || result.reason || "unknown error"));
+  return result;
 }
 
 async function sendOrderDeliveredEmailOnce(orderId) {
@@ -4455,13 +4484,8 @@ app.put("/api/admin/orders/:id/status", requireAdmin, async (req, res) => {
   }
 
   let shippedEmailResult = null;
-  if (status === "shipped" && order.payment_status === "paid" && order.shipped_email_status !== "sent") {
-    shippedEmailResult = await sendOrderShippedEmail(getOrderById(id));
-    db.prepare("UPDATE orders SET shipped_email_status = ? WHERE id = ?")
-      .run(shippedEmailResult.sent ? "sent" : "failed", id);
-    recordOrderEvent(id, "shipped", shippedEmailResult.sent
-      ? "Shipping notification email sent to customer."
-      : "Shipping notification email could not be sent.");
+  if (status === "shipped" && order.payment_status === "paid") {
+    shippedEmailResult = await sendOrderShippedEmailOnce(id);
   }
 
   let deliveryEmailResult = null;
@@ -5233,4 +5257,13 @@ require("./support")(app, db, rateLimit);
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`MONOWEAR server running on port ${PORT}`);
   startGigTrackingBot(db);
+
+  // Send the requested catch-up shipping guide for the already-shipped order.
+  // The database claim makes this one-time and safe across restarts.
+  setTimeout(() => {
+    const existing = db.prepare("SELECT id FROM orders WHERE reference = ? AND LOWER(COALESCE(order_status, '')) = 'shipped'").get("MONO-1794433159593-7128775E");
+    if (existing) sendOrderShippedEmailOnce(existing.id).then(result => {
+      console.log("[Shipping email catch-up] MONO-1794433159593-7128775E:", result.sent ? "sent" : (result.reason || result.error || "not sent"));
+    }).catch(error => console.error("[Shipping email catch-up] Failed:", error.message));
+  }, 60000);
 });
