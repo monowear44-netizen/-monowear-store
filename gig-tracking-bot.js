@@ -3,7 +3,7 @@ const { chromium: playwrightChromium } = require("playwright-core");
 const chromiumBinary = require("@sparticuz/chromium");
 
 const INTERVAL_MS = 15 * 60 * 1000;
-const TRACKER_URL = "https://web2.giglogistics.com/";
+const TRACKER_URL = "https://portal.gigagilitysystems.com/public/track";
 const KNOWN_SCAN = [
   "SHIPMENT CREATED AT SERVICE CENTER", "SHIPMENT CREATED",
   "SHIPMENT RECEIVED FROM THE STORE", "SHIPMENT ARRIVED SERVICE CENTRE",
@@ -74,11 +74,18 @@ async function fetchGIGScans(page, waybill) {
     }
     return hits.slice(0, 5);
   });
-  const input = page.getByPlaceholder(/waybill/i).first();
-  await input.waitFor({ state: "visible", timeout: 20000 });
+  let input = page.getByPlaceholder(/waybill|tracking|shipment/i).first();
+  if (!(await input.count())) input = page.locator("input[type='text'], input:not([type])").first();
+  await input.waitFor({ state: "visible", timeout: 25000 });
   const inputDetails = await input.evaluate(el => ({ html: el.outerHTML, parent: el.parentElement?.outerHTML?.slice(0, 1200) }));
   await input.fill(String(waybill));
-  await page.locator("#trackNowBtn").click({ force: true, timeout: 15000 });
+  const submitById = page.locator("#trackNowBtn");
+  if (await submitById.count()) await submitById.click({ force: true, timeout: 15000 });
+  else {
+    const submit = page.getByRole("button", { name: /track|search|submit/i }).first();
+    if (await submit.count()) await submit.click({ force: true, timeout: 15000 });
+    else await input.press("Enter").catch(() => {});
+  }
   await page.waitForTimeout(9000);
   let body = await page.locator("body").innerText({ timeout: 15000 });
   if (!body.includes(String(waybill)) && !/shipment origin/i.test(body)) {
