@@ -18,7 +18,9 @@ function cleanLines(value) {
 function parseDateNear(lines, index) {
   for (const value of [lines[index], lines[index - 1], lines[index + 1], lines[index + 2], lines[index - 2]]) {
     if (!value || !DATE_PATTERN.test(value)) continue;
-    const parsed = new Date(value);
+    // GIG displays timestamps as "12 Nov 2026 at 18:56"; native Date
+    // parsing does not accept the word "at", so normalize it first.
+    const parsed = new Date(value.replace(/\\s+at\\s+/i, " "));
     if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().replace("T", " ").replace("Z", "");
   }
   return null;
