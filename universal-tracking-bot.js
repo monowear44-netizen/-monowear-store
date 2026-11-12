@@ -212,7 +212,27 @@ async function runUniversalTrackingCheck(db) {
     SELECT id, reference, shipment_carrier, shipment_tracking_number, shipment_tracking_url
     FROM orders
     WHERE TRIM(COALESCE(shipment_tracking_number, '')) <> ''
-      AND LOWER(COALESCE(order_status, '')) NOT IN ('delivered', 'cancelled')
+      AND (
+        LOWER(COALESCE(order_status, '')) NOT IN ('delivered', 'cancelled')
+        OR (
+          LOWER(COALESCE(shipment_carrier, '')) LIKE '%gig%'
+          AND EXISTS (
+            SELECT 1 FROM order_events oe
+            WHERE oe.order_id = orders.id
+              AND oe.status = 'carrier_update'
+              AND (
+                LOWER(oe.message) LIKE '%mailroom%'
+                OR LOWER(oe.message) LIKE '%correspondence%'
+                OR LOWER(oe.message) LIKE '%trusted brand%'
+                OR LOWER(oe.message) LIKE '%customer testimonial%'
+                OR LOWER(oe.message) LIKE '%delivery experience%'
+                OR LOWER(oe.message) LIKE '%gadget business%'
+                OR LOWER(oe.message) LIKE '%our customers%'
+                OR LOWER(oe.message) LIKE '%we provide%'
+              )
+          )
+        )
+      )
   `).all();
   if (!orders.length) return;
 
