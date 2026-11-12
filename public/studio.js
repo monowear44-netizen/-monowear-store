@@ -231,7 +231,7 @@ function switchTab(tab) {
     abandoned: "Abandoned carts",
     completed: "Completed & shipped",
     collections: "Collections",
-    payments: "MONO PAY / Wallet",
+    payments: "Payments",
     history: "LabelD History",
     audience: "Waitlist & Subscribers"
   };
@@ -2171,7 +2171,7 @@ window.updateOrder = async (id, status) => {
       if (carrier === null) { await loadOrders(); return; }
       const tracking = prompt("Tracking number / waybill (optional):", order?.shipment_tracking_number || "");
       if (tracking === null) { await loadOrders(); return; }
-      const trackingUrl = prompt("Carrier tracking website URL (optional — leave blank and the bot will search for the carrier tracking page):", order?.shipment_tracking_url || "");
+      const trackingUrl = prompt("Direct tracking link (optional):", order?.shipment_tracking_url || "");
       if (trackingUrl === null) { await loadOrders(); return; }
       shipment.shipment_carrier = carrier.trim();
       shipment.shipment_tracking_number = tracking.trim();
@@ -2639,16 +2639,6 @@ async function loadPayments() {
     );
 
     const { all, month, today } = data.revenue;
-    const monoPay = data.monoPay || {};
-    const monoReceived = monoPay.received || { gross: 0, orders: 0 };
-    const monoPending = monoPay.pending || { gross: 0, orders: 0 };
-    const monoRefunded = monoPay.refunded || { gross: 0, orders: 0 };
-    setText("monoPayReceived", money(monoReceived.gross));
-    setText("monoPayReceivedOrders", `${monoReceived.orders || 0} verified transfer(s)`);
-    setText("monoPayPending", money(monoPending.gross));
-    setText("monoPayPendingOrders", `${monoPending.orders || 0} awaiting confirmation`);
-    setText("monoPayRefunded", money(monoRefunded.gross));
-    setText("monoPayRefundedOrders", `${monoRefunded.orders || 0} refunded transfer(s)`);
 
     setText("revToday", money(today.gross));
     setText("revTodayOrders", `${today.orders} paid order${today.orders === 1 ? "" : "s"}`);
