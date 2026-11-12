@@ -9,7 +9,7 @@ const chromiumBinary = require("@sparticuz/chromium");
 const INTERVAL_MS = 15 * 60 * 1000;
 const GIG_FALLBACK_URL = "https://web2.giglogistics.com/?LSCWP_CTRL=before_optm";
 const STATUS_PATTERN = /\b(?:shipment created|order created|label created|booked|booking confirmed|picked up|pick up|collected|received|accepted|dispatched|departed|arrived|in transit|transit|out for delivery|with delivery|delivery attempted|attempted delivery|delivered|delivery confirmed|delivery failed|unsuccessful delivery|exception|held|on hold|returned|return to sender|rts|customs|clearance|processed|processing|sorted|at facility|at service cent(?:er|re)|handed over|handover|cancelled|canceled)\b/i;
-const DATE_PATTERN = /\b(?:20\d{2}[-/]\d{1,2}[-/]\d{1,2}|\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+20\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+20\d{2})\b/i;
+const DATE_PATTERN = /\b(?:20\d{2}[-/]\d{1,2}[-/]\d{1,2}|\d{1,2}[-/]\d{1,2}[-/]\d{2,4}|\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+20\d{2}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+20\d{2})(?:\s+at\s+\d{1,2}:\d{2})?\b/i;
 
 function cleanLines(value) {
   return String(value || "").split(/\r?\n/).map(line => line.replace(/\s+/g, " ").trim()).filter(Boolean);
@@ -17,10 +17,13 @@ function cleanLines(value) {
 
 function parseDateNear(lines, index) {
   for (const value of [lines[index], lines[index - 1], lines[index + 1], lines[index + 2], lines[index - 2]]) {
-    if (!value || !DATE_PATTERN.test(value)) continue;
-    // GIG displays timestamps as "12 Nov 2026 at 18:56"; native Date
-    // parsing does not accept the word "at", so normalize it first.
-    const parsed = new Date(value.replace(/\\s+at\\s+/i, " "));
+    if (!value) continue;
+    // Extract the date token rather than parsing the whole line: GIG can place
+    // its timestamp directly after a long promotional paragraph.
+    const match = value.match(DATE_PATTERN);
+    if (!match) continue;
+    // GIG displays timestamps as "12 Nov 2026 at 18:56".
+    const parsed = new Date(match[0].replace(/\\s+at\\s+/i, " "));
     if (!Number.isNaN(parsed.getTime())) return parsed.toISOString().replace("T", " ").replace("Z", "");
   }
   return null;
