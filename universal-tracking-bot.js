@@ -30,7 +30,7 @@ function parseDateNear(lines, index) {
 }
 
 function isPromotionalOrArticleText(line) {
-  return /mailroom|correspondence|outsourc|transform(?:ed|ing)? our|customer testimonial|trusted brand|our customers|we provide|gadget business|delivery experience|on time|learn more|read more|click here|contact us|frequently asked|customer service|privacy policy|terms (?:and|&) conditions/i.test(line);
+  return /mailroom|correspondence|outsourc|transform(?:ed|ing)? our|customer testimonial|trusted brand|our customers|we provide|gadget business|delivery experience|on time|giggo app|game-changer for my business|request item pickups|international shipping services|learn more|read more|click here|contact us|frequently asked|customer service|privacy policy|terms (?:and|&) conditions/i.test(line);
 }
 
 function extractTrackingEvents(bodyText) {
@@ -232,6 +232,10 @@ async function runUniversalTrackingCheck(db) {
                 OR LOWER(oe.message) LIKE '%gadget business%'
                 OR LOWER(oe.message) LIKE '%our customers%'
                 OR LOWER(oe.message) LIKE '%we provide%'
+                OR LOWER(oe.message) LIKE '%giggo app%'
+                OR LOWER(oe.message) LIKE '%game-changer for my business%'
+                OR LOWER(oe.message) LIKE '%request item pickups%'
+                OR LOWER(oe.message) LIKE '%international shipping services%'
               )
           )
         )
@@ -263,6 +267,10 @@ async function runUniversalTrackingCheck(db) {
                 OR LOWER(message) LIKE '%gadget business%'
                 OR LOWER(message) LIKE '%our customers%'
                 OR LOWER(message) LIKE '%we provide%'
+                OR LOWER(message) LIKE '%giggo app%'
+                OR LOWER(message) LIKE '%game-changer for my business%'
+                OR LOWER(message) LIKE '%request item pickups%'
+                OR LOWER(message) LIKE '%international shipping services%'
               )
           `).run(order.id);
         }
