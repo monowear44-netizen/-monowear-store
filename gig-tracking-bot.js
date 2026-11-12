@@ -50,11 +50,17 @@ async function fetchGIGScans(page, waybill) {
   const input = page.getByPlaceholder(/waybill/i).first();
   await input.waitFor({ state: "visible", timeout: 20000 });
   await input.fill(String(waybill));
-  await page.getByText(/track now/i).first().click({ timeout: 15000 });
-  await page.waitForTimeout(6500);
-  const body = await page.locator("body").innerText({ timeout: 15000 });
+  await input.press("Enter").catch(() => {});
+  await page.waitForTimeout(2500);
+  let body = await page.locator("body").innerText({ timeout: 15000 });
   if (!body.includes(String(waybill)) && !/shipment origin/i.test(body)) {
-    throw new Error("GIG tracker did not return a result for the submitted waybill.");
+    const submit = page.getByRole("button", { name: /track now/i }).first();
+    if (await submit.count()) await submit.click({ timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(5000);
+    body = await page.locator("body").innerText({ timeout: 15000 });
+  }
+  if (!body.includes(String(waybill)) && !/shipment origin/i.test(body)) {
+    throw new Error("GIG tracker response missing. URL=" + page.url() + " TITLE=" + await page.title() + " PAGE=" + body.slice(-1800).replace(/\\s+/g, " "));
   }
   if (/no shipment found|invalid waybill|waybill not found/i.test(body)) {
     throw new Error("GIG tracker returned no shipment for this waybill.");
