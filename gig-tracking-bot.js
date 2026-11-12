@@ -60,6 +60,7 @@ async function fetchGIGScans(page, waybill) {
   await page.goto(TRACKER_URL, { waitUntil: "domcontentloaded", timeout: 45000 });
   const input = page.getByPlaceholder(/waybill/i).first();
   await input.waitFor({ state: "visible", timeout: 20000 });
+  const inputDetails = await input.evaluate(el => ({ html: el.outerHTML, parent: el.parentElement?.outerHTML?.slice(0, 1200) }));
   await input.fill(String(waybill));
   await input.press("Enter").catch(() => {});
   await page.waitForTimeout(2500);
@@ -72,8 +73,11 @@ async function fetchGIGScans(page, waybill) {
     body = await page.locator("body").innerText({ timeout: 15000 });
   }
   if (!body.includes(String(waybill)) && !/shipment origin/i.test(body)) {
-    const controls = await page.locator("input,button,a").evaluateAll(els => els.map(e => ({ tag: e.tagName, text: (e.innerText || e.value || "").trim().slice(0, 80), placeholder: e.getAttribute("placeholder"), type: e.getAttribute("type"), href: e.getAttribute("href") })).slice(0, 30));
-    throw new Error("GIG tracker response missing. URL=" + page.url() + " TITLE=" + await page.title() + " CONTROLS=" + JSON.stringify(controls) + " NETWORK=" + JSON.stringify(network) + " PAGE=" + body.slice(-900).replace(/\\s+/g, " "));
+    const trackTarget = await page.getByText(/track now/i).first().evaluate(el => ({ tag: el.tagName, html: el.outerHTML, parent: el.parentElement?.outerHTML?.slice(0, 1600) })).catch(() => null);
+    const inputs = await page.locator("input").evaluateAll(els => els.map(e => ({ html: e.outerHTML, value: e.value, visible: !!(e.offsetWidth || e.offsetHeight || e.getClientRects().length) })));
+    const forms = await page.locator("form").evaluateAll(els => els.map(e => e.outerHTML.slice(0, 1800)));
+    const excerptAt = body.toLowerCase().lastIndexOf("track shipment");
+    throw new Error("GIG tracker response missing. URL=" + page.url() + " TITLE=" + await page.title() + " INPUTDETAILS=" + JSON.stringify(inputDetails) + " INPUTS=" + JSON.stringify(inputs) + " FORMS=" + JSON.stringify(forms) + " TRACKTARGET=" + JSON.stringify(trackTarget) + " NETWORK=" + JSON.stringify(network) + " RESULTTEXT=" + body.slice(Math.max(0, excerptAt - 300), excerptAt + 1400).replace(/\\s+/g, " "));
   }
   if (/no shipment found|invalid waybill|waybill not found/i.test(body)) {
     throw new Error("GIG tracker returned no shipment for this waybill.");
