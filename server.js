@@ -458,6 +458,14 @@ ensureColumn("orders", "shipment_tracking_number", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipment_tracking_url", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipped_email_status", "TEXT DEFAULT ''");
 
+/*
+ * One-time shipment detail repair for an already-shipped MONOWEAR order.
+ * This updates only tracking metadata; it does not change order status
+ * or send another shipping email. Safe to run on every server restart.
+ */
+db.prepare("UPDATE orders SET shipment_carrier = ?, shipment_tracking_number = ?, shipment_tracking_url = ?, updated_at = CURRENT_TIMESTAMP WHERE reference = ? AND LOWER(COALESCE(order_status, '')) = 'shipped'").run("GIG Logistics", "1441011321", "https://giglogistics.com/track-shipment/", "MONO-1794433159593-7128775E");
+
+
 ensureColumn("orders", "preorder_email_status", "TEXT DEFAULT ''");
 
 if (ensureColumn("orders", "email_status", "TEXT DEFAULT ''")) {
