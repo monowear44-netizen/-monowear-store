@@ -463,7 +463,18 @@ ensureColumn("orders", "shipped_email_status", "TEXT DEFAULT ''");
  * This updates only tracking metadata; it does not change order status
  * or send another shipping email. Safe to run on every server restart.
  */
-db.prepare("UPDATE orders SET shipment_carrier = ?, shipment_tracking_number = ?, shipment_tracking_url = ?, updated_at = CURRENT_TIMESTAMP WHERE reference = ? AND LOWER(COALESCE(order_status, '')) = 'shipped'").run("GIG Logistics", "1441011321", "https://giglogistics.com/track-shipment/", "MONO-1794433159593-7128775E");
+db.prepare("UPDATE orders SET shipment_carrier = ?, shipment_tracking_number = ?, shipment_tracking_url = '', updated_at = CURRENT_TIMESTAMP WHERE reference = ? AND LOWER(COALESCE(order_status, '')) = 'shipped'").run("GIG Logistics", "1441011321", "MONO-1794433159593-7128775E");
+db.prepare(`
+  INSERT INTO order_events (order_id, status, message, created_at)
+  SELECT id, 'carrier_update', 'SHIPMENT CREATED', '2026-11-12 13:13:00'
+  FROM orders
+  WHERE reference = ?
+    AND NOT EXISTS (
+      SELECT 1 FROM order_events
+      WHERE order_id = orders.id AND status = 'carrier_update'
+        AND message = 'SHIPMENT CREATED'
+    )
+`).run("MONO-1794433159593-7128775E");
 
 
 ensureColumn("orders", "preorder_email_status", "TEXT DEFAULT ''");
@@ -1579,7 +1590,7 @@ async function sendOrderShippedEmail(order) {
   }
   const carrier = String(order.shipment_carrier || "").trim();
   const tracking = String(order.shipment_tracking_number || "").trim();
-  const trackingLink = String(order.shipment_tracking_url || "").trim();
+  const trackingLink = /^gig/i.test(carrier) ? "" : String(order.shipment_tracking_url || "").trim();
   const details = [
     carrier ? '<p><strong>Delivery company:</strong> ' + escapeHTML(carrier) + '</p>' : "",
     tracking ? '<p><strong>Tracking / waybill number:</strong> <span style="font-size:18px;letter-spacing:1px">' + escapeHTML(tracking) + '</span></p>' : "",
@@ -4135,7 +4146,7 @@ app.get("/api/orders/track/:reference", checkoutLimiter, (req, res) => {
       order_status: order.order_status,
       shipment_carrier: order.shipment_carrier || "",
       shipment_tracking_number: order.shipment_tracking_number || "",
-      shipment_tracking_url: order.shipment_tracking_url || "",
+      shipment_tracking_url: /^gig/i.test(String(order.shipment_carrier || "")) ? "" : (order.shipment_tracking_url || ""),
       total: Number(order.total || 0),
       items
     },
