@@ -1190,16 +1190,9 @@
         <div class="stat"><span>REFUNDED MONO PAY</span><strong id="monoPayRefunded">—</strong><small id="monoPayRefundedOrders"></small></div>
       </div>
       <p class="muted">To confirm a transfer, open Orders and use “CONFIRM TRANSFER + MARK PAID” only after the money appears in your bank app. Bank withdrawals are made from your bank app, not from this Studio wallet.</p>
-      <h2>Bank account for customer transfers</h2>
-      <p class="muted">Customers will see these details after placing an order. Enter the MONOWEAR account where transfers should arrive. Orders stay pending until you verify the money in your bank app and confirm them below.</p>
-      <form id="monoPaySettingsForm" class="form-grid">
-        <label>Bank name<input name="mono_pay_bank_name" required maxlength="80" placeholder="e.g. First Bank"></label>
-        <label>Account name<input name="mono_pay_account_name" required maxlength="120" placeholder="Account holder name"></label>
-        <label>Account number<input name="mono_pay_account_number" required inputmode="numeric" pattern="[0-9]{10}" maxlength="10" minlength="10" placeholder="10-digit account number"></label>
-        <div class="span2"><button class="primary" type="submit">SAVE MONO PAY BANK DETAILS ↗</button></div>
-        <p id="monoPaySettingsMessage" class="message span2" role="status" aria-live="polite"></p>
-      </form>
-    </div>
+      <h2>MONO PAY · Paystack bank transfer</h2>
+      <p class="muted">MONO PAY uses your connected Paystack integration. Customers are redirected to secure Paystack checkout with bank transfer as the only enabled payment channel. Successful payments are verified automatically through Paystack before orders are marked paid. Funds settle through your existing Paystack account.</p>
+      <p class="muted">No separate MONOWEAR bank account number is configured here. Keep your Paystack secret key and webhook settings active in the hosting environment and Paystack dashboard.</p>    </div>
     <div class="toolbar">
       <div>
         <p class="eyebrow">MONEY</p>
