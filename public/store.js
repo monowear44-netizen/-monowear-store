@@ -1049,28 +1049,6 @@ if (checkoutForm) {
         );
       }
 
-      if (result.payment_method === "mono_pay") {
-        hidePaymentLoading();
-        if (checkoutDialog && !checkoutDialog.open) checkoutDialog.showModal();
-        if (message) {
-          message.textContent = "MONO PAY — BANK TRANSFER\n" +
-            "Order: " + result.reference + "\n" +
-            "Amount: " + money(result.total) + "\n\n" +
-            "Bank: " + result.bank_name + "\n" +
-            "Account name: " + result.account_name + "\n" +
-            "Account number: " + result.account_number + "\n\n" +
-            result.instructions + "\n\n" +
-            "Keep your order reference. Your order remains pending until MONOWEAR confirms the transfer in Studio.";
-          message.style.whiteSpace = "pre-line";
-        }
-        if (submitButton) {
-          submitButton.textContent = "TRANSFER DETAILS SHOWN";
-          submitButton.disabled = true;
-        }
-        redirectingToPaystack = true;
-        return;
-      }
-
       if (!result.authorization_url) {
         throw new Error(
           "Payment started, but no payment link was returned."
@@ -1079,7 +1057,7 @@ if (checkoutForm) {
 
       redirectingToPaystack = true;
       const loadingMessage = paymentLoading ? paymentLoading.querySelector(".payment-loading-message") : null;
-      if (loadingMessage) loadingMessage.textContent = "Opening Paystack secure payment…";
+      if (loadingMessage) loadingMessage.textContent = "Opening MONO PAY secure bank transfer…";
       window.location.assign(result.authorization_url);
 
     } catch (error) {
