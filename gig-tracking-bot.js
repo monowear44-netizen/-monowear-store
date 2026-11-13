@@ -13,8 +13,17 @@ const KNOWN_SCAN = [
   "SHIPMENT WITH DELIVERY COURIER", "SHIPMENT ARRIVED FINAL DESTINATION",
   "ARRIVED DELIVERY FACILITY", "DELIVERY ATTEMPTED", "DELIVERY UNSUCCESSFUL",
   "SHIPMENT ENROUTE RETURN", "SHIPMENT REREOUTED", "SHIPMENT CANCELLED",
-  "DAMAGED SHIPMENT", "DELIVERED", "IN TRANSIT", "OUT FOR DELIVERY"
+  "DAMAGED SHIPMENT", "SHIPMENT DELIVERED", "DELIVERED",
+  "ARRIVED PROCESSING CENTER", "ARRIVED PROCESSING CENTRE",
+  "DEPARTS IJEBO ODE", "IN TRANSIT", "OUT FOR DELIVERY"
 ];
+
+const PROMOTIONAL_TEXT = /NEED YOUR PACKAGE DELIVERED TO YOUR DOORSTEP|WE WILL SHIP IT|LAST.MILE DELIVERY SERVICE|COVERS OVER \d+ STATES|AT GIG LOGISTICS, WE HANDLE/i;
+
+function isExplicitDeliveredEvent(message) {
+  const value = String(message || "").trim().toUpperCase();
+  return /^(?:SHIPMENT\s+)?DELIVERED(?:\s+(?:TO\b|SUCCESSFULLY\b|AT\b).*)?$/.test(value);
+}
 
 function cleanLines(text) {
   return String(text || "").split(/\r?\n/).map(x => x.replace(/\s+/g, " ").trim()).filter(Boolean);
@@ -35,7 +44,10 @@ function extractScans(bodyText) {
   const scans = [];
   for (let i = 0; i < lines.length; i++) {
     const upper = lines[i].toUpperCase();
-    if (!KNOWN_SCAN.some(label => upper.includes(label))) continue;
+    // GIG's public tracker page includes marketing copy containing the word
+    // "delivered". It is not a shipment scan and must never advance an order.
+    if (PROMOTIONAL_TEXT.test(upper)) continue;
+    if (!KNOWN_SCAN.some(label => upper === label || upper.startsWith(label + " ") || upper.startsWith(label + ":"))) continue;
     if (/KNOW THE MEANING|FREQUENTLY ASKED|TRACK SHIPMENT|SHIPMENT ORIGIN|DESTINATION/.test(upper)) continue;
     const message = lines[i].slice(0, 240);
     if (!scans.some(x => x.message.toLowerCase() === message.toLowerCase())) {
@@ -120,7 +132,9 @@ async function fetchGIGScans(page, waybill) {
 }
 
 async function runGigTrackingCheck(db) {
-  const orders = db.prepare("SELECT id, reference, shipment_tracking_number FROM orders WHERE LOWER(COALESCE(shipment_carrier, '')) LIKE '%gig%' AND TRIM(COALESCE(shipment_tracking_number, '')) <> '' AND LOWER(COALESCE(order_status, '')) NOT IN ('delivered', 'cancelled')").all();
+  // Include delivered orders so we can repair an earlier false-positive
+  // caused by GIG promotional copy. Cancelled orders remain excluded.
+  const orders = db.prepare("SELECT id, reference, shipment_tracking_number, order_status FROM orders WHERE LOWER(COALESCE(shipment_carrier, '')) LIKE '%gig%' AND TRIM(COALESCE(shipment_tracking_number, '')) <> '' AND LOWER(COALESCE(order_status, '')) <> 'cancelled'").all();
   if (!orders.length) return;
   let browser;
   try {
@@ -132,13 +146,24 @@ async function runGigTrackingCheck(db) {
         const scans = await fetchGIGScans(page, order.shipment_tracking_number);
         const insert = db.prepare("INSERT INTO order_events (order_id, status, message, created_at) SELECT ?, 'carrier_update', ?, COALESCE(?, CURRENT_TIMESTAMP) WHERE NOT EXISTS (SELECT 1 FROM order_events WHERE order_id = ? AND status = 'carrier_update' AND LOWER(message) = LOWER(?))");
         let added = 0;
+        const hasExplicitDelivery = scans.some(scan => isExplicitDeliveredEvent(scan.message));
+        const hasOldPromotionalFalsePositive = db.prepare(
+          "SELECT 1 FROM order_events WHERE order_id = ? AND status = 'carrier_update' AND (message LIKE '%Need your package delivered to your doorstep%' OR message LIKE '%last-mile delivery service%') LIMIT 1"
+        ).get(order.id);
         const save = db.transaction(() => {
           for (const scan of scans) {
             const result = insert.run(order.id, scan.message, scan.created_at, order.id, scan.message);
             added += result.changes;
-            if (/\bdelivered\b|delivery confirmed/i.test(scan.message)) {
-              db.prepare("UPDATE orders SET order_status = 'delivered', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(order.id);
-            }
+          }
+          if (hasExplicitDelivery) {
+            db.prepare("UPDATE orders SET order_status = 'delivered', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(order.id);
+          } else if (String(order.order_status || "").toLowerCase() === "delivered" && hasOldPromotionalFalsePositive) {
+            // Undo only the bot's identifiable marketing-copy false positive.
+            // Keep the order shipped until GIG supplies an actual delivery scan.
+            db.prepare("UPDATE orders SET order_status = 'shipped', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(order.id);
+            db.prepare(
+              "DELETE FROM order_events WHERE order_id = ? AND status = 'carrier_update' AND (message LIKE '%Need your package delivered to your doorstep%' OR message LIKE '%last-mile delivery service%')"
+            ).run(order.id);
           }
         });
         save();
