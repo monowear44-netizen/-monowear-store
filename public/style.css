@@ -1402,3 +1402,23 @@ body{font-size:16px}
 .bulk-background-images figcaption { padding:6px; text-align:center; font-size:10px; letter-spacing:1px; background:rgba(0,0,0,.72); color:#fff; }
 .bulk-background-card > strong,.bulk-background-card > small { display:block; margin-top:8px; overflow-wrap:anywhere; }
 @media(max-width:600px){.bulk-background-actions>button{width:100%;}.bulk-background-images img{height:130px;}}
+
+/* MONOWEAR PRODUCT PRESENTATION — transparent image stages.
+   Keep uploaded product files untouched; only remove the CSS panels behind them. */
+.product-image,
+.product-detail-image,
+.more-product-image,
+.product-detail-more-image,
+.product-showcase-carousel,
+.product-showcase-carousel .product-image {
+  background: transparent !important;
+}
+.product-image img,
+.product-detail-image img,
+.more-product-image img,
+.product-detail-more-image img,
+.product-showcase-carousel .product-image img {
+  object-fit: contain !important;
+  object-position: center !important;
+  mix-blend-mode: normal !important;
+}
