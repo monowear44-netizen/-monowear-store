@@ -459,6 +459,25 @@ ensureColumn("orders", "shipment_tracking_url", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipped_email_status", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipped_admin_copy_status", "TEXT DEFAULT ''");
 
+/*
+ * One-time cleanup of the former carrier-sync false delivery for this order.
+ * Restore MONOWEAR's last manually set state (shipped), then remove imported
+ * carrier scans so this correction cannot overwrite a later Studio decision.
+ */
+const gigFalseDeliveryOrder = db.prepare(`
+  SELECT id FROM orders
+  WHERE reference = ?
+    AND LOWER(COALESCE(order_status, '')) = 'delivered'
+    AND EXISTS (
+      SELECT 1 FROM order_events
+      WHERE order_id = orders.id AND status = 'carrier_update'
+    )
+`).get("MONO-1794433159593-7128775E");
+if (gigFalseDeliveryOrder) {
+  db.prepare("UPDATE orders SET order_status = 'shipped', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(gigFalseDeliveryOrder.id);
+  db.prepare("DELETE FROM order_events WHERE order_id = ? AND status = 'carrier_update'").run(gigFalseDeliveryOrder.id);
+}
+
 
 ensureColumn("orders", "preorder_email_status", "TEXT DEFAULT ''");
 
@@ -1611,9 +1630,7 @@ async function sendOrderShippedAdminCopyOnce(orderId) {
   const result = await sendOrderShippedEmail(order, "monowear44@gmail.com", "ADMIN COPY — ");
   db.prepare("UPDATE orders SET shipped_admin_copy_status = ? WHERE id = ?")
     .run(result.sent ? "sent" : "failed", order.id);
-  recordOrderEvent(order.id, "shipped", result.sent
-    ? "Shipping guidance email copy sent to MONOWEAR admin."
-    : "Shipping guidance admin copy failed: " + (result.error || result.reason || "unknown error"));
+  // Admin-only email delivery is internal metadata, never a customer-facing order event.
   console.log("[Shipping email admin copy]", order.reference + ":", result.sent ? "sent" : (result.error || result.reason || "failed"));
   return result;
 }
@@ -4191,7 +4208,11 @@ app.get("/api/orders/track/:reference", checkoutLimiter, (req, res) => {
   // MONOWEAR tracking is the source of truth. Carrier scan feeds are not merged into this timeline.
   const events = db.prepare(`
     SELECT status, message, created_at FROM order_events
-    WHERE order_id = ? AND status <> 'carrier_update' ORDER BY id ASC
+    WHERE order_id = ?
+      AND status <> 'carrier_update'
+      AND message NOT LIKE 'Shipping guidance email copy sent to MONOWEAR admin%'
+      AND message NOT LIKE 'Shipping guidance admin copy failed%'
+    ORDER BY id ASC
   `).all(order.id);
 
   res.set("Cache-Control", "no-store");
@@ -5305,12 +5326,4 @@ require("./support")(app, db, rateLimit);
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`MONOWEAR server running on port ${PORT}`);
 
-  // Send the requested catch-up shipping guide for the already-shipped order.
-  // The database claim makes this one-time and safe across restarts.
-  setTimeout(() => {
-    const existing = db.prepare("SELECT id FROM orders WHERE reference = ? AND LOWER(COALESCE(order_status, '')) = 'shipped'").get("MONO-1794433159593-7128775E");
-    if (existing) sendOrderShippedEmailOnce(existing.id).then(result => {
-      console.log("[Shipping email catch-up] MONO-1794433159593-7128775E:", result.sent ? "sent" : (result.reason || result.error || "not sent"));
-    }).catch(error => console.error("[Shipping email catch-up] Failed:", error.message));
-  }, 60000);
 });
