@@ -1433,6 +1433,10 @@ async function sendOrderConfirmation(order) {
 
     ${address ? `<p style="margin-top:22px"><strong>Delivering to</strong><br>${address}</p>` : ""}
 
+    <div style="margin:22px 0;padding:16px;background:#f4f4f1;border-left:3px solid #164A36">
+      <strong>MONOWEAR DELIVERY POLICY</strong>
+      <p style="margin:8px 0 0">Estimated delivery is <strong>5–10 days after dispatch</strong>. Once your order is handed to our logistics partner, its status will be updated on your MONOWEAR tracking page. Tracking begins after payment is confirmed. Please allow the stated delivery window for your order to arrive.</p>
+    </div>
     <p style="margin-top:22px">We'll keep your order moving. Reply to this email if you need anything.</p>
   `;
 
@@ -1477,6 +1481,7 @@ async function sendSuccessfulPreorderEmail(order) {
     '<p>Subtotal: ' + naira(order.subtotal) + '<br>Delivery: ' + naira(order.shipping_fee) +
     '<br><strong>Total paid: ' + naira(order.total) + "</strong></p>" +
     '<p><strong>OFFICIAL DROP — NOVEMBER 10, 2026</strong></p>' +
+    '<div style="margin:18px 0;padding:16px;background:#f4f4f1;border-left:3px solid #164A36"><strong>MONOWEAR DELIVERY POLICY</strong><p style="margin:8px 0 0">Estimated delivery is 5–10 days after dispatch. Tracking begins after payment is confirmed and will be updated on your MONOWEAR tracking page once your order is handed to our logistics partner.</p></div>' +
     '<p>This is your preorder confirmation, separate from MONOWEAR regular order confirmations. Thank you for getting in before the official release.</p>' +
     '<p><strong>HELP IS ON THE WAY.</strong><br>LIVE THE NAME. WEAR THE MEANING.</p>';
   return sendEmail(order.customer_email, "MONOWEAR Prelude preorder confirmed — " + order.reference, emailShell(body));
