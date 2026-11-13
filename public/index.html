@@ -19,7 +19,7 @@
   <title>MONOWEARS — Help Is On The Way</title>
 
   <link rel="stylesheet" href="/style.css?v=original-product-colors-20261029-4">
-  <link rel="stylesheet" href="/theme.css?v=waitlist-button-text-fix-20261029-3">
+  <link rel="stylesheet" href="/theme.css?v=waitlist-blur-layer-20261113-1">
   <link rel="stylesheet" href="/wardrobe-rail.css?v=wardrobe-no-color-tags-20261029-3">
   <link rel="stylesheet" href="/layouts.css?v=layouts-20261026-1">
   <link rel="stylesheet" href="/saved-pieces.css?v=20261026">
@@ -395,65 +395,9 @@
     </div>
   </div>
   <!-- LOAD STORE LOGIC -->
-  <script src="/store.js?v=preorder-price-restore-20261110"></script>
+  <script src="/store.js?v=waitlist-background-layer-20261113-1"></script>
 
-  <!-- LOAD BACKGROUND IMAGES FROM STUDIO SETTINGS -->
-  <script>
-    (() => {
-      "use strict";
-
-      async function loadStudioBackgrounds() {
-        try {
-          const response = await fetch("/api/store-settings", {
-            credentials: "same-origin",
-            cache: "no-store"
-          });
-
-          if (!response.ok) {
-            throw new Error("Could not load store settings.");
-          }
-
-          const result = await response.json();
-          const settings = result.settings || result;
-
-          function applyBackground(element, imagePath) {
-            if (!element || !imagePath) return;
-
-            const image = String(imagePath).trim();
-
-            // Accept only local upload paths or HTTPS image URLs.
-            const isLocalUpload = /^\/uploads\/[a-zA-Z0-9._-]+$/.test(image);
-            const isHttpsUrl = /^https:\/\/[^"'\s]+$/i.test(image);
-
-            if (!isLocalUpload && !isHttpsUrl) return;
-
-            element.style.backgroundImage =
-              `linear-gradient(rgba(0,0,0,.30), rgba(0,0,0,.45)), url("${image}")`;
-
-            element.style.backgroundSize = "cover";
-            element.style.backgroundPosition = "center";
-            element.style.backgroundRepeat = "no-repeat";
-          }
-
-          applyBackground(
-            document.getElementById("heroSection"),
-            settings.hero_background_image
-          );
-
-          applyBackground(
-            document.getElementById("newsletter"),
-            settings.waitlist_background_image
-          );
-
-        } catch (error) {
-          // The existing storefront still works if settings cannot load.
-          console.warn("MONOWEAR background settings:", error.message);
-        }
-      }
-
-      loadStudioBackgrounds();
-    })();
-  </script>
+  <!-- Store settings, including the waitlist campaign image, are loaded by store.js. -->
 
   <script src="/theme.js?v=bluegold-theme-20261017" defer></script>
   <script src="/wardrobe-rail.js?v=wardrobe-no-color-tags-20261029-3" defer></script>
