@@ -607,3 +607,39 @@ html[data-theme="white"] .waitlist-section #newsletterLink {
   position: relative;
   z-index: 1;
 }
+
+/* WAITLIST BACKGROUND LAYERING — uploaded editor image, soft blur, readable copy. */
+.waitlist-section {
+  position: relative !important;
+  isolation: isolate !important;
+  overflow: hidden !important;
+  background-image: none !important;
+}
+.waitlist-section::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: -12px !important;
+  z-index: 0 !important;
+  display: block !important;
+  background-image: var(--waitlist-background-image, none) !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  filter: blur(5px) !important;
+  transform: scale(1.04) !important;
+  opacity: .78 !important;
+  pointer-events: none !important;
+}
+.waitlist-section::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  display: block !important;
+  background: linear-gradient(100deg, rgba(5,8,6,.82), rgba(5,8,6,.68)) !important;
+  pointer-events: none !important;
+}
+.waitlist-section > * {
+  position: relative !important;
+  z-index: 2 !important;
+}
