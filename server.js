@@ -2223,8 +2223,10 @@ function effectiveRailStatus(product, now = new Date()) {
   const status = String(product.rail_status || "");
   if (status === "featured") return "featured";
   if (status !== "new-drop" && status !== "new-arrival") return "";
-  const date = String(product.rail_drop_date || "");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return "";
+  const date = String(product.rail_drop_date || "").trim();
+  // A selected rail status is enough to display the product. A date is optional;
+  // when supplied, it controls the new-drop -> new-arrival -> expiry lifecycle.
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return status;
   const drop = new Date(date + "T00:00:00+01:00");
   const end = new Date(Number(date.slice(0, 4)), Number(date.slice(5, 7)), 1);
   if (now.getTime() >= end.getTime()) return "";
