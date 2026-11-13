@@ -1435,7 +1435,7 @@ async function sendOrderConfirmation(order) {
 
     <div style="margin:22px 0;padding:16px;background:#f4f4f1;border-left:3px solid #164A36">
       <strong>MONOWEAR DELIVERY POLICY</strong>
-      <p style="margin:8px 0 0">Estimated delivery is <strong>5–10 days after dispatch</strong>. Once your order is handed to our logistics partner, its status will be updated on your MONOWEAR tracking page. Tracking begins after payment is confirmed. Please allow the stated delivery window for your order to arrive.</p>
+      <p style="margin:8px 0 0">Estimated delivery is <strong>5–10 days after dispatch</strong>. Please allow the stated delivery window for your order to arrive.</p>
     </div>
     <p style="margin-top:22px">We'll keep your order moving. Reply to this email if you need anything.</p>
   `;
