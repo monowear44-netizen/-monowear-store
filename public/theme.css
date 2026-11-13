@@ -654,3 +654,10 @@ html[data-theme] .manifesto .eyebrow,
 html[data-theme] .manifesto > p:not(.eyebrow) {
   color: var(--muted) !important;
 }
+
+
+/* WAITLIST: no separate solid section background; use the uploaded waitlist image layer only. */
+html[data-theme] .waitlist-section,
+.waitlist-section {
+  background-color: transparent !important;
+}
