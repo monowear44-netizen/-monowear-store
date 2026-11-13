@@ -22,7 +22,10 @@ const PROMOTIONAL_TEXT = /NEED YOUR PACKAGE DELIVERED TO YOUR DOORSTEP|WE WILL S
 
 function isExplicitDeliveredEvent(message) {
   const value = String(message || "").trim().toUpperCase();
-  return /^(?:SHIPMENT\s+)?DELIVERED(?:\s+(?:TO\b|SUCCESSFULLY\b|AT\b).*)?$/.test(value);
+  // This line has already been extracted from GIG's shipment scan list, not page marketing copy.
+  // Accept GIG delivery scan variants such as "DELIVERED", "SHIPMENT DELIVERED",
+  // "DELIVERED TO CUSTOMER", or a scan line with a date/reference appended.
+  return /^(?:SHIPMENT\s+)?DELIVERED\b(?:.*)?$/.test(value);
 }
 
 function cleanLines(text) {
