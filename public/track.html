@@ -54,39 +54,22 @@ const response=await fetch("/api/orders/track/"+encodeURIComponent(ref)+"?email=
 if(!response.ok)throw new Error(data.error||"We couldn't find that order. Check your reference.");
 const order=data.order||{},events=Array.isArray(data.events)?data.events:[],items=Array.isArray(order.items)?order.items:[],current=stageIndex(order.order_status);
 const progress=stages.map((s,i)=>'<span class="'+(current>=0&&i<current?"done":current===i?"current":"")+'"></span>').join("");
-const trackingHtml=(order.shipment_carrier||order.shipment_tracking_number||order.shipment_tracking_url)
-  ? '<section class="panel" style="margin:16px 0 0"><div class="section-title" style="margin-top:0">COURIER / SHIPMENT DETAILS</div>' +
-    (order.shipment_carrier ? '<p class="muted"><strong>Delivery company:</strong> '+safe(order.shipment_carrier)+'</p>' : '') +
-    (order.shipment_tracking_number ? '<p class="muted"><strong>Tracking / waybill:</strong> '+safe(order.shipment_tracking_number)+'</p>' : '') +
-    (order.shipment_tracking_url ? '<p style="margin:12px 0 0"><a href="'+safe(order.shipment_tracking_url)+'" target="_blank" rel="noopener" style="display:inline-block;padding:11px 15px;background:#171816;color:#fff;font-size:10px;letter-spacing:.12em">TRACK WITH COURIER ↗</a></p>' : '') +
+const trackingHtml=(order.shipment_carrier||order.shipment_tracking_number)
+  ? '<section class="panel" style="margin:16px 0 0"><div class="section-title" style="margin-top:0">DELIVERY DETAILS</div>' +
+    (order.shipment_carrier ? '<p class="muted"><strong>Logistics company:</strong> '+safe(order.shipment_carrier)+'</p>' : '') +
+    (order.shipment_tracking_number ? '<p class="muted"><strong>Waybill / tracking number:</strong> '+safe(order.shipment_tracking_number)+'</p>' : '') +
     '</section>' : '';
 const railHook=(type)=>type==="cap"?'<svg viewBox="0 0 46 30" aria-hidden="true"><path d="M23 29V16c0-5 6-4 6-9a6 6 0 0 0-12 0" fill="none" stroke="currentColor" stroke-width="2"/></svg>':'<svg viewBox="0 0 46 30" aria-hidden="true"><path d="M23 12V8.5c0-5 6-4 6-8M23 12L2 28h42z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
 const railType=(name)=>/jean|trouser|pant|flare/i.test(String(name||""))?"jean":/cap|hat|beanie/i.test(String(name||""))?"cap":"top";
 const itemHtml=items.length?items.map(item=>'<button class="wr-it '+railType(item.name)+'" type="button" aria-label="'+safe(item.name)+' quantity '+safe(item.quantity)+'">'+railHook(railType(item.name))+(item.image?'<img src="'+safe(item.image)+'" alt="'+safe(item.name)+'" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{className:\'order-rail-placeholder\',textContent:\'MONO\'}))">':'<div class="order-rail-placeholder">MONO</div>')+'<small>'+safe(item.name)+'</small><span class="wr-tag">QTY × '+safe(item.quantity)+'</span></button>').join(""):'<p class="muted">Product details are not available for this order.</p>';
 let timeline="";
-const carrierEvents=events.filter(ev=>String(ev.status||"").toLowerCase()==="carrier_update").sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));
-const carrierDelivered=carrierEvents.filter(ev=>/\bdelivered\b|delivery confirmed/i.test(String(ev.message||"")));
 if(current<0)timeline='<div class="event current"><strong>'+safe(nice(order.order_status))+'</strong><p>Please contact MONOWEAR if you need help with this order.</p></div>';
 else timeline=stages.map((s,i)=>{
-  const matches=events.filter(ev=>String(ev.status||"").toLowerCase()!=="carrier_update"&&stageIndex(ev.status)===i);
+  const matches=events.filter(ev=>stageIndex(ev.status)===i);
   const last=matches[matches.length-1];
   const cls=i<current?"done":i===current?"current":"";
-  let message=last?.message||s.desc;
-  let time=last?.created_at?'<time>'+safe(displayDate(last.created_at))+'</time>':"";
-  if(i===2){
-    const inTransitScans=carrierEvents.filter(ev=>!/\bdelivered\b|delivery confirmed/i.test(String(ev.message||"")));
-    if(inTransitScans.length){
-      message=inTransitScans[0].message;
-      time=inTransitScans[0].created_at?'<time>'+safe(displayDate(inTransitScans[0].created_at))+'</time>':"";
-      const extra=inTransitScans.slice(1).map(ev=>'<div class="event '+(current>2?"done":current===2?"current":"")+'"><strong>'+safe(ev.message||"Shipment update")+'</strong>'+(ev.created_at?'<time>'+safe(displayDate(ev.created_at))+'</time>':"")+'</div>').join("");
-      return '<div class="event '+cls+'"><strong>'+safe(s.label)+'</strong><p>'+safe(message)+'</p>'+time+'</div>'+extra;
-    }
-  }
-  if(i===3&&carrierDelivered.length){
-    const delivered=carrierDelivered[carrierDelivered.length-1];
-    message=delivered.message||"Delivered to customer.";
-    time=delivered.created_at?'<time>'+safe(displayDate(delivered.created_at))+'</time>':time;
-  }
+  const message=last?.message||s.desc;
+  const time=last?.created_at?'<time>'+safe(displayDate(last.created_at))+'</time>':"";
   return '<div class="event '+cls+'"><strong>'+safe(s.label)+'</strong><p>'+safe(message)+'</p>'+time+'</div>';
 }).join("");
 result.innerHTML='<div class="topline"><div><div class="eyebrow">ORDER REFERENCE</div><div class="order-ref">'+safe(order.reference||ref)+'</div><h2>Shipment progress</h2><p class="muted">Placed '+safe(displayDate(order.created_at)||"date unavailable")+'</p></div><span class="status">'+safe(nice(order.order_status))+'</span></div><div class="section-title">YOUR ITEMS / ON THE RAIL</div><section class="wr order-wardrobe-rail" aria-label="Your ordered items"><div class="wr-rail"><div class="wr-track">'+itemHtml+'</div></div><div class="wr-hint">YOUR ORDER · HANGING ON THE RAIL</div></section><div class="summary"><span>Payment · '+safe(nice(order.payment_status))+'</span><strong>'+safe(money(order.total))+'</strong></div>'+trackingHtml+'<div class="section-title">DELIVERY PROGRESS</div><div class="progress">'+progress+'</div><div class="timeline">'+timeline+'</div>';
