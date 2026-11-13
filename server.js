@@ -3748,12 +3748,8 @@ app.post(
     try {
       const body = req.body || {};
       const paymentMethod = String(body.payment_method || "paystack").toLowerCase() === "mono_pay" ? "mono_pay" : "paystack";
-      const paymentSettings = Object.fromEntries(db.prepare("SELECT key, value FROM settings WHERE key IN ('mono_pay_bank_name','mono_pay_account_name','mono_pay_account_number')").all().map(row => [row.key, row.value]));
-      if (paymentMethod === "paystack" && !PAYSTACK_SECRET_KEY) {
-        return res.status(503).json({ error: "Online payment is not configured yet." });
-      }
-      if (paymentMethod === "mono_pay" && (!paymentSettings.mono_pay_bank_name || !paymentSettings.mono_pay_account_name || !/^\d{10}$/.test(String(paymentSettings.mono_pay_account_number || "")))) {
-        return res.status(503).json({ error: "MONO PAY bank transfer details are not ready yet. Please contact MONOWEAR." });
+      if (!PAYSTACK_SECRET_KEY) {
+        return res.status(503).json({ error: "MONO PAY is temporarily unavailable. Please contact MONOWEAR." });
       }
 
       const customerName = String(body.customer_name || body.name || "").trim();
@@ -3871,21 +3867,8 @@ app.post(
       recordOrderEvent(
         orderId,
         "pending",
-        paymentMethod === "mono_pay" ? "Order placed. Awaiting bank transfer and manual payment confirmation." : "Order created. Awaiting payment."
+        paymentMethod === "mono_pay" ? "Order placed. Awaiting bank transfer through MONO PAY." : "Order created. Awaiting payment."
       );
-
-      if (paymentMethod === "mono_pay") {
-        return res.json({
-          success: true,
-          payment_method: "mono_pay",
-          reference,
-          total,
-          bank_name: paymentSettings.mono_pay_bank_name,
-          account_name: paymentSettings.mono_pay_account_name,
-          account_number: paymentSettings.mono_pay_account_number,
-          instructions: "Transfer the exact amount and use your MONOWEAR order reference as the transfer narration. Your order will be processed after MONOWEAR confirms the payment."
-        });
-      }
 
       let payment;
 
@@ -3896,6 +3879,7 @@ app.post(
             email: customerEmail,
             amount: Math.round(total * 100),
             currency: "NGN",
+            ...(paymentMethod === "mono_pay" ? { channels: ["bank_transfer"] } : {}),
             reference,
             callback_url: BASE_URL
               ? `${BASE_URL}/payment/callback`
