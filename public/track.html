@@ -53,7 +53,9 @@ try{
 const response=await fetch("/api/orders/track/"+encodeURIComponent(ref)+"?email="+encodeURIComponent(email),{headers:{Accept:"application/json"},cache:"no-store"});const data=await response.json();
 if(!response.ok)throw new Error(data.error||"We couldn't find that order. Check your reference.");
 const order=data.order||{},events=Array.isArray(data.events)?data.events:[],items=Array.isArray(order.items)?order.items:[],current=stageIndex(order.order_status);
-const progress=stages.map((s,i)=>'<span class="'+(current>=0&&i<current?"done":current===i?"current":"")+'"></span>').join("");
+const isPaid=String(order.payment_status||"").toLowerCase()==="paid";
+const trackingStage=isPaid?current:-2;
+const progress=stages.map((s,i)=>'<span class="'+(trackingStage>=0&&i<trackingStage?"done":trackingStage===i?"current":"")+'"></span>').join("");
 const trackingHtml=(order.shipment_carrier||order.shipment_tracking_number)
   ? '<section class="panel" style="margin:16px 0 0"><div class="section-title" style="margin-top:0">DELIVERY DETAILS</div>' +
     (order.shipment_carrier ? '<p class="muted"><strong>Logistics company:</strong> '+safe(order.shipment_carrier)+'</p>' : '') +
@@ -64,15 +66,16 @@ const railType=(name)=>/jean|trouser|pant|flare/i.test(String(name||""))?"jean":
 const itemHtml=items.length?items.map(item=>'<button class="wr-it '+railType(item.name)+'" type="button" aria-label="'+safe(item.name)+' quantity '+safe(item.quantity)+'">'+railHook(railType(item.name))+(item.image?'<img src="'+safe(item.image)+'" alt="'+safe(item.name)+'" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),{className:\'order-rail-placeholder\',textContent:\'MONO\'}))">':'<div class="order-rail-placeholder">MONO</div>')+'<small>'+safe(item.name)+'</small><span class="wr-tag">QTY × '+safe(item.quantity)+'</span></button>').join(""):'<p class="muted">Product details are not available for this order.</p>';
 let timeline="";
 if(current<0)timeline='<div class="event current"><strong>'+safe(nice(order.order_status))+'</strong><p>Please contact MONOWEAR if you need help with this order.</p></div>';
+else if(!isPaid)timeline='<div class="event current"><strong>Awaiting payment</strong><p>Tracking will begin once your payment is confirmed.</p></div>';
 else timeline=stages.map((s,i)=>{
-  const matches=events.filter(ev=>stageIndex(ev.status)===i);
+  const matches=(trackingStage>=0&&i<=trackingStage)?events.filter(ev=>stageIndex(ev.status)===i):[];
   const last=matches[matches.length-1];
-  const cls=i<current?"done":i===current?"current":"";
+  const cls=i<trackingStage?"done":i===trackingStage?"current":"";
   const message=last?.message||s.desc;
   const time=last?.created_at?'<time>'+safe(displayDate(last.created_at))+'</time>':"";
   return '<div class="event '+cls+'"><strong>'+safe(s.label)+'</strong><p>'+safe(message)+'</p>'+time+'</div>';
 }).join("");
-result.innerHTML='<div class="topline"><div><div class="eyebrow">ORDER REFERENCE</div><div class="order-ref">'+safe(order.reference||ref)+'</div><h2>Shipment progress</h2><p class="muted">Placed '+safe(displayDate(order.created_at)||"date unavailable")+'</p></div><span class="status">'+safe(nice(order.order_status))+'</span></div><div class="section-title">YOUR ITEMS / ON THE RAIL</div><section class="wr order-wardrobe-rail" aria-label="Your ordered items"><div class="wr-rail"><div class="wr-track">'+itemHtml+'</div></div><div class="wr-hint">YOUR ORDER · HANGING ON THE RAIL</div></section><div class="summary"><span>Payment · '+safe(nice(order.payment_status))+'</span><strong>'+safe(money(order.total))+'</strong></div>'+trackingHtml+'<div class="section-title">DELIVERY PROGRESS</div><div class="progress">'+progress+'</div><div class="timeline">'+timeline+'</div>';
+result.innerHTML='<div class="topline"><div><div class="eyebrow">ORDER REFERENCE</div><div class="order-ref">'+safe(order.reference||ref)+'</div><h2>Shipment progress</h2><p class="muted">Placed '+safe(displayDate(order.created_at)||"date unavailable")+'</p></div><span class="status">'+safe(!isPaid?'Awaiting payment':nice(order.order_status))+'</span></div><div class="section-title">YOUR ITEMS / ON THE RAIL</div><section class="wr order-wardrobe-rail" aria-label="Your ordered items"><div class="wr-rail"><div class="wr-track">'+itemHtml+'</div></div><div class="wr-hint">YOUR ORDER · HANGING ON THE RAIL</div></section><div class="summary"><span>Payment · '+safe(nice(order.payment_status))+'</span><strong>'+safe(money(order.total))+'</strong></div>'+trackingHtml+'<div class="section-title">DELIVERY PROGRESS</div><div class="progress">'+progress+'</div><div class="timeline">'+timeline+'</div>';
 result.hidden=false;message.textContent="";
 }catch(err){message.textContent=err.message||"We couldn't retrieve your order. Please try again."}finally{button.disabled=false}
 });
