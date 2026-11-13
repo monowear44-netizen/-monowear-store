@@ -14,7 +14,6 @@ const crypto = require("crypto");
 const { Resend } = require("resend");
 const webpush = require("web-push");
 const archiver = require("archiver");
-const { startGigTrackingBot } = require("./gig-tracking-bot");
 
 // ============================================================
 // MONOWEAR STORE SERVER
@@ -459,24 +458,6 @@ ensureColumn("orders", "shipment_tracking_number", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipment_tracking_url", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipped_email_status", "TEXT DEFAULT ''");
 ensureColumn("orders", "shipped_admin_copy_status", "TEXT DEFAULT ''");
-
-/*
- * One-time shipment detail repair for an already-shipped MONOWEAR order.
- * This updates only tracking metadata; it does not change order status
- * or send another shipping email. Safe to run on every server restart.
- */
-db.prepare("UPDATE orders SET shipment_carrier = ?, shipment_tracking_number = ?, shipment_tracking_url = '', updated_at = CURRENT_TIMESTAMP WHERE reference = ? AND LOWER(COALESCE(order_status, '')) = 'shipped'").run("GIG Logistics", "1441011321", "MONO-1794433159593-7128775E");
-db.prepare(`
-  INSERT INTO order_events (order_id, status, message, created_at)
-  SELECT id, 'carrier_update', 'SHIPMENT CREATED', '2026-11-12 13:13:00'
-  FROM orders
-  WHERE reference = ?
-    AND NOT EXISTS (
-      SELECT 1 FROM order_events
-      WHERE order_id = orders.id AND status = 'carrier_update'
-        AND message = 'SHIPMENT CREATED'
-    )
-`).run("MONO-1794433159593-7128775E");
 
 
 ensureColumn("orders", "preorder_email_status", "TEXT DEFAULT ''");
@@ -4207,9 +4188,10 @@ app.get("/api/orders/track/:reference", checkoutLimiter, (req, res) => {
     });
   } catch {}
 
+  // MONOWEAR tracking is the source of truth. Carrier scan feeds are not merged into this timeline.
   const events = db.prepare(`
     SELECT status, message, created_at FROM order_events
-    WHERE order_id = ? ORDER BY id ASC
+    WHERE order_id = ? AND status <> 'carrier_update' ORDER BY id ASC
   `).all(order.id);
 
   res.set("Cache-Control", "no-store");
@@ -4222,7 +4204,7 @@ app.get("/api/orders/track/:reference", checkoutLimiter, (req, res) => {
       order_status: order.order_status,
       shipment_carrier: order.shipment_carrier || "",
       shipment_tracking_number: order.shipment_tracking_number || "",
-      shipment_tracking_url: /^gig/i.test(String(order.shipment_carrier || "")) ? "" : (order.shipment_tracking_url || ""),
+      shipment_tracking_url: "",
       total: Number(order.total || 0),
       items
     },
@@ -5322,7 +5304,6 @@ require("./support")(app, db, rateLimit);
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`MONOWEAR server running on port ${PORT}`);
-  startGigTrackingBot(db);
 
   // Send the requested catch-up shipping guide for the already-shipped order.
   // The database claim makes this one-time and safe across restarts.
