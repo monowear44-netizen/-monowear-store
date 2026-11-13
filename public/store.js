@@ -59,34 +59,31 @@
   /* =========================================================
      BACKGROUND IMAGES
   ========================================================= */
-  function setBackground(element, image, overlay) {
-    if (!element || !image) return;
-    const safeImage = String(image).replace(/["\\]/g, "");
-    element.style.backgroundImage =
-      `${overlay}, url("${safeImage}")`;
-    element.style.backgroundSize = "cover";
-    element.style.backgroundPosition = "center";
-    element.style.backgroundRepeat = "no-repeat";
+  function setBackground(element, image) {
+    if (!element) return;
+    const value = String(image || "").trim();
+    if (!value) {
+      element.style.removeProperty("--waitlist-background-image");
+      return;
+    }
+    const safeImage = value.replace(/["\\]/g, "");
+    element.style.setProperty("--waitlist-background-image", `url("${safeImage}")`);
   }
   function applyStoreBackgrounds(storeSettings) {
-    setBackground(
-      document.querySelector(".site-header"),
-      storeSettings.header_background_image,
-      "linear-gradient(90deg, rgba(0,0,0,.78), rgba(0,0,0,.35))"
-    );
-    setBackground(
-      document.querySelector(".hero"),
-      storeSettings.hero_background_image,
-      "linear-gradient(90deg, rgba(0,0,0,.72), rgba(0,0,0,.22))"
-    );
-    const waitlist = document.querySelector(
-      "#waitlist, .waitlist-section, .drop-waitlist, [data-section='waitlist'], .waitlist"
-    );
-    setBackground(
-      waitlist,
-      storeSettings.waitlist_background_image,
-      "linear-gradient(90deg, rgba(0,0,0,.72), rgba(0,0,0,.38))"
-    );
+    const header = document.querySelector(".site-header");
+    if (header && storeSettings.header_background_image) {
+      header.style.backgroundImage = `linear-gradient(90deg, rgba(0,0,0,.78), rgba(0,0,0,.35)), url("${String(storeSettings.header_background_image).replace(/["\\]/g, "")}")`;
+      header.style.backgroundSize = "cover";
+      header.style.backgroundPosition = "center";
+    }
+    const hero = document.querySelector(".hero");
+    if (hero && storeSettings.hero_background_image) {
+      hero.style.backgroundImage = `linear-gradient(90deg, rgba(0,0,0,.72), rgba(0,0,0,.22)), url("${String(storeSettings.hero_background_image).replace(/["\\]/g, "")}")`;
+      hero.style.backgroundSize = "cover";
+      hero.style.backgroundPosition = "center";
+    }
+    const waitlist = document.querySelector("#newsletter.waitlist-section");
+    setBackground(waitlist, storeSettings.waitlist_background_image);
   }
   /* =========================================================
      STORE SETTINGS
