@@ -71,7 +71,7 @@ else timeline=stages.map((s,i)=>{
   const matches=(trackingStage>=0&&i<=trackingStage)?events.filter(ev=>stageIndex(ev.status)===i):[];
   const last=matches[matches.length-1];
   const cls=i<trackingStage?"done":i===trackingStage?"current":"";
-  const message=last?.message||s.desc;
+  const message=i===2?"Order handed to logistics partner. Estimated delivery 5-10 days.":(last?.message||s.desc);
   const time=last?.created_at?'<time>'+safe(displayDate(last.created_at))+'</time>':"";
   return '<div class="event '+cls+'"><strong>'+safe(s.label)+'</strong><p>'+safe(message)+'</p>'+time+'</div>';
 }).join("");
